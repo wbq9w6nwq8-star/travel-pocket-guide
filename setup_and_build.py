@@ -19,7 +19,7 @@ from pathlib import Path
 # ==========================================
 SITE_URL = "https://tokou-pocket.com"
 SITE_NAME = "渡航ポケット辞典"
-GTM_ID = "G-1PEDJWQF68"
+GTM_ID = "G-2Q2NX4NSVQ"
 
 AFFILIATE_ESIM_URL = "#YOUR_ESIM_AFFILIATE_LINK"
 AFFILIATE_VPN_URL = "#YOUR_VPN_AFFILIATE_LINK"
@@ -1131,11 +1131,12 @@ def tip_color_class(level: str) -> str:
 
 
 def render_gtm_head() -> str:
-    return f"""<script async src="https://www.googletagmanager.com/gtm.js?id={GTM_ID}"></script>
+    return f"""<script async src="https://www.googletagmanager.com/gtag/js?id={GTM_ID}"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){{dataLayer.push(arguments);}}
     gtag('js', new Date());
+    gtag('config', '{GTM_ID}');
   </script>"""
 
 
