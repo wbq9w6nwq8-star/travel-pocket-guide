@@ -19,7 +19,7 @@ from pathlib import Path
 # ==========================================
 SITE_URL = "https://tokou-pocket.com"
 SITE_NAME = "渡航ポケット辞典"
-GTM_ID = "GTM-TJ4RTPWB"
+GTM_ID = "G-1PEDJWQF68"
 
 AFFILIATE_ESIM_URL = "#YOUR_ESIM_AFFILIATE_LINK"
 AFFILIATE_VPN_URL = "#YOUR_VPN_AFFILIATE_LINK"
