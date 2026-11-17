@@ -35,7 +35,7 @@ COUNTRY_PROFILES = {
         "curr": "KRW", "curr_ja": "ウォン", "sym": "₩",
         "tip": "none", "tip_badge": "不要", "tip_detail": "韓国にチップの習慣はありません。高級ホテルや一部レストランではサービス料10%が自動加算される場合があります。",
         "tax": "付加価値税(VAT)10%。Tax Free加盟店で15,000ウォン以上購入時、パスポート提示で即時還付または空港キオスク還付が可能。",
-        "water": False, "water_note": "水道水はそのまま飲まず市販のミネラルウォーター推奨。飲食店の無料の水は浄水器の水なので安心です。",
+        "water": False, "water_note": "水道水はそのまま飲まず市販のミネラルウォーター推奨。飲食店の無料の水は浄水器のものです。",
         "emerg": "警察112 / 救急・消防119 / 観光通訳案内1330（日本語対応）",
         "apps": ["NAVERマップ（必須・Googleマップ徒歩ナビ非対応）", "Kakao T（タクシー）", "WOWPASS / NAMANE"],
         "embassy": "在大韓民国日本国大使館（ソウル）/ 在釜山総領事館 / 在済州総領事館（代表: +82-2-2170-5200）",
@@ -96,7 +96,7 @@ COUNTRY_PROFILES = {
         "apps": ["Grab（ぼったくり防止に絶対必須）", "Be", "Googleマップ"],
         "embassy": "在ベトナム日本国大使館（ハノイ: +84-24-3846-3000）/ 在ホーチミン総領事館 / 在ダナン総領事館",
         "mofa_url": "https://www.anzen.mofa.go.jp/info/pcinfectionspothazardinfo_015.html",
-        "safety_note": "バイクによるスマホのひったくり（歩きスマホ厳禁）や、流しの白タク・シクロによる法外な料金請求が多発しています。移動は必ずGrabアプリを利用してください。",
+        "safety_note": "バイクによるバイクひったくり（歩きスマホ厳禁）や、流しの白タク・シクロによる法外な料金請求が多発しています。移動は必ずGrabアプリを利用してください。",
         "special_ui": "standard"
     },
     "PH": {
@@ -864,23 +864,19 @@ COUNTRY_PROFILES = {
 # ==========================================
 # 3. 世界130都市リスト（ひらがな検索対応キーワード付き）
 # ==========================================
-# (slug, name_ja, kana_keywords, name_en, cc, tz, has_dst, airport, fastest, cheapest)
 RAW_CITIES = [
-    # 韓国
-    ("seoul", "ソウル", "そうる かんこく みょんどん ほんんで", "Seoul", "KR", "Asia/Seoul", False, "仁川国際空港(ICN) / 金浦空港(GMP)", "空港鉄道A'REX直通列車（ソウル駅まで43分 / 11,000₩）", "A'REX一般列車（ソウル駅まで約60分 / 4,450〜5,050₩）"),
+    ("seoul", "ソウル", "そうる かんこく みょんどん ほんで", "Seoul", "KR", "Asia/Seoul", False, "仁川国際空港(ICN) / 金浦空港(GMP)", "空港鉄道A'REX直通列車（ソウル駅まで43分 / 11,000₩）", "A'REX一般列車（ソウル駅まで約60分 / 4,450〜5,050₩）"),
     ("busan", "釜山（プサン）", "ぷさん ぶさん かんこく", "Busan", "KR", "Asia/Seoul", False, "金海国際空港(PUS)", "タクシー（西面・南浦洞まで約30分 / 約20,000₩）", "釜山金海軽電鉄＋地下鉄（西面駅まで約30分 / 約2,100₩）"),
     ("jeju", "済州島（チェジュ）", "ちぇじゅ さいしゅうとう かんこく", "Jeju", "KR", "Asia/Seoul", False, "済州国際空港(CJU)", "タクシー（新済州エリアまで約10分 / 約6,000₩）", "市内急行バス（中文リゾートまで約50分 / 3,000₩）"),
     ("incheon", "仁川（インチョン）", "いんちょん にんせん かんこく", "Incheon", "KR", "Asia/Seoul", False, "仁川国際空港(ICN)", "タクシー・無料シャトル（パラダイスシティ・松島まで10〜25分）", "空港鉄道A'REX＋仁川地下鉄1号線（約3,000₩）"),
     ("daegu", "大邱（テグ）", "てぐ たいきゅう かんこく", "Daegu", "KR", "Asia/Seoul", False, "大邱国際空港(TAE)", "タクシー（東大邱駅まで約10分 / 約7,000₩）", "市内バス401・急行1番＋地下鉄（中心部まで約30分 / 1,500₩）"),
     ("gyeongju", "慶州（キョンジュ）", "きょんじゅ けいしゅう かんこく", "Gyeongju", "KR", "Asia/Seoul", False, "金海国際空港(PUS)", "空港リムジンバス（慶州バスターミナルまで約70分 / 11,000₩）", "軽電鉄＋KTX鉄道（新慶州駅まで約60分）"),
 
-    # 台湾
     ("taipei", "台北（タイペイ）", "たいぺい たいほく たいわん", "Taipei", "TW", "Asia/Taipei", False, "桃園国際空港(TPE) / 松山空港(TSA)", "桃園メトロ空港線・直達車（台北駅まで35分 / 160元）", "國光客運リムジンバス1819路（台北駅まで約55分 / 140元）"),
     ("kaohsiung", "高雄（カオシュン）", "たかお かおしゅん たいわん", "Kaohsiung", "TW", "Asia/Taipei", False, "高雄国際空港(KHH)", "高雄MRTレッドライン（美麗島駅まで16分 / 35元）", "高雄MRTレッドライン（高雄駅まで19分 / 35元）"),
     ("taichung", "台中（タイチュン）", "たいちゅう たいちゅん たいわん", "Taichung", "TW", "Asia/Taipei", False, "台中国際空港(RMQ) / 台湾高鉄台中駅", "タクシー（台中駅・逢甲夜市まで約30〜40分 / 約500元）", "市内バス302・A2路（市内まで約50分 / 悠遊カード利用で格安）"),
     ("tainan", "台南（タイナン）", "たいなん たいわん", "Tainan", "TW", "Asia/Taipei", False, "高雄空港(KHH) / 高鉄台南駅", "高雄空港からMRT＋台湾鉄道・自強号（台南駅まで約60分 / 約140元）", "高鉄台南駅から台鉄沙崙線（台南駅まで22分 / 25元）"),
 
-    # タイ・シンガポール
     ("bangkok", "バンコク", "ばんこく たい", "Bangkok", "TH", "Asia/Bangkok", False, "スワンナプーム国際空港(BKK) / ドンムアン(DMK)", "エアポート・レール・リンクARL（パヤタイ駅まで26分 / 45B）", "ARL＋BTS/MRT乗り継ぎ（アソーク・サイアムまで約40分 / 約75B）"),
     ("phuket", "プーケット", "ぷーけっと たい", "Phuket", "TH", "Asia/Bangkok", False, "プーケット国際空港(HKT)", "空港リムジンタクシー・Grab（パトンビーチまで約50分 / 800B〜）", "プーケット・スマートバス（パトン・カロンまで約70分 / 一律100B）"),
     ("chiang-mai", "チェンマイ", "ちぇんまい たい", "Chiang Mai", "TH", "Asia/Bangkok", False, "チェンマイ国際空港(CNX)", "エアポートタクシー・Grab（旧市街・ニマンヘミンまで15分 / 一律150B〜）", "RTCシティバス（旧市街まで約20分 / 30B）"),
@@ -888,7 +884,6 @@ RAW_CITIES = [
     ("chiang-rai", "チェンライ", "ちぇんらい たい", "Chiang Rai", "TH", "Asia/Bangkok", False, "チェンライ国際空港(CEI)", "Grab・空港タクシー（市内中心部まで約15〜20分 / 約150〜200B）", "空港シャトル・ソンテウ（市内バスターミナルまで約20分）"),
     ("singapore", "シンガポール", "しんがぽーる まりーなべい", "Singapore", "SG", "Asia/Singapore", False, "チャンギ国際空港(SIN)", "タクシー・Grab（マリーナベイ・オーチャードまで約20分 / 約25〜35S$）", "MRT地下鉄（市内中心部まで約40分 / 約2.2S$・クレカタッチ乗車可）"),
 
-    # ベトナム・フィリピン・マレーシア・インドネシア
     ("ho-chi-minh", "ホーチミン", "ほーちみん さいごん べとなむ", "Ho Chi Minh City", "VN", "Asia/Ho_Chi_Minh", False, "タンソンニャット国際空港(SGN)", "Grab・Vinasunタクシー（1区ドンコイ通り周辺まで約25分 / 約15万VND）", "空港バス109番・152番（ベンタイン市場まで約40分 / 5,000〜20,000VND）"),
     ("hanoi", "ハノイ", "はのい べとなむ", "Hanoi", "VN", "Asia/Ho_Chi_Minh", False, "ノイバイ国際空港(HAN)", "Grab・タクシー（旧市街・ホアンキエム湖まで約40分 / 約35万VND）", "急行バス86番（ハノイ駅・オペラハウスまで約50分 / 45,000VND）"),
     ("da-nang", "ダナン・ホイアン", "だなん ほいあん べとなむ", "Da Nang", "VN", "Asia/Ho_Chi_Minh", False, "ダナン国際空港(DAD)", "Grab・タクシー（ミーケビーチ・市街地までわずか10〜15分 / 約10万VND）", "シャトルバス（市街地まで約20分・ホイアンまでGrabで約40分）"),
@@ -904,9 +899,8 @@ RAW_CITIES = [
     ("bali", "バリ島（デンパサール・ウブド）", "ばり ばりとう でんぱさーる うぶど ぬさどぅあ いんどねしあ", "Bali", "ID", "Asia/Makassar", False, "ングラ・ライ国際空港(DPS)", "Grab（空港公式ラウンジ発）・空港タクシー（クタ15分・ヌサドゥア25分・ウブド90分 / 15万〜45万Rp）", "トランス・サルバギタ / クラクラバス（主要エリアへ格安移動）"),
     ("jakarta", "ジャカルタ", "じゃかるた いんどねしあ", "Jakarta", "ID", "Asia/Jakarta", False, "スカルノ・ハッタ国際空港(CGK)", "空港鉄道Railink（BNIシティ駅まで約45分 / 70,000Rp）", "DAMRI空港バス（ガンビル駅・ブロックMまで約60分 / 80,000Rp）"),
     ("yogyakarta", "ジョグジャカルタ", "じょぐじゃかるた ぼろぶどぅーる いんどねしあ", "Yogyakarta", "ID", "Asia/Jakarta", False, "ジョグジャカルタ国際空港(YIA)", "空港特急列車YIA Xpress（トゥグ駅まで35分 / 50,000Rp）", "一般空港列車（トゥグ駅まで39分 / 20,000Rp）"),
-    ("surabaya", "スラバヤ（ブロモ山拠点）", "すらばや ぶろも いんどねしあ", "Surabaya", "ID", "Asia/Jakarta", False, "ジュアンダ国際空港(SUB)", "Grab・Bluebirdタクシー（市内中心部まで高速経由で約30分 / 約10万〜15万Rp）", "DAMRI空港バス（ブンurasihバスターミナルまで約30分 / 35,000Rp）"),
+    ("surabaya", "スラバヤ（ブロモ山拠点）", "すらばや ぶろも いんどねしあ", "Surabaya", "ID", "Asia/Jakarta", False, "ジュアンダ国際空港(SUB)", "Grab・Bluebirdタクシー（市内中心部まで高速経由で約30分 / 約10万〜15万Rp）", "DAMRI空港バス（ブングラシバスターミナルまで約30分 / 35,000Rp）"),
 
-    # 香港・マカオ・中国本土（VPN必須エリア）
     ("hong-kong", "香港（ホンコン）", "ほんこん きゅうりゅう", "Hong Kong", "HK", "Asia/Hong_Kong", False, "香港国際空港(HKG)", "エアポート・エクスプレス機場快線（香港駅まで24分 / 115HKD）", "城バスCityflyer A11・A21（中環・尖沙咀まで約45〜60分 / 34.6〜41.9HKD）"),
     ("macau", "マカオ", "まかお", "Macau", "MO", "Asia/Macau", False, "マカオ国際空港(MFM) / 港珠澳大橋", "各統合型リゾート(IR)の無料シャトルバス（コタイ地区ホテルまで5〜10分 / 無料）", "マカオLRT軽軌鉄道（コタイ・タイパエリアまで約10分 / 6〜8MOP）"),
     ("shanghai", "上海（シャンハイ）", "しゃんはい ちゅうごく", "Shanghai", "CN", "Asia/Shanghai", False, "上海浦東国際空港(PVG) / 虹橋空港(SHA)", "上海トランスラピッド・リニアモーターカー（龍陽路駅までわずか8分 / 50元）", "地下鉄2号線（人民広場・南京東路まで約65分 / 7元）"),
@@ -921,7 +915,6 @@ RAW_CITIES = [
     ("xiamen", "厦門（アモイ）", "あもい しゃめん ちゅうごく", "Xiamen", "CN", "Asia/Shanghai", False, "厦門高崎国際空港(XMN)", "タクシー・DiDi（中山路・フェリーターミナルまで約20分 / 約35元）", "BRT快速バス・空港リムジン（市内中心部まで約30分 / 1〜15元）"),
     ("harbin", "ハルビン（哈爾浜）", "はるびん ちゅうごく", "Harbin", "CN", "Asia/Shanghai", False, "ハルビン太平国際空港(HRB)", "タクシー・DiDi（中央大街まで約40分 / 約100元）", "空港バス1号線・3号線（中央大街・ハルビン駅まで約50分 / 20元）"),
 
-    # 南アジア・中央アジア
     ("siem-reap", "シェムリアップ（アンコールワット）", "しぇむりあっぷ あんこーるわっと かんぼじあ", "Siem Reap", "KH", "Asia/Phnom_Penh", False, "シェムリアップ・アンコール国際空港(SAI)", "公式空港タクシー・Grab（市内中心部まで約50分 / 35USD）", "空港シャトルバス（市内CDF免税店前まで約60分 / 8USD）"),
     ("phnom-penh", "プノンペン", "ぷのんぺん かんぼじあ", "Phnom Penh", "KH", "Asia/Phnom_Penh", False, "プノンペン国際空港(PNH)", "Grab・タクシー（リバーサイド中心部まで約35分 / 約10〜15USD）", "市バス3番（市内中心部まで約50分 / 1,500リエル≒0.38USD）"),
     ("delhi", "デリー（ニューデリー）", "でりー にゅーでりー いんど", "New Delhi", "IN", "Asia/Kolkata", False, "インディラ・ガンディー国際空港(DEL)", "デリーメトロ・エアポートエクスプレス線（ニューデリー駅まで19分 / 60₹）", "エアポートエクスプレス線（渋滞・客引き皆無で最速かつ最安60₹）"),
@@ -932,7 +925,6 @@ RAW_CITIES = [
     ("tashkent", "タシュケント・サマルカンド", "たしゅけんと さまるかんど うずべきすたん", "Tashkent", "UZ", "Asia/Tashkent", False, "タシュケント国際空港(TAS)", "Yandex Go配車タクシー（市内中心部・タシュケント駅までわずか15分 / 約25,000スム≒300円）", "路線バス67・11番（市内まで約25分 / 2,000スム）"),
     ("almaty", "アルマトイ", "あるまとい かざふすたん", "Almaty", "KZ", "Asia/Almaty", False, "アルマトイ国際空港(ALA)", "Yandex Go配車タクシー（市内中心部まで約30分 / 約2,500〜3,500₸）", "市バス92番（市内中心部まで約45分 / 100〜200₸）"),
 
-    # ハワイ・グアム・北米・中南米
     ("honolulu", "ホノルル（ハワイ・オアフ島）", "ほのるる はわい わいきき おあふ あめりか", "Honolulu", "US", "Pacific/Honolulu", False, "ダニエル・K・イノウエ国際空港(HNL)", "Uber・チャーリーズタクシー（ワイキキまで約25分 / 定額$33〜45＋チップ）", "ザ・バス20番 / スカイライン鉄道（ワイキキまで約55分 / $3.00・大きなスーツケース持込不可）"),
     ("kona", "ハワイ島（コナ・ヒロ）", "はわいとう こな ひろ はわい", "Kailua-Kona", "US", "Pacific/Honolulu", False, "エリソン・オニヅカ・コナ国際空港(KOA)", "レンタカー・Uber（カイルア・コナ中心部まで約15分・ワイコロアまで30分）", "ヘレオン・バス（無料〜少額運行・本数少なめ）"),
     ("guam", "グアム", "ぐあむ たもん", "Guam", "US_GUM", "Pacific/Guam", False, "グアム国際空港(GUM)", "ミキタクシー・Stroll配車（タモン地区ホテルまでわずか10〜15分 / 約$25〜30）", "ホテル送迎シャトル（事前予約制）"),
@@ -962,7 +954,6 @@ RAW_CITIES = [
     ("sao-paulo", "サンパウロ", "さんぱうろ ぶらじる", "Sao Paulo", "BR", "America/Sao_Paulo", False, "グアルーリョス国際空港(GRU)", "Uber・公式タクシー（パウリスタ通りまで約45〜60分 / 約100〜150R$）", "Airport Bus Service直行バスまたはCPTM空港鉄道13号線（市内まで約60分）"),
     ("buenos-aires", "ブエノスアイレス", "ぶえのすあいれす あるぜんちん", "Buenos Aires", "AR", "America/Argentina/Buenos_Aires", False, "エセイサ国際空港(EZE) / アエロパルケ空港(AEP)", "Tienda León公式シャトルバス・Uber（市内中心部まで約45分 / 約$12〜25）", "コレクティーボ路線バス8番（SUBEカード利用で市内まで格安移動）"),
 
-    # ヨーロッパ
     ("london", "ロンドン", "ろんどん いぎりす えいこく", "London", "GB", "Europe/London", True, "ヒースロー空港(LHR) / ガトウィック空港(LGW)", "ヒースロー・エクスプレス（パディントン駅まで15分 / £25・早割あり）", "地下鉄ピカデリーライン / エリザベスライン（中心部まで40〜50分 / £5.60〜12.80）"),
     ("edinburgh", "エディンバラ", "えでぃんばら すこっとらんど いぎりす", "Edinburgh", "GB", "Europe/London", True, "エディンバラ空港(EDI)", "Airlink 100急行バス（ウェイバリー駅まで25分 / £5.50・往復£8）", "エディンバラ・トラム（プリンシズ・ストリートまで30分 / £7.50）"),
     ("manchester", "マンチェスター", "まんちぇすたー いぎりす", "Manchester", "GB", "Europe/London", True, "マンチェスター空港(MAN)", "鉄道TransPennine / Northern（ピカデリー駅まで15分 / 約£4〜6）", "メトロリンク・トラムまたはバス（市内まで£4.60）"),
@@ -1008,7 +999,6 @@ RAW_CITIES = [
     ("warsaw", "ワルシャワ", "わるしゃわ ぽーらんど", "Warsaw", "PL", "Europe/Warsaw", True, "ワルシャワ・ショパン空港(WAW)", "SKM近郊鉄道S2/S3線（ワルシャワ中央駅まで約20分 / 4.40PLN≒約170円）", "市バス175番（旧市街・中央駅まで約25分 / 4.40PLN）"),
     ("krakow", "クラクフ（アウシュヴィッツ拠点）", "くらくふ ぽーらんど", "Krakow", "PL", "Europe/Warsaw", True, "クラクフ・バリツェ空港(KRK)", "Koleje Małopolskie空港列車（クラクフ本駅までわずか17分 / 17PLN）", "市バス209・300番（市内まで約40分 / 6PLN）"),
 
-    # オセアニア
     ("sydney", "シドニー", "しどにー おーすとらりあ", "Sydney", "AU", "Australia/Sydney", True, "シドニー・キングスフォード・スミス国際空港(SYD)", "エアポート・リンク鉄道（セントラル駅・サーキュラーキーまで10〜15分 / 約20.60A$）", "路線バス420番＋電車乗継（空港駅アクセス料を回避して約5A$）"),
     ("melbourne", "メルボルン", "めるぼるん おーすとらりあ", "Melbourne", "AU", "Australia/Melbourne", True, "メルボルン空港(MEL)", "スカイバス・メルボルンシティエクスプレス（サザンクロス駅まで約30分 / 23.90A$）", "路線バス901番＋鉄道ブロードメドウズ駅乗継（mykiカードで約5.30A$）"),
     ("cairns", "ケアンズ", "けあんず おーすとらりあ", "Cairns", "AU", "Australia/Brisbane", False, "ケアンズ国際空港(CNS)", "タクシー・Uber（ケアンズ市内中心部までわずか10分 / 約25〜30A$）", "空港乗合シャトルバス（市内ホテルまで約15分 / 約15A$）"),
@@ -1022,7 +1012,6 @@ RAW_CITIES = [
     ("noumea", "ニューカレドニア（ヌメア）", "にゅーかれどにあ ぬめあ", "Noumea", "NC", "Pacific/Noumea", False, "ラ・トントゥータ国際空港(NOU)", "エアポートシャトルバス（ヌメア市内ホテルまで約45〜60分 / 約3,000XPF）", "Raï長距離バス（市内まで格安移動・本数限定）"),
     ("tahiti", "タヒチ（パペーテ・ボラボラ）", "たひち ぱぺーて ぼらぼら", "Tahiti", "PF", "Pacific/Tahiti", False, "ファアア国際空港(PPT)", "タクシー（パペーテ中心部まで約15分 / 約2,000〜2,500XPF）", "Terevau高速フェリー（モーレア島へ30分）または国内線（ボラボラ島へ50分）"),
 
-    # 中東・アフリカ
     ("dubai", "ドバイ", "どばい あらぶ", "Dubai", "AE", "Asia/Dubai", False, "ドバイ国際空港(DXB)", "ドバイ・メトロ・レッドライン（ブルジュ・ハリファ駅まで約25分 / 約8AED）", "公営タクシー・Careem（初乗り25AED〜・市内中心部まで約50〜70AEDで激安）"),
     ("abu-dhabi", "アブダビ", "あぶだび あらぶ", "Abu Dhabi", "AE", "Asia/Dubai", False, "ザイード国際空港(AUH)", "タクシー・Careem（市内中心部・シェイクザイードモスクまで約20〜30分 / 約70〜90AED）", "空港急行バスA1・A2（市内中心部まで約45分 / 4AED）"),
     ("istanbul", "イスタンブール", "いすたんぶーる とるこ", "Istanbul", "TR", "Europe/Istanbul", False, "イスタンブール空港(IST) / サビハ・ギョクチェン空港(SAW)", "Havaist空港リムジンバス（スルタンアフメット・タクシム広場まで約60〜80分 / 約200〜250₺）", "地下鉄M11号線＋M2号線乗り継ぎ（市内中心部まで約50分 / 約50₺）"),
@@ -1448,24 +1437,29 @@ def build_index_html(cities: list, rates_data: dict) -> str:
         for r in unique_regions
     ])
 
-    cards_html = "\n".join([
-        f'<a href="./{c["slug"]}/" data-region="{c["region"]}" '
-        f'data-name="{c["name_ja"]}" data-country="{c["country_ja"]}" data-slug="{c["slug"]}" '
-        f'data-search="{c["name_ja"]} {c["kana_kw"]} {c["name_en"].lower()} {c["country_ja"]} {c["currency_code"].lower()}" '
-        f'class="city-card block bg-white p-3.5 rounded-2xl border border-slate-200 hover:border-blue-500 shadow-sm transition">'
-        f'<div class="flex items-center justify-between gap-1">'
-        f'<span class="font-extrabold text-sm text-slate-900">{c["name_ja"]}</span>'
-        f'<span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium shrink-0">{c["country_ja"]}</span>'
-        f'</div>'
-        f'<div class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-2 flex-wrap">'
-        f'<span>🔌 {c["plug_type"]}</span>'
-        f'<span>💱 {c["currency_code"]}</span>'
-        f'<span>💵 チップ{c["tip_badge"].split("（")[0]}</span>'
-        f'{"<span class=\"text-[10px] text-rose-600 font-bold\">🛡️要VPN/eSIM</span>" if c["special_ui"] == "china_vpn" else ""}'
-        f'</div>'
-        f'</a>'
-        for c in cities
-    ])
+    card_list = []
+    for c in cities:
+        vpn_badge = '<span class="text-[10px] text-rose-600 font-bold">🛡️要VPN/eSIM</span>' if c["special_ui"] == "china_vpn" else ""
+        tip_short = c["tip_badge"].split("（")[0]
+        search_str = f'{c["name_ja"]} {c["kana_kw"]} {c["name_en"].lower()} {c["country_ja"]} {c["currency_code"].lower()}'
+        card_list.append(
+            f'<a href="./{c["slug"]}/" data-region="{c["region"]}" '
+            f'data-name="{c["name_ja"]}" data-country="{c["country_ja"]}" data-slug="{c["slug"]}" '
+            f'data-search="{search_str}" '
+            f'class="city-card block bg-white p-3.5 rounded-2xl border border-slate-200 hover:border-blue-500 shadow-sm transition">'
+            f'<div class="flex items-center justify-between gap-1">'
+            f'<span class="font-extrabold text-sm text-slate-900">{c["name_ja"]}</span>'
+            f'<span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium shrink-0">{c["country_ja"]}</span>'
+            f'</div>'
+            f'<div class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-2 flex-wrap">'
+            f'<span>🔌 {c["plug_type"]}</span>'
+            f'<span>💱 {c["currency_code"]}</span>'
+            f'<span>💵 チップ{tip_short}</span>'
+            f'{vpn_badge}'
+            f'</div>'
+            f'</a>'
+        )
+    cards_html = "\n".join(card_list)
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
@@ -1510,7 +1504,6 @@ def build_index_html(cities: list, rates_data: dict) -> str:
     const cards = Array.from(document.querySelectorAll('.city-card'));
     const regionBtns = document.querySelectorAll('.region-btn');
 
-    // カタカナをひらがなに統一して検索精度を上げる関数
     function toHiragana(str) {{
       return str.replace(/[\\u30a1-\\u30f6]/g, function(match) {{
         const chr = match.charCodeAt(0) - 0x60;
@@ -1537,7 +1530,6 @@ def build_index_html(cities: list, rates_data: dict) -> str:
         }}
       }});
 
-      // 予測変換（オートコンプリート）ドロップダウンの描画
       if (q.length > 0 && matchedCards.length > 0) {{
         suggestBox.innerHTML = matchedCards.slice(0, 8).map(c => `
           <a href="./${{c.dataset.slug}}/" class="flex items-center justify-between px-4 py-2.5 hover:bg-blue-50 transition text-xs">
@@ -1553,7 +1545,6 @@ def build_index_html(cities: list, rates_data: dict) -> str:
 
     searchInput.addEventListener('input', filterCards);
 
-    // 検索欄の外側をクリックしたら予測候補を閉じる
     document.addEventListener('click', (e) => {{
       if (!searchInput.contains(e.target) && !suggestBox.contains(e.target)) {{
         suggestBox.classList.add('hidden');
@@ -1582,7 +1573,6 @@ def build_index_html(cities: list, rates_data: dict) -> str:
 
 
 def write_auxiliary_files(dist_dir: Path):
-    # GitHub Pagesでカスタムドメイン(tokou-pocket.com)が毎回のデプロイで消えないようCNAMEファイルを自動出力
     (dist_dir / "CNAME").write_text("tokou-pocket.com\n", encoding="utf-8")
 
     manifest = {
