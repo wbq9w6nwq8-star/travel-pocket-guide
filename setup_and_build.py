@@ -355,6 +355,12 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-TJ4RTPWB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{city['name_ja']}の現地情報まとめ｜時差・コンセント({city['plug_type']})・チップ・為替を1画面で即答</title>
