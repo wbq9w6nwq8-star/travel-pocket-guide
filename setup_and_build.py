@@ -12,7 +12,7 @@ from pathlib import Path
 # ==========================================
 # 1. 基本設定
 # ==========================================
-SITE_URL = "https://wbq9w6nwq8-star.github.io/travel-pocket-guide"
+SITE_URL = "SITE_URL = "https://tokou-pocket.com""
 SITE_NAME = "渡航ポケット辞典"
 
 AFFILIATE_ESIM_URL = "#YOUR_ESIM_AFFILIATE_LINK"
