@@ -328,9 +328,9 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
     # 同じ地域の関連都市リンク（内部リンク強化でSEO向上）
     related = [c for c in all_cities if c["region"] == city["region"] and c["slug"] != city["slug"]][:8]
     related_html = "".join([
-        f'<a href="/{c["slug"]}/" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:border-blue-500 transition">{c["name_ja"]}</a>'
-        for c in related
-    ])
+    f'<a href="../{c["slug"]}/" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:border-blue-500 transition">{c["name_ja"]}</a>'
+    for c in related
+])
 
     # コンテキスト連動アフィリエイト
     context_affiliate = ""
