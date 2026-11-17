@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-渡航ポケット辞典（世界100都市プログラムSEOサイト）オールインワン生成スクリプト
-実行コマンド: python3 setup_and_build.py
+渡航ポケット辞典（世界108都市プログラムSEOサイト）オールインワン生成スクリプト
 """
 
 import json
@@ -11,22 +10,21 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 # ==========================================
-# 1. 基本設定（独自ドメイン取得後に書き換え）
+# 1. 基本設定
 # ==========================================
 SITE_URL = "https://wbq9w6nwq8-star.github.io/travel-pocket-guide"
 SITE_NAME = "渡航ポケット辞典"
 
-# Affiliate Links (あとから一括変更可能)
 AFFILIATE_ESIM_URL = "#YOUR_ESIM_AFFILIATE_LINK"
 AFFILIATE_CARD_URL = "#YOUR_CARD_AFFILIATE_LINK"
 AFFILIATE_INSURANCE_URL = "#YOUR_INSURANCE_AFFILIATE_LINK"
 
 # ==========================================
-# 2. 国・地域別ベースプロファイル（38カ国・地域）
+# 2. 国・地域別ベースプロファイル
 # ==========================================
 COUNTRY_PROFILES = {
     "KR": {"country_ja": "韓国", "region": "アジア", "plug": "C/SE", "voltage": "220V", "freq": "60Hz", "trans": False, "curr": "KRW", "curr_ja": "ウォン", "sym": "₩", "tip": "none", "tip_badge": "不要", "tip_detail": "韓国にチップの習慣はありません。高級ホテルやレストランではサービス料10%が加算される場合があります。", "tax": "付加価値税(VAT)10%。免税店やTax Free加盟店で15,000ウォン以上購入時、空港や市内キオスクで即時または事後還付可能。", "water": False, "water_note": "水道水はそのまま飲まず、市販のミネラルウォーター推奨。飲食店の無料の水は浄水器のものです。", "emerg": "警察112 / 救急・消防119", "apps": ["Kakao T（タクシー）", "NAVERマップ（必須・Googleマップ非対応）", "Subway Korea"]},
-    "TW": {"country_ja": "台湾", "region": "アジア", "plug": "A", "voltage": "110V", "freq": "60Hz", "trans": False, "curr": "TWD", "curr_ja": "ニュー台湾ドル", "sym": "NT$", "tip": "none", "tip_badge": "不要", "tip_detail": "基本的に不要。レストランでは会計に10%のサービス料が含まれることが多いです。", "tax": "営業税5%。特定マークのある店舗で同日2,000台湾ドル以上購入すると空港等で還付申請が可能。", "water": False, "water_note": "水道水の直接飲用は不可。必ずミネラルウォーターを購入するか煮沸してください。", "emerg": "警察110 / 救急・消防119", "apps": ["Uber", "Googleマップ", "台湾公車通"]},
+    "TW": {"country_ja": "台湾", "region": "アジア", "plug": "A", "voltage": "110V", "freq": "60Hz", "trans": False, "curr": "TWD", "curr_ja": "ニュー台湾ドル", "sym": "NT$", "tip": "none", "tip_badge": "不要", "tip_detail": "基本的に不要。レストランでは会計に10%のサービス料が含まれることが多いです。", "tax": "営業税5%。特定マークのある店舗で同日2,000台湾ドル以上購入すると空港等で還付申請が可能。", "water": False, "water_note": "水道水の直接飲用は不可。必ずミネラルウォーターを購入するか煮沸してください。", "emerg": "警察110 / 救急消防119", "apps": ["Uber", "Googleマップ", "台湾公車通"]},
     "TH": {"country_ja": "タイ", "region": "アジア", "plug": "A/B3/C", "voltage": "220V", "freq": "50Hz", "trans": False, "curr": "THB", "curr_ja": "バーツ", "sym": "฿", "tip": "optional", "tip_badge": "気持ち程度（20〜100B）", "tip_detail": "屋台や食堂は不要。マッサージは50〜100バーツ、ホテルのポーターやベッドメイクは20〜50バーツ程度がスマート。", "tax": "VAT 7%。VAT Refund加盟店で同日2,000バーツ以上購入すると空港で還付手続き可能。", "water": False, "water_note": "水道水は飲用不可。氷も衛生的な店舗以外は注意が必要です。", "emerg": "観光警察1155 / 警察191 / 救急1669", "apps": ["Grab（配車・デリバリー必須）", "Bolt", "Googleマップ"]},
     "SG": {"country_ja": "シンガポール", "region": "アジア", "plug": "BF", "voltage": "230V", "freq": "50Hz", "trans": False, "curr": "SGD", "curr_ja": "シンガポールドル", "sym": "S$", "tip": "none", "tip_badge": "不要（サービス料込）", "tip_detail": "原則不要。ほとんどのレストランやホテルで10%のサービス料が自動で加算されます。", "tax": "GST 9%。加盟店で100S$以上購入時、チャンギ空港の電子キオスク(eTRS)で簡単に免税還付が可能。", "water": True, "water_note": "水道水はWHO基準を満たしておりそのまま飲用可能ですが、気になる場合は市販水を推奨。", "emerg": "警察999 / 救急・消防995", "apps": ["Grab", "Gojek", "Citymapper"]},
     "VN": {"country_ja": "ベトナム", "region": "アジア", "plug": "A/C", "voltage": "220V", "freq": "50Hz", "trans": False, "curr": "VND", "curr_ja": "ドン", "sym": "₫", "tip": "optional", "tip_badge": "気持ち程度（スパ・高級店）", "tip_detail": "ローカル店は不要。スパやマッサージでは50,000〜100,000ドン程度渡すのが一般的。", "tax": "VAT 8〜10%。対象店舗で200万ドン以上購入時、国際空港で85%相当のVAT還付が可能。", "water": False, "water_note": "水道水は飲用不可。歯磨きもミネラルウォーターを使う方が安心です。", "emerg": "警察113 / 消防114 / 救急115", "apps": ["Grab（ぼったくり防止に必須）", "Be", "Googleマップ"]},
@@ -64,7 +62,7 @@ COUNTRY_PROFILES = {
     "HU": {"country_ja": "ハンガリー", "region": "ヨーロッパ", "plug": "C", "voltage": "230V", "freq": "50Hz", "trans": False, "curr": "HUF", "curr_ja": "フォリント", "sym": "Ft", "tip": "optional", "tip_badge": "10%（サ料別の場合）", "tip_detail": "伝票にSzervizdíj（サービス料10〜15%）が含まれていれば不要。含まれない場合は会計時に10%程度を上乗せします。", "tax": "標準VAT 27%（欧州最高水準のため、免税店でのTax Free手続きのメリットが大きいです）。", "water": True, "water_note": "水道水はそのまま飲用可能です。", "emerg": "欧州共通 112", "apps": ["BudapestGO（交通チケット必須）", "Bolt（ブダペスト公認タクシー配車）"]},
     "FI": {"country_ja": "フィンランド", "region": "ヨーロッパ", "plug": "C", "voltage": "230V", "freq": "50Hz", "trans": False, "curr": "EUR", "curr_ja": "ユーロ", "sym": "€", "tip": "none", "tip_badge": "不要", "tip_detail": "北欧はサービス料込みかつ高賃金体系のため、チップの習慣は基本的にありません。", "tax": "標準VAT 25.5%。40€以上の購入で免税対象。", "water": True, "water_note": "水道水は世界トップクラスの純度で、ペットボトル水以上に美味しくそのまま飲めます。", "emerg": "欧州共通 112", "apps": ["HSL（ヘルシンキ交通）", "Bolt", "Uber"]},
     "SE": {"country_ja": "スウェーデン", "region": "ヨーロッパ", "plug": "C", "voltage": "230V", "freq": "50Hz", "trans": False, "curr": "SEK", "curr_ja": "スウェーデンクローナ", "sym": "kr", "tip": "none", "tip_badge": "不要（端数程度）", "tip_detail": "基本的に不要。ディナーで良いサービスを受けた際に端数を切り上げる程度。現金お断りの店が多いためタッチ決済カード必須。", "tax": "標準VAT 25%。200SEK以上の購入で免税対象。", "water": True, "water_note": "水道水は非常に綺麗でそのまま飲めます。", "emerg": "欧州共通 112", "apps": ["SL（ストックホルム交通）", "Uber", "Bolt"]},
-    "DK": {"country_ja": "デンマーク", "region": "ヨーロッパ", "plug": "C", "voltage": "230V", "freq": "50Hz", "trans": False, "curr": "DKK", "curr_ja": "デンマーククローネ", "sym": "kr", "tip": "none", "tip_badge": "不要", "tip_detail": "法律でサービス料込みの表示が義務付けられており、チップは不要です。", "tax": "標準VAT 25%。300DKK以上の購入で免税対象。", "water": True, "water_note": "水道水はそのまま飲用可能です。", "emerg": "欧州共通 112", "apps": ["DOT Tickets", "Rejseplanen", " Viggo（配車）"]},
+    "DK": {"country_ja": "デンマーク", "region": "ヨーロッパ", "plug": "C", "voltage": "230V", "freq": "50Hz", "trans": False, "curr": "DKK", "curr_ja": "デンマーククローネ", "sym": "kr", "tip": "none", "tip_badge": "不要", "tip_detail": "法律でサービス料込みの表示が義務付けられており、チップは不要です。", "tax": "標準VAT 25%。300DKK以上の購入で免税対象。", "water": True, "water_note": "水道水はそのまま飲用可能です。", "emerg": "欧州共通 112", "apps": ["DOT Tickets", "Rejseplanen", "Viggo（配車）"]},
     "PL": {"country_ja": "ポーランド", "region": "ヨーロッパ", "plug": "C", "voltage": "230V", "freq": "50Hz", "trans": False, "curr": "PLN", "curr_ja": "ズウォティ", "sym": "zł", "tip": "optional", "tip_badge": "10%程度", "tip_detail": "レストランでは会計の10%程度を上乗せするのが一般的です。", "tax": "標準VAT 23%。200PLN以上の購入で免税対象。", "water": True, "water_note": "主要都市の水道水は飲用可能ですが、ミネラルウォーターも安価に買えます。", "emerg": "欧州共通 112", "apps": ["Jakdojade（乗換・切符購入）", "Uber", "Bolt"]},
 
     "AU": {"country_ja": "オーストラリア", "region": "オセアニア", "plug": "O", "voltage": "230V", "freq": "50Hz", "trans": False, "curr": "AUD", "curr_ja": "豪ドル", "sym": "A$", "tip": "none", "tip_badge": "不要", "tip_detail": "最低賃金が高くチップの習慣はありません。高級レストランで特別なサービスを受けた際のみ5〜10%程度。", "tax": "GST 10%。同一店舗で300A$以上購入時、空港のTRSカウンター（アプリ事前入力推奨）で免税還付が可能。", "water": True, "water_note": "水道水は安全基準が高く、そのまま美味しく飲めます。", "emerg": "警察・救急・消防 000", "apps": ["Uber", "DiDi", "Googleマップ"]},
@@ -81,31 +79,23 @@ COUNTRY_PROFILES = {
 }
 
 # ==========================================
-# 3. 日本人に人気の世界100都市リスト
-# (slug, 都市名, 英語名, 国コード, タイムゾーン, サマータイム有無, 空港名, 最速移動, 最安移動)
+# 3. 世界108都市リスト
 # ==========================================
 RAW_CITIES = [
-    # --- 韓国 (6) ---
     ("seoul", "ソウル", "Seoul", "KR", "Asia/Seoul", False, "仁川国際空港(ICN)", "空港鉄道A'REX直通列車（ソウル駅まで43分 / 11,000₩）", "A'REX一般列車（ソウル駅まで約60分 / 4,450〜5,050₩）"),
     ("busan", "釜山（プサン）", "Busan", "KR", "Asia/Seoul", False, "金海国際空港(PUS)", "タクシー（西面・南浦洞まで約30分 / 約20,000₩）", "釜山金海軽電鉄＋地下鉄（西面駅まで約30分 / 約2,100₩）"),
     ("jeju", "済州島（チェジュ）", "Jeju", "KR", "Asia/Seoul", False, "済州国際空港(CJU)", "タクシー（新済州エリアまで約10分 / 約6,000₩）", "市内急行バス（中文リゾートまで約50分 / 3,000₩）"),
     ("incheon", "仁川（インチョン）", "Incheon", "KR", "Asia/Seoul", False, "仁川国際空港(ICN)", "タクシー・無料シャトル（パラダイスシティ・松島まで10〜25分）", "空港鉄道A'REX＋仁川地下鉄1号線（約3,000₩）"),
     ("daegu", "大邱（テグ）", "Daegu", "KR", "Asia/Seoul", False, "大邱国際空港(TAE)", "タクシー（東大邱駅まで約10分 / 約7,000₩）", "市内バス401・急行1番＋地下鉄（中心部まで約30分 / 1,500₩）"),
     ("gyeongju", "慶州（キョンジュ）", "Gyeongju", "KR", "Asia/Seoul", False, "金海国際空港(PUS)", "空港リムジンバス（慶州バスターミナルまで約70分 / 11,000₩）", "軽電鉄＋KTX鉄道（新慶州駅まで約60分）"),
-
-    # --- 台湾 (4) ---
     ("taipei", "台北", "Taipei", "TW", "Asia/Taipei", False, "桃園国際空港(TPE) / 松山空港(TSA)", "桃園メトロ空港線・直達車（台北駅まで35分 / 160元）", "國光客運リムジンバス1819路（台北駅まで約55分 / 140元）"),
     ("kaohsiung", "高雄", "Kaohsiung", "TW", "Asia/Taipei", False, "高雄国際空港(KHH)", "高雄MRTレッドライン（美麗島駅まで16分 / 35元）", "高雄MRTレッドライン（高雄駅まで19分 / 35元）"),
     ("taichung", "台中", "Taichung", "TW", "Asia/Taipei", False, "台中国際空港(RMQ) / 台湾高鉄台中駅", "タクシー（台中駅・逢甲夜市まで約30〜40分 / 約500元）", "市内バス302・A2路（市内まで約50分 / 悠遊カード利用で格安）"),
     ("tainan", "台南", "Tainan", "TW", "Asia/Taipei", False, "高雄空港(KHH) / 高鉄台南駅", "高雄空港からMRT＋台湾鉄道・自強号（台南駅まで約60分 / 約140元）", "高鉄台南駅から台鉄沙崙線（台南駅まで22分 / 25元）"),
-
-    # --- タイ (4) ---
     ("bangkok", "バンコク", "Bangkok", "TH", "Asia/Bangkok", False, "スワンナプーム国際空港(BKK)", "エアポート・レール・リンクARL（パヤタイ駅まで26分 / 45B）", "ARL＋BTS/MRT乗り継ぎ（アソーク・サイアムまで約40分 / 約75B）"),
     ("phuket", "プーケット", "Phuket", "TH", "Asia/Bangkok", False, "プーケット国際空港(HKT)", "空港リムジンタクシー・Grab（パトンビーチまで約50分 / 800B〜）", "プーケット・スマートバス（パトン・カロンまで約70分 / 一律100B）"),
     ("chiang-mai", "チェンマイ", "Chiang Mai", "TH", "Asia/Bangkok", False, "チェンマイ国際空港(CNX)", "エアポートタクシー・Grab（旧市街・ニマンヘミンまで15分 / 一律150B〜）", "RTCシティバス（旧市街まで約20分 / 30B）"),
     ("pattaya", "パタヤ", "Pattaya", "TH", "Asia/Bangkok", False, "スワンナプーム空港(BKK)", "チャータータクシー・Grab（パタヤ中心部まで約90分 / 約1,200〜1,500B）", "空港1階8番ゲート発・直行バス（パタヤまで約120分 / 143B）"),
-
-    # --- 東南アジア・南アジア・東アジアその他 (24) ---
     ("singapore", "シンガポール", "Singapore", "SG", "Asia/Singapore", False, "チャンギ国際空港(SIN)", "タクシー・Grab（マリーナベイ・オーチャードまで約20分 / 約25〜35S$）", "MRT地下鉄（市内中心部まで約40分 / 約2.2S$・クレカタッチ乗車可）"),
     ("ho-chi-minh", "ホーチミン", "Ho Chi Minh City", "VN", "Asia/Ho_Chi_Minh", False, "タンソンニャット国際空港(SGN)", "Grab・Vinasunタクシー（1区ドンコイ通り周辺まで約25分 / 約15万VND）", "空港バス109番・152番（ベンタイン市場まで約40分 / 5,000〜20,000VND）"),
     ("hanoi", "ハノイ", "Hanoi", "VN", "Asia/Ho_Chi_Minh", False, "ノイバイ国際空港(HAN)", "Grab・タクシー（旧市街・ホアンキエム湖まで約40分 / 約35万VND）", "急行バス86番（ハノイ駅・オペラハウスまで約50分 / 45,000VND）"),
@@ -133,8 +123,6 @@ RAW_CITIES = [
     ("colombo", "コロンボ", "Colombo", "LK", "Asia/Colombo", False, "バンダラナイケ国際空港(CMB)", "空港高速経由タクシー・PickMe（コロンボ市内まで約40分 / 約4,000Rs）", "高速バス187番（コロンボ・フォート駅まで約45分 / 約350Rs）"),
     ("kathmandu", "カトマンズ", "Kathmandu", "NP", "Asia/Kathmandu", False, "トリブバン国際空港(KTM)", "空港プリペイドタクシー・Pathao（タメル地区まで約20分 / 約800〜1,000Rs）", "路線バス（空港ゲート外から中心部へ約30Rs）"),
     ("male", "モルディブ（マレ）", "Male", "MV", "Indian/Maldives", False, "ヴェラナ国際空港(MLE)", "各リゾート専用スピードボートまたは水上飛行機（空港島から直接乗船）", "公共フェリー（マレ本島まで約10分 / 1〜2USD）"),
-
-    # --- ハワイ・グアム・北米・中南米 (23) ---
     ("honolulu", "ホノルル（ハワイ）", "Honolulu", "US", "Pacific/Honolulu", False, "ダニエル・K・イノウエ国際空港(HNL)", "Uber・チャーリーズタクシー（ワイキキまで約25分 / 定額$33〜45＋チップ）", "ザ・バス20番（ワイキキまで約55分 / $3.00・大きなスーツケース持込不可）"),
     ("kona", "ハワイ島（コナ）", "Kailua-Kona", "US", "Pacific/Honolulu", False, "エリソン・オニヅカ・コナ国際空港(KOA)", "レンタカー・Uber（カイルア・コナ中心部まで約15分・ワイコロアまで30分）", "ヘレオン・バス（無料〜少額運行・本数少なめ）"),
     ("guam", "グアム", "Guam", "US_GUM", "Pacific/Guam", False, "グアム国際空港(GUM)", "ミキタクシー・Stroll配車（タモン地区ホテルまでわずか10〜15分 / 約$25〜30）", "ホテル送迎シャトル（事前予約制）"),
@@ -159,8 +147,6 @@ RAW_CITIES = [
     ("cusco", "クスコ（マチュピチュ玄関口）", "Cusco", "PE", "America/Lima", False, "アレハンドロ・ベラスコ・アステテ国際空港(CUZ)", "Uber・空港内公式タクシー（アルマス広場周辺まで約15分 / 約25〜35ソル）", "コレクティーボ・路線バス（空港外大通りから1〜2ソル）"),
     ("lima", "リマ", "Lima", "PE", "America/Lima", False, "ホルヘ・チャベス国際空港(LIM)", "Airport Express Lima公式バス（ミラフローレス地区まで約50分 / $8または25ソル）", "QuickLlama乗合バン・Uber（ミラフローレスまで約45ソル）"),
     ("rio-de-janeiro", "リオデジャネイロ", "Rio de Janeiro", "BR", "America/Sao_Paulo", False, "アントニオ・カルロス・ジョビン国際空港(GIG)", "Uber・公式タクシー（コパカバーナ・イパネマまで約35分 / 約70〜100R$）", "Frescãoエアコン付き空港バス（コパカバーナまで約50分 / 約20R$）"),
-
-    # --- ヨーロッパ (34) ---
     ("london", "ロンドン", "London", "GB", "Europe/London", True, "ヒースロー空港(LHR)", "ヒースロー・エクスプレス（パディントン駅まで15分 / £25・早割あり）", "地下鉄ピカデリーライン / エリザベスライン（中心部まで40〜50分 / £5.60〜12.80）"),
     ("edinburgh", "エディンバラ", "Edinburgh", "GB", "Europe/London", True, "エディンバラ空港(EDI)", "Airlink 100急行バス（ウェイバリー駅まで25分 / £5.50・往復£8）", "エディンバラ・トラム（プリンシズ・ストリートまで30分 / £7.50）"),
     ("manchester", "マンチェスター", "Manchester", "GB", "Europe/London", True, "マンチェスター空港(MAN)", "鉄道TransPennine / Northern（ピカデリー駅まで15分 / 約£4〜6）", "メトロリンク・トラムまたはバス（市内まで£4.60）"),
@@ -199,8 +185,6 @@ RAW_CITIES = [
     ("stockholm", "ストックホルム", "Stockholm", "SE", "Europe/Stockholm", True, "アーランダ国際空港(ARN)", "アーランダ・エクスプレス高速列車（中央駅までわずか18分 / 340SEK）", "Flygbussarna / FlixBus空港バス（中央駅まで約45分 / 129SEK〜）"),
     ("copenhagen", "コペンハーゲン", "Copenhagen", "DK", "Europe/Copenhagen", True, "コペンハーゲン空港(CPH)", "メトロM2線またはDSB国鉄（コンゲンス・ニュートー駅・中央駅まで13〜15分 / 30DKK）", "メトロ・国鉄共通3ゾーン切符（30DKKでわずか15分）"),
     ("warsaw", "ワルシャワ", "Warsaw", "PL", "Europe/Warsaw", True, "ワルシャワ・ショパン空港(WAW)", "SKM近郊鉄道S2/S3線（ワルシャワ中央駅まで約20分 / 4.40PLN≒約170円）", "市バス175番（旧市街・中央駅まで約25分 / 4.40PLN）"),
-
-    # --- オセアニア・南太平洋 (12) ---
     ("sydney", "シドニー", "Sydney", "AU", "Australia/Sydney", True, "シドニー・キングスフォード・スミス国際空港(SYD)", "エアポート・リンク鉄道（セントラル駅・サーキュラーキーまで10〜15分 / 約20.60A$）", "路線バス420番＋電車乗継（空港駅アクセス料を回避して約5A$）"),
     ("melbourne", "メルボルン", "Melbourne", "AU", "Australia/Melbourne", True, "メルボルン空港(MEL)", "スカイバス・メルボルンシティエクスプレス（サザンクロス駅まで約30分 / 23.90A$）", "路線バス901番＋鉄道ブロードメドウズ駅乗継（mykiカードで約5.30A$）"),
     ("cairns", "ケアンズ", "Cairns", "AU", "Australia/Brisbane", False, "ケアンズ国際空港(CNS)", "タクシー・Uber（ケアンズ市内中心部までわずか10分 / 約25〜30A$）", "空港乗合シャトルバス（市内ホテルまで約15分 / 約15A$）"),
@@ -213,8 +197,6 @@ RAW_CITIES = [
     ("nadi", "フィジー（ナンディ）", "Nadi", "FJ", "Pacific/Fiji", False, "ナンディ国際空港(NAN)", "空港公認イエロータクシー（デナラウ地区リゾートまで約20分 / 約30〜35FJ$）", "ローカルバス（ナンディタウンまで約15分 / 約2FJ$）"),
     ("noumea", "ニューカレドニア（ヌメア）", "Noumea", "NC", "Pacific/Noumea", False, "ラ・トントゥータ国際空港(NOU)", "エアポートシャトルバス（ヌメア市内ホテルまで約45〜60分 / 約3,000XPF）", "Raï長距離バス（市内まで格安移動・本数限定）"),
     ("tahiti", "タヒチ（パペーテ・ボラボラ）", "Tahiti", "PF", "Pacific/Tahiti", False, "ファアア国際空港(PPT)", "タクシー（パペーテ中心部まで約15分 / 約2,000〜2,500XPF）", "Terevau高速フェリー（モーレア島へ30分）または国内線（ボラボラ島へ50分）"),
-
-    # --- 中東・アフリカ (5) ---
     ("dubai", "ドバイ", "Dubai", "AE", "Asia/Dubai", False, "ドバイ国際空港(DXB)", "ドバイ・メトロ・レッドライン（ブルジュ・ハリファ駅まで約25分 / 約8AED）", "公営タクシー・Careem（初乗り25AED〜・市内中心部まで約50〜70AEDで激安）"),
     ("abu-dhabi", "アブダビ", "Abu Dhabi", "AE", "Asia/Dubai", False, "ザイード国際空港(AUH)", "タクシー・Careem（市内中心部・シェイクザイードモスクまで約20〜30分 / 約70〜90AED）", "空港急行バスA1・A2（市内中心部まで約45分 / 4AED）"),
     ("istanbul", "イスタンブール", "Istanbul", "TR", "Europe/Istanbul", False, "イスタンブール空港(IST)", "Havaist空港リムジンバス（スルタンアフメット・タクシム広場まで約60〜80分 / 約200〜250₺）", "地下鉄M11号線＋M2号線乗り継ぎ（市内中心部まで約50分 / 約50₺）"),
@@ -224,9 +206,6 @@ RAW_CITIES = [
     ("marrakech", "マラケシュ", "Marrakech", "MA", "Africa/Casablanca", False, "マラケシュ・メナラ空港(RAK)", "空港公認タクシー（フナ広場・新市街まで約15分 / 定額70〜100DH）", "ALSA空港急行バスL19（フナ広場まで約20分 / 30DH・往復50DH）")
 ]
 
-# ちょうど100都市になるようスライス（現在108都市登録、上位100都市または全108都市をそのまま生成）
-print(f"登録都市数: {len(RAW_CITIES)} 都市")
-
 
 def generate_cities_data() -> list:
     cities = []
@@ -234,7 +213,7 @@ def generate_cities_data() -> list:
         slug, name_ja, name_en, cc, tz, has_dst, airport, fastest, cheapest = item
         p = COUNTRY_PROFILES[cc]
         dst_note = "あり（春〜秋は時計が1時間進みます。上の時計はサマータイム自動反映済み）" if has_dst else "なし（年間を通じて時差は一定です）"
-        trans_note = f"スマホ・PC・カメラ等の充電器（100-240V対応表記）は変圧器不要。日本の100V専用ドライヤーやヘアアイロンは変圧器が必要です。" if p["voltage"] != "120V" and p["voltage"] != "110V" else "電圧が日本(100V)と近いため、短期旅行ならスマホ充電器や多くの電化製品がそのまま使えます。"
+        trans_note = "スマホ・PC・カメラ等の充電器（100-240V対応表記）は変圧器不要。日本の100V専用ドライヤーやヘアアイロンは変圧器が必要です。" if p["voltage"] not in ("120V", "110V") else "電圧が日本(100V)と近いため、短期旅行ならスマホ充電器や多くの電化製品がそのまま使えます。"
 
         cities.append({
             "slug": slug,
@@ -281,10 +260,9 @@ def fetch_exchange_rates() -> dict:
             data = json.loads(res.read().decode("utf-8"))
             if data.get("result") == "success":
                 return {"updated_at": now_jst, "base": "JPY", "rates": data["rates"]}
-    except Exception as e:
-        print(f"API取得失敗（フォールバックレートを使用します）: {e}")
+    except Exception:
+        pass
 
-    # オフライン実行時用のフォールバックレート
     return {
         "updated_at": now_jst,
         "base": "JPY",
@@ -325,14 +303,12 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
     local_to_jpy = round(1 / jpy_to_local, 2) if jpy_to_local >= 0.005 else round(1 / jpy_to_local, 4)
     thousand_jpy_in_local = round(1000 * jpy_to_local, 2)
 
-    # 同じ地域の関連都市リンク（内部リンク強化でSEO向上）
     related = [c for c in all_cities if c["region"] == city["region"] and c["slug"] != city["slug"]][:8]
     related_html = "".join([
-    f'<a href="../{c["slug"]}/" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:border-blue-500 transition">{c["name_ja"]}</a>'
-    for c in related
-])
+        f'<a href="../{c["slug"]}/" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:border-blue-500 transition">{c["name_ja"]}</a>'
+        for c in related
+    ])
 
-    # コンテキスト連動アフィリエイト
     context_affiliate = ""
     if not city["tap_water_safe"]:
         context_affiliate = f"""
@@ -384,14 +360,14 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
   <title>{city['name_ja']}の現地情報まとめ｜時差・コンセント({city['plug_type']})・チップ・為替を1画面で即答</title>
   <meta name="description" content="{city['name_ja']}（{city['country_ja']}）の現在時刻・時差、コンセントのプラグ形状（{city['plug_type']}）・電圧（{city['voltage']}）、チップ相場、最新為替レート、{city['airport_access']['airport_name']}からの移動手段をスクロールなしで即確認。">
   <link rel="canonical" href="{SITE_URL}/{city['slug']}/">
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="../manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="application/ld+json">{json.dumps(faq_schema, ensure_ascii=False)}</script>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased pb-12">
   <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
     <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/" class="font-bold text-slate-800 text-sm flex items-center gap-1">🌐 {SITE_NAME}</a>
+      <a href="../" class="font-bold text-slate-800 text-sm flex items-center gap-1">🌐 {SITE_NAME}</a>
       <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">{city['region']} / {city['country_ja']}</span>
     </div>
   </header>
@@ -402,9 +378,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       <span class="text-[11px] text-slate-400">為替更新: {rates_data['updated_at']}</span>
     </div>
 
-    <!-- ファーストビュー：4分割即答ダッシュボード -->
     <section class="grid grid-cols-2 gap-2.5">
-      <!-- 1. 現地時刻 -->
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-500">🕒 現地時刻</span>
@@ -414,7 +388,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
         <div id="time-diff" class="text-xs font-bold text-blue-600 mt-1">時差を計算中...</div>
       </div>
 
-      <!-- 2. コンセント -->
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col justify-between">
         <span class="text-xs font-bold text-slate-500 block text-left">🔌 プラグ・電圧</span>
         <div class="my-0.5">{render_plug_svg(city['plug_type'])}</div>
@@ -424,7 +397,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
         </div>
       </div>
 
-      <!-- 3. チップ判定 -->
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
         <span class="text-xs font-bold text-slate-500">💵 チップ習慣</span>
         <div class="my-1.5">
@@ -435,7 +407,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
         <div class="text-[11px] text-slate-500">水: {'💧飲用可' if city['tap_water_safe'] else '⚠️飲用不可（市販水）'}</div>
       </div>
 
-      <!-- 4. クイック通貨換算 -->
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
         <span class="text-xs font-bold text-slate-500">💱 1{code} ≒ {local_to_jpy}円</span>
         <div class="mt-1">
@@ -448,7 +419,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       </div>
     </section>
 
-    <!-- 空港アクセス・移動アプリ（検索需要特大ブロック） -->
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
       <h2 class="text-sm font-bold flex items-center gap-1.5 text-slate-800">✈️ {city['airport_access']['airport_name']}から市内への移動</h2>
       <div class="text-xs space-y-2 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
@@ -460,7 +430,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       </div>
     </section>
 
-    <!-- 通信＆eSIM枠 -->
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
       <h2 class="text-sm font-bold flex items-center gap-1.5">📶 現地の通信・ネット環境</h2>
       <p class="text-xs text-slate-700 mt-1.5 leading-relaxed">{city['telecom_note']}</p>
@@ -475,7 +444,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       </div>
     </section>
 
-    <!-- お金・電気・水・緊急時の詳細ルール -->
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
       <h2 class="text-sm font-bold">📌 お金・マナー・生活ルール詳細</h2>
       <div class="text-xs space-y-2.5 text-slate-700 leading-relaxed">
@@ -489,7 +457,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       {context_affiliate}
     </section>
 
-    <!-- 同じエリアの他都市リンク -->
     <section class="pt-2">
       <h3 class="text-xs font-bold text-slate-500 mb-2">🗺️ {city['region']}の他の都市をチェック</h3>
       <div class="flex flex-wrap gap-1.5">{related_html}</div>
@@ -532,7 +499,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
     }});
 
     if ('serviceWorker' in navigator) {{
-      navigator.serviceWorker.register('/sw.js').catch(() => {{}});
+      navigator.serviceWorker.register('../sw.js').catch(() => {{}});
     }}
   </script>
 </body>
@@ -540,7 +507,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
 
 
 def build_index_html(cities: list, rates_data: dict) -> str:
-    regions = ["すべて", "アジア", "北米・ハワイ", "北米", "ヨーロッパ", "オセアニア", "太平洋・リゾート", "中南米", "中東", "中東・ヨーロッパ", "中東・アフリカ", "アフリカ"]
     unique_regions = ["すべて"] + sorted(list({c["region"] for c in cities}))
 
     region_buttons = "".join([
@@ -550,7 +516,7 @@ def build_index_html(cities: list, rates_data: dict) -> str:
     ])
 
     cards_html = "\n".join([
-        f'<a href="/{c["slug"]}/" data-region="{c["region"]}" data-search="{c["name_ja"]} {c["name_en"].lower()} {c["country_ja"]} {c["currency_code"].lower()}" '
+        f'<a href="./{c["slug"]}/" data-region="{c["region"]}" data-search="{c["name_ja"]} {c["name_en"].lower()} {c["country_ja"]} {c["currency_code"].lower()}" '
         f'class="city-card block bg-white p-3.5 rounded-2xl border border-slate-200 hover:border-blue-500 shadow-sm transition">'
         f'<div class="flex items-center justify-between">'
         f'<span class="font-extrabold text-sm text-slate-900">{c["name_ja"]}</span>'
@@ -573,7 +539,7 @@ def build_index_html(cities: list, rates_data: dict) -> str:
   <title>{SITE_NAME}｜世界{len(cities)}都市の時差・コンセント・チップ・為替を1画面で即答</title>
   <meta name="description" content="海外旅行や留学・出張の渡航前や空港ですぐに知りたい世界{len(cities)}都市の現在時刻・時差・コンセント形状・電圧・チップ相場・最新為替レート・空港アクセスをスクロールなしで即解決。">
   <link rel="canonical" href="{SITE_URL}/">
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="./manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased pb-16">
@@ -625,18 +591,16 @@ def build_index_html(cities: list, rates_data: dict) -> str:
 
 
 def write_auxiliary_files(dist_dir: Path):
-    # PWA manifest.json
     manifest = {
         "name": SITE_NAME,
         "short_name": SITE_NAME,
-        "start_url": "/",
+        "start_url": "./",
         "display": "standalone",
         "background_color": "#f8fafc",
         "theme_color": "#0f172a"
     }
     (dist_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # Service Worker (機内モードキャッシュ用)
     sw_js = """const CACHE_NAME = 'pocket-guide-v1';
 self.addEventListener('fetch', (event) => {
   event.respondWith(
@@ -652,13 +616,12 @@ self.addEventListener('fetch', (event) => {
 """
     (dist_dir / "sw.js").write_text(sw_js, encoding="utf-8")
 
-    # GitHub Actions 毎日自動為替更新＆デプロイ設定
     wf_dir = Path(".github/workflows")
     wf_dir.mkdir(parents=True, exist_ok=True)
     workflow_yml = """name: Daily Rate Update & Deploy Pages
 on:
   schedule:
-    - cron: '0 21 * * *' # 毎日 日本時間 朝6:00 に最新為替レート取得＆全ページ再生成
+    - cron: '0 21 * * *'
   workflow_dispatch:
   push:
     branches: [ main ]
@@ -695,15 +658,12 @@ def main():
     data_dir.mkdir(exist_ok=True)
     dist_dir.mkdir(exist_ok=True)
 
-    # 1. 都市データ生成・保存
     cities = generate_cities_data()
     (data_dir / "cities.json").write_text(json.dumps(cities, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # 2. 最新為替レート取得・保存
     rates_data = fetch_exchange_rates()
     (data_dir / "rates.json").write_text(json.dumps(rates_data, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # 3. 全都市HTML生成
     urls = [f"{SITE_URL}/"]
     for city in cities:
         city_dir = dist_dir / city["slug"]
@@ -712,24 +672,17 @@ def main():
         (city_dir / "index.html").write_text(html, encoding="utf-8")
         urls.append(f"{SITE_URL}/{city['slug']}/")
 
-    # 4. トップページ生成
     index_html = build_index_html(cities, rates_data)
     (dist_dir / "index.html").write_text(index_html, encoding="utf-8")
 
-    # 5. sitemap.xml ＆ robots.txt 生成
     sitemap_items = "\n".join([f"  <url><loc>{u}</loc></url>" for u in urls])
     sitemap_xml = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{sitemap_items}\n</urlset>'
     (dist_dir / "sitemap.xml").write_text(sitemap_xml, encoding="utf-8")
     (dist_dir / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
 
-    # 6. PWA & GitHub Actions 生成
     write_auxiliary_files(dist_dir)
-
-    print(f"✅ 完了！ 全 {len(cities)} 都市のHTML・JSON・サイトマップ・GitHub Actionsをすべて生成しました。")
-    print("👉 ローカル確認コマンド: python3 -m http.server 8000 --directory dist")
+    print(f"✅ 完了！ 全 {len(cities)} 都市のページを更新しました。")
 
 
 if __name__ == "__main__":
     main()
-    
-    
