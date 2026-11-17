@@ -1,0 +1,8 @@
+{
+  "name": "渡航ポケット辞典",
+  "short_name": "渡航ポケット辞典",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a"
+}

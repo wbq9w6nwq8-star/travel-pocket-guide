@@ -1,0 +1,30 @@
+name: Daily Rate Update & Deploy Pages
+on:
+  schedule:
+    - cron: '0 21 * * *' # 毎日 日本時間 朝6:00 に最新為替レート取得＆全ページ再生成
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Generate all city pages with latest exchange rates
+        run: python3 setup_and_build.py
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

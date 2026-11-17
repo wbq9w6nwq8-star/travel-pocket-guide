@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>バンクーバーの現地情報まとめ｜時差・コンセント(A)・チップ・為替を1画面で即答</title>
+  <meta name="description" content="バンクーバー（カナダ）の現在時刻・時差、コンセントのプラグ形状（A）・電圧（120V）、チップ相場、最新為替レート、バンクーバー国際空港(YVR)からの移動手段をスクロールなしで即確認。">
+  <link rel="canonical" href="https://example.com/vancouver/">
+  <link rel="manifest" href="/manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "バンクーバーのコンセント形状と変圧器の必要性は？", "acceptedAnswer": {"@type": "Answer", "text": "バンクーバー（カナダ）のコンセントはAタイプ、電圧は120V（60Hz）です。電圧が日本(100V)と近いため、短期旅行ならスマホ充電器や多くの電化製品がそのまま使えます。"}}, {"@type": "Question", "name": "バンクーバーでチップは必要ですか？相場は？", "acceptedAnswer": {"@type": "Answer", "text": "必須（15〜20%）です。アメリカ同様チップ社会。レストランやタクシーではカード端末に表示される15%・18%・20%のボタンから選ぶだけで完了します。"}}, {"@type": "Question", "name": "バンクーバーの空港から市内へのアクセス方法は？", "acceptedAnswer": {"@type": "Answer", "text": "バンクーバー国際空港(YVR)から市内へは、最速が「スカイトレイン・カナダライン（ウォーターフロント駅まで26分 / 約9.55C$）」、最安が「スカイトレイン・カナダライン（タッチ決済でそのまま乗車可能）」です。"}}, {"@type": "Question", "name": "バンクーバーの水道水は飲めますか？", "acceptedAnswer": {"@type": "Answer", "text": "水道水は水質基準が非常に高く、そのまま美味しく飲めます。"}}]}</script>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased pb-12">
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/" class="font-bold text-slate-800 text-sm flex items-center gap-1">🌐 渡航ポケット辞典</a>
+      <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">北米 / カナダ</span>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto px-4 pt-4 space-y-4">
+    <div class="flex items-baseline justify-between">
+      <h1 class="text-2xl font-extrabold tracking-tight">バンクーバー <span class="text-sm font-normal text-slate-500">Vancouver</span></h1>
+      <span class="text-[11px] text-slate-400">為替更新: 2026-11-18 00:10 JST</span>
+    </div>
+
+    <!-- ファーストビュー：4分割即答ダッシュボード -->
+    <section class="grid grid-cols-2 gap-2.5">
+      <!-- 1. 現地時刻 -->
+      <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-500">🕒 現地時刻</span>
+          <button id="tz-toggle" class="text-[10px] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded text-slate-600 font-medium">vs 日本</button>
+        </div>
+        <div id="local-clock" class="text-2xl font-mono font-bold mt-1.5 tracking-tight">--:--:--</div>
+        <div id="time-diff" class="text-xs font-bold text-blue-600 mt-1">時差を計算中...</div>
+      </div>
+
+      <!-- 2. コンセント -->
+      <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col justify-between">
+        <span class="text-xs font-bold text-slate-500 block text-left">🔌 プラグ・電圧</span>
+        <div class="my-0.5"><svg viewBox="0 0 64 64" class="w-11 h-11 mx-auto"><circle cx="32" cy="32" r="28" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/><rect x="21" y="20" width="4" height="24" rx="1" fill="#0f172a"/><rect x="39" y="20" width="4" height="24" rx="1" fill="#0f172a"/></svg></div>
+        <div>
+          <div class="text-sm font-extrabold">Aタイプ <span class="text-xs font-normal text-slate-500">/ 120V</span></div>
+          <div class="text-[11px] text-emerald-700 font-medium">スマホ変圧器不要</div>
+        </div>
+      </div>
+
+      <!-- 3. チップ判定 -->
+      <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+        <span class="text-xs font-bold text-slate-500">💵 チップ習慣</span>
+        <div class="my-1.5">
+          <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold border bg-rose-100 text-rose-800 border-rose-300">
+            必須（15〜20%）
+          </span>
+        </div>
+        <div class="text-[11px] text-slate-500">水: 💧飲用可</div>
+      </div>
+
+      <!-- 4. クイック通貨換算 -->
+      <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+        <span class="text-xs font-bold text-slate-500">💱 1CAD ≒ 109.89円</span>
+        <div class="mt-1">
+          <div class="flex items-center border border-slate-300 rounded-lg px-2 py-1 bg-slate-50">
+            <input id="jpy-input" type="number" value="1000" class="w-full bg-transparent text-sm font-bold focus:outline-none">
+            <span class="text-xs text-slate-500 ml-1">円</span>
+          </div>
+          <div id="local-output" class="text-sm font-extrabold text-emerald-700 mt-1">≒ 9.1 CAD</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 空港アクセス・移動アプリ（検索需要特大ブロック） -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
+      <h2 class="text-sm font-bold flex items-center gap-1.5 text-slate-800">✈️ バンクーバー国際空港(YVR)から市内への移動</h2>
+      <div class="text-xs space-y-2 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
+        <p><span class="inline-block bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">最速・快適</span>スカイトレイン・カナダライン（ウォーターフロント駅まで26分 / 約9.55C$）</p>
+        <p><span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">最安・定番</span>スカイトレイン・カナダライン（タッチ決済でそのまま乗車可能）</p>
+      </div>
+      <div class="text-xs text-slate-700 pt-1">
+        <strong class="text-slate-900">必須の移動・配車アプリ：</strong>Uber, Lyft, Transit
+      </div>
+    </section>
+
+    <!-- 通信＆eSIM枠 -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+      <h2 class="text-sm font-bold flex items-center gap-1.5">📶 現地の通信・ネット環境</h2>
+      <p class="text-xs text-slate-700 mt-1.5 leading-relaxed">バンクーバー（カナダ）では空港からの移動・配車アプリ（Uber等）・キャッシュレス決済に常時通信が必須です。到着前に日本でeSIMを設定しておくと空港に降りた瞬間から繋がります。</p>
+      <div class="mt-3 p-3.5 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <p class="text-xs font-bold text-blue-900">📱 搭乗前に5分で開通！カナダ対応eSIM</p>
+          <p class="text-[11px] text-slate-600 mt-0.5">SIMピン不要・空港に着いた瞬間からGoogleマップや配車アプリが使えます。</p>
+        </div>
+        <a href="#YOUR_ESIM_AFFILIATE_LINK" class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-lg text-center transition">
+          最安eSIMを見る →
+        </a>
+      </div>
+    </section>
+
+    <!-- お金・電気・水・緊急時の詳細ルール -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+      <h2 class="text-sm font-bold">📌 お金・マナー・生活ルール詳細</h2>
+      <div class="text-xs space-y-2.5 text-slate-700 leading-relaxed">
+        <p><strong class="text-slate-900">💵 チップの詳細：</strong>アメリカ同様チップ社会。レストランやタクシーではカード端末に表示される15%・18%・20%のボタンから選ぶだけで完了します。</p>
+        <p><strong class="text-slate-900">🛍️ 税金・免税（Tax Free）：</strong>連邦税(GST 5%)＋州税(PST)または統合税(HST)で計5〜15%が加算。旅行者向けの免税還付制度は原則なし。</p>
+        <p><strong class="text-slate-900">🔌 変圧器・周波数（60Hz）：</strong>電圧が日本(100V)と近いため、短期旅行ならスマホ充電器や多くの電化製品がそのまま使えます。</p>
+        <p><strong class="text-slate-900">💧 水道水・氷：</strong>水道水は水質基準が非常に高く、そのまま美味しく飲めます。</p>
+        <p><strong class="text-slate-900">☀️ サマータイム：</strong>あり（春〜秋は時計が1時間進みます。上の時計はサマータイム自動反映済み）</p>
+        <p class="text-rose-700 font-bold pt-1">🚨 緊急連絡先（警察・救急・消防）：警察・救急・消防 911</p>
+      </div>
+      
+        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 mt-3">
+          <p class="text-xs font-bold text-rose-900">💳 バンクーバーはカードタッチ決済＆チップ必須</p>
+          <p class="text-xs text-slate-700 mt-1">一般的な日本のクレカは海外事務手数料（約2.2〜3.85%）が毎回上乗せされます。海外手数料が安いカードやデビットを使うだけで数千円節約できます。</p>
+          <a href="#YOUR_CARD_AFFILIATE_LINK" class="inline-block mt-2 text-xs font-bold text-blue-600 underline">→ 海外決済に強いおすすめカード比較</a>
+        </div>
+    </section>
+
+    <!-- 同じエリアの他都市リンク -->
+    <section class="pt-2">
+      <h3 class="text-xs font-bold text-slate-500 mb-2">🗺️ 北米の他の都市をチェック</h3>
+      <div class="flex flex-wrap gap-1.5"><a href="/toronto/" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:border-blue-500 transition">トロント</a><a href="/montreal/" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:border-blue-500 transition">モントリオール</a><a href="/banff/" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:border-blue-500 transition">バンフ（カナディアンロッキー）</a></div>
+    </section>
+  </main>
+
+  <script>
+    const targetTz = "America/Vancouver";
+    let compareWithLocal = false;
+
+    function updateClock() {
+      const now = new Date();
+      const targetStr = now.toLocaleTimeString('ja-JP', { timeZone: targetTz, hour12: false });
+      document.getElementById('local-clock').textContent = targetStr;
+
+      const baseTz = compareWithLocal ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'Asia/Tokyo';
+      const targetDate = new Date(now.toLocaleString('en-US', { timeZone: targetTz }));
+      const baseDate = new Date(now.toLocaleString('en-US', { timeZone: baseTz }));
+      const diffHours = Math.round((targetDate - baseDate) / 3600000);
+      const sign = diffHours >= 0 ? '+' : '';
+      const label = compareWithLocal ? '現在地との時差' : '日本との時差';
+      document.getElementById('time-diff').textContent = `${label}: ${sign}${diffHours}時間`;
+    }
+
+    document.getElementById('tz-toggle').addEventListener('click', (e) => {
+      compareWithLocal = !compareWithLocal;
+      e.target.textContent = compareWithLocal ? 'vs 現在地' : 'vs 日本';
+      updateClock();
+    });
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const rate = 0.0091;
+    const jpyInput = document.getElementById('jpy-input');
+    const localOutput = document.getElementById('local-output');
+    jpyInput.addEventListener('input', () => {
+      const val = parseFloat(jpyInput.value) || 0;
+      localOutput.textContent = `≒ ${(val * rate).toFixed(2)} CAD`;
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
