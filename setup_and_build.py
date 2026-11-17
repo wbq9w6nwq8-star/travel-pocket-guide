@@ -13,7 +13,7 @@ from pathlib import Path
 # ==========================================
 # 1. 基本設定（独自ドメイン取得後に書き換え）
 # ==========================================
-SITE_URL = "https://example.com"
+SITE_URL = "https://wbq9w6nwq8-star.github.io/travel-pocket-guide"
 SITE_NAME = "渡航ポケット辞典"
 
 # Affiliate Links (あとから一括変更可能)
