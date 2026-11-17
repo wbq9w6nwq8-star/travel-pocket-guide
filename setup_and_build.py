@@ -6,6 +6,7 @@
 - 130都市対応・ひらがな＆予測変換サジェスト検索対応
 - 国・地域別カスタムUI（中国VPNカード、欧米キャッシュレス＆チップ、水道水＆医療保険）
 - 外務省「海外安全ホームページ」・たびレジ・現地日本大使館/領事館情報搭載
+- Service Worker (sw.js) 自動解除・キャッシュパージ対応
 """
 
 import json
@@ -96,7 +97,7 @@ COUNTRY_PROFILES = {
         "apps": ["Grab（ぼったくり防止に絶対必須）", "Be", "Googleマップ"],
         "embassy": "在ベトナム日本国大使館（ハノイ: +84-24-3846-3000）/ 在ホーチミン総領事館 / 在ダナン総領事館",
         "mofa_url": "https://www.anzen.mofa.go.jp/info/pcinfectionspothazardinfo_015.html",
-        "safety_note": "バイクによるバイクひったくり（歩きスマホ厳禁）や、流しの白タク・シクロによる法外な料金請求が多発しています。移動は必ずGrabアプリを利用してください。",
+        "safety_note": "バイクによるひったくり（歩きスマホ厳禁）や、流しの白タク・シクロによる法外な料金請求が多発しています。移動は必ずGrabアプリを利用してください。",
         "special_ui": "standard"
     },
     "PH": {
@@ -1420,8 +1421,14 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       localOutput.textContent = `≒ ${{(val * rate).toFixed(2)}} {code}`;
     }});
 
+    // 既存のService Workerキャッシュを削除して登録解除する
     if ('serviceWorker' in navigator) {{
-      navigator.serviceWorker.register('../sw.js').catch(() => {{}});
+      navigator.serviceWorker.getRegistrations().then(regs => {{
+        for (const reg of regs) reg.unregister();
+      }});
+      if ('caches' in window) {{
+        caches.keys().then(names => names.forEach(name => caches.delete(name)));
+      }}
     }}
   </script>
 </body>
@@ -1567,6 +1574,16 @@ def build_index_html(cities: list, rates_data: dict) -> str:
         filterCards();
       }});
     }});
+
+    // 既存のService Workerキャッシュを削除して登録解除する
+    if ('serviceWorker' in navigator) {{
+      navigator.serviceWorker.getRegistrations().then(regs => {{
+        for (const reg of regs) reg.unregister();
+      }});
+      if ('caches' in window) {{
+        caches.keys().then(names => names.forEach(name => caches.delete(name)));
+      }}
+    }}
   </script>
 </body>
 </html>"""
@@ -1585,16 +1602,16 @@ def write_auxiliary_files(dist_dir: Path):
     }
     (dist_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    sw_js = """const CACHE_NAME = 'pocket-guide-v2';
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return response;
-      });
-    })
+    # 既存ユーザー端末の古いService Workerとキャッシュを強制削除して自己解除するKill-Switch sw.js
+    sw_js = """self.addEventListener('install', (e) => {
+  self.skipWaiting();
+});
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n))))
+      .then(() => self.registration.unregister())
+      .then(() => self.clients.matchAll())
+      .then((clients) => clients.forEach((c) => c.navigate(c.url)))
   );
 });
 """
@@ -1665,7 +1682,7 @@ def main():
     (dist_dir / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
 
     write_auxiliary_files(dist_dir)
-    print(f"✅ 完了！ 全 {len(cities)} 都市のページとCNAME・サイトマップを生成しました。")
+    print(f"✅ 完了！ 全 {len(cities)} 都市のページとKill-Switch sw.jsを生成しました。")
 
 
 if __name__ == "__main__":
