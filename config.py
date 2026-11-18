@@ -12,11 +12,12 @@ GA4_ID = "G-2Q2NX4NSVQ"
 SISTER_SITE_URL = "https://ryugaku-intern.com"
 SISTER_SITE_NAME = "Atrium（海外留学・キャリア・現地リアル情報）"
 
-# A8.net アフィリエイトリンク（4大案件完備）
+# A8.net アフィリエイトリンク（5大案件完備）
 AFFILIATE_ESIM_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+16VZM+2W74+NTJWY"
 AFFILIATE_VPN_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+7QNN6+3YFI+674EQ"
 AFFILIATE_CARD_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+BB99U+38L8+62MDE"
 AFFILIATE_OOOH_URL = "https://px.a8.net/svt/ejp?a8mat=4BGOWJ+5YCTU+5OEM+5YRHE"
+AFFILIATE_AGODA_URL = "https://px.a8.net/svt/ejp?a8mat=4BGOWK+1HL182+4X1W+5YRHE"
 
 # A8.net インプレッション計測用ピクセルURL
 A8_PIXEL_URLS = [
@@ -24,6 +25,7 @@ A8_PIXEL_URLS = [
     "https://www11.a8.net/0.gif?a8mat=4BGO4G+16VZM+2W74+NTJWY",
     "https://www13.a8.net/0.gif?a8mat=4BGO4G+BB99U+38L8+62MDE",
     "https://www13.a8.net/0.gif?a8mat=4BGOWJ+5YCTU+5OEM+5YRHE",
+    "https://www14.a8.net/0.gif?a8mat=4BGOWK+1HL182+4X1W+5YRHE",
 ]
 
 # 自動生成する「人気2都市比較ページ」のペア定義
@@ -53,7 +55,7 @@ FEATURE_PAGES = [
         "slug": "graduation-spring",
         "title": "【卒業旅行・春休み】学生＆初海外におすすめ12都市｜予算・治安・事前準備まとめ",
         "badge": "2月〜3月・春渡航向け",
-        "desc": "学生の卒業旅行や春休みの海外旅行で選ばれている世界12都市をピックアップ。初めての海外でも失敗しない通信（eSIM/VPN）・クレカ保険・プラグ形状を一括チェック！",
+        "desc": "学生の卒業旅行や春休みの海外旅行で選ばれている世界12都市をピックアップ。初めての海外でも失敗しないホテル予約・通信（eSIM/VPN）・クレカ保険・プラグ形状を一括チェック！",
         "cities": ["seoul", "taipei", "bangkok", "da-nang", "guam", "honolulu", "paris", "rome", "barcelona", "london", "los-angeles", "cairo"]
     }
 ]
