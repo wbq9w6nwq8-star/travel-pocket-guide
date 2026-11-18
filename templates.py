@@ -122,7 +122,7 @@ def render_sister_site_banner() -> str:
 
 def render_countdown_and_checklist(city: dict) -> str:
     """機能②：出発日カウントダウン＆ブラウザ保存式渡航前チェックリスト（アフィ直結）"""
-    plug_ info = f"{city['plug_type']}タイプ変換プラグの準備" if city['plug_type'] != "A" else "スマホ充電器・モバイルバッテリーの確認"
+    plug_info = f"{city['plug_type']}タイプ変換プラグの準備" if city['plug_type'] != "A" else "スマホ充電器・モバイルバッテリーの確認"
     return f"""
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-blue-200 space-y-3">
       <div class="flex items-center justify-between flex-wrap gap-2">
