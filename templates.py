@@ -13,7 +13,7 @@ HTML・UIデザイン・テンプレート管理ファイル (templates.py)
 
 import json
 from config import (
-    SITE_URL, SITE_NAME, GA4_ID, OGP_IMAGE_URL,
+    SITE_URL, SITE_NAME, GA4_ID, OGP_IMAGE_URL, FAVICON_URL,
     SISTER_SITE_URL, SISTER_SITE_NAME,
     AFFILIATE_ESIM_URL, AFFILIATE_VPN_URL, AFFILIATE_CARD_URL,
     AFFILIATE_OOOH_URL, AFFILIATE_AGODA_URL,
@@ -50,9 +50,9 @@ def danger_badge_class(color: str) -> str:
 
 def render_common_head(page_title: str, page_desc: str, page_url: str, og_type: str = "article") -> str:
     """全ページ共通のOGP・Twitterカード（ogp.png）・AdSense・GA4タグを生成"""
-    favicon_svg = "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><text x=%2250%22 y=%2268%22 font-size=%2252%22 text-anchor=%22middle%22 fill=%22%23ffffff%22 font-family=%22sans-serif%22 font-weight=%22bold%22>渡</text></svg>"
-    return f"""<link rel="icon" href="{favicon_svg}">
-  <link rel="apple-touch-icon" href="{OGP_IMAGE_URL}">
+    return f"""<link rel="icon" type="image/png" sizes="48x48" href="{FAVICON_URL}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{FAVICON_URL}">
+  <link rel="apple-touch-icon" href="{FAVICON_URL}"> href="{OGP_IMAGE_URL}">
   <meta property="og:site_name" content="{SITE_NAME}">
   <meta property="og:title" content="{page_title}">
   <meta property="og:description" content="{page_desc}">
