@@ -12,6 +12,9 @@ GA4_ID = "G-2Q2NX4NSVQ"
 OGP_IMAGE_FILENAME = "ogp.png"
 OGP_IMAGE_URL = f"{SITE_URL}/{OGP_IMAGE_FILENAME}"
 
+FAVICON_FILENAME = "youka.png"
+FAVICON_URL = f"{SITE_URL}/{FAVICON_FILENAME}"
+
 # 姉妹サイト
 SISTER_SITE_URL = "https://ryugaku-intern.com"
 SISTER_SITE_NAME = "Atrium（海外留学・キャリア・現地リアル情報）"
