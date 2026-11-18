@@ -2,16 +2,18 @@
 # -*- coding: utf-8 -*-
 """
 HTML・UIデザイン・テンプレート管理ファイル (templates.py)
+- 5大アフィリエイト完備（Agoda / Cross eSIM / NordVPN / エポスカード / Oooh）
 - 機能①：チップ＆割り勘・リアルタイム計算機
-- 機能②：出発日カウントダウン＆ブラウザ保存式チェックリスト（アフィ直結）
+- 機能②：出発日カウントダウン＆ブラウザ保存式チェックリスト（6項目）
 - 機能③：人気2都市比較ページ＆季節特集ハブページ生成
-- 機能④：1タップ現地リアル度投票（DB不要）＆Atrium相互送客
+- 機能④：1タップ現地リアル度投票＆Atrium相互送客
 """
 
 import json
 from config import (
     SITE_URL, SITE_NAME, GA4_ID, SISTER_SITE_URL, SISTER_SITE_NAME,
-    AFFILIATE_ESIM_URL, AFFILIATE_VPN_URL, AFFILIATE_CARD_URL, AFFILIATE_OOOH_URL,
+    AFFILIATE_ESIM_URL, AFFILIATE_VPN_URL, AFFILIATE_CARD_URL,
+    AFFILIATE_OOOH_URL, AFFILIATE_AGODA_URL,
     A8_PIXEL_URLS, COMPARE_PAIRS, FEATURE_PAGES
 )
 
@@ -106,7 +108,6 @@ def render_share_script() -> str:
 
 
 def render_sister_site_banner() -> str:
-    """姉妹サイト Atrium (ryugaku-intern.com) との相互送客バナー"""
     return f"""
     <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
@@ -121,16 +122,15 @@ def render_sister_site_banner() -> str:
 
 
 def render_countdown_and_checklist(city: dict) -> str:
-    """機能②：出発日カウントダウン＆ブラウザ保存式渡航前チェックリスト（アフィ直結）"""
+    """機能②：出発日カウントダウン＆ブラウザ保存式チェックリスト（5大アフィ＋たびレジの6項目）"""
     plug_info = f"{city['plug_type']}タイプ変換プラグの準備" if city['plug_type'] != "A" else "スマホ充電器・モバイルバッテリーの確認"
     return f"""
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-blue-200 space-y-3">
       <div class="flex items-center justify-between flex-wrap gap-2">
         <h2 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">✅ {city['name_ja']} 渡航前チェック＆出発カウントダウン</h2>
-        <span id="checklist-progress" class="text-[11px] font-extrabold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">準備完了: 0/5</span>
+        <span id="checklist-progress" class="text-[11px] font-extrabold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">準備完了: 0/6</span>
       </div>
 
-      <!-- 出発日カウントダウンバー -->
       <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between flex-wrap gap-2">
         <div class="flex items-center gap-2">
           <span class="text-xs font-bold text-slate-700">📅 出発日を設定:</span>
@@ -139,8 +139,15 @@ def render_countdown_and_checklist(city: dict) -> str:
         <div id="trip-countdown-msg" class="text-xs font-extrabold text-blue-700">出発日を入れると残り日数と準備目安を表示します</div>
       </div>
 
-      <!-- インタラクティブ・チェックリスト（localStorage保存＋アフィリエイト直結） -->
       <div class="divide-y divide-slate-100 text-xs">
+        <div class="py-2 flex items-center justify-between gap-2">
+          <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+            <input type="checkbox" data-ck="hotel" class="prep-check w-4 h-4 accent-blue-600 rounded cursor-pointer">
+            <span>🏨 {city['name_ja']}のホテル・宿泊先の予約（最大80%OFF・即時確定）</span>
+          </label>
+          <a href="{AFFILIATE_AGODA_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 text-[10px] font-bold bg-violet-50 hover:bg-violet-100 text-violet-800 border border-violet-200 px-2.5 py-1 rounded-lg transition">アゴダ(WEB予約) [PR] →</a>
+        </div>
+
         <div class="py-2 flex items-center justify-between gap-2">
           <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
             <input type="checkbox" data-ck="esim" class="prep-check w-4 h-4 accent-blue-600 rounded cursor-pointer">
@@ -168,7 +175,7 @@ def render_countdown_and_checklist(city: dict) -> str:
         <div class="py-2 flex items-center justify-between gap-2">
           <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
             <input type="checkbox" data-ck="tour" class="prep-check w-4 h-4 accent-blue-600 rounded cursor-pointer">
-            <span>💬 空港送迎・現地ツアー・レストラン等の手配相談</span>
+            <span>💬 空港送迎・現地ツアー・レストラン等の日本語手配相談</span>
           </label>
           <a href="{AFFILIATE_OOOH_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-lg transition">Oooh無料相談 [PR] →</a>
         </div>
@@ -186,7 +193,6 @@ def render_countdown_and_checklist(city: dict) -> str:
 
 
 def render_tip_split_calculator(city: dict, local_to_jpy: float) -> str:
-    """機能①：現地レストラン・タクシーで使えるチップ＆割り勘シミュレーター"""
     code = city["currency_code"]
     default_tip = 18 if city["tip_level"] == "required" else (10 if city["tip_level"] == "optional" else 0)
     return f"""
@@ -239,7 +245,6 @@ def render_tip_split_calculator(city: dict, local_to_jpy: float) -> str:
 
 
 def render_quick_poll(city: dict) -> str:
-    """機能④：超軽量1タップ現地リアル度アンケート（DB不要・即時フィードバック）"""
     base_seed = sum(ord(ch) for ch in city["slug"])
     safety_pct = 92 if city["danger_color"] == "emerald" else 76
     cashless_pct = 95 if city["special_ui"] in ("europe_cashless", "korea_nav", "us_tip_medical") else 81
@@ -281,22 +286,41 @@ def render_quick_poll(city: dict) -> str:
     </section>"""
 
 
-def render_oooh_box(city: dict) -> str:
+def render_agoda_and_oooh_box(city: dict) -> str:
+    """空港移動セクション直下：ホテル予約（Agoda）＆現地手配相談（Oooh）の2大旅行手配カード"""
     return f"""
-      <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-[10px] font-extrabold bg-emerald-600 text-white px-2 py-0.5 rounded">チャット相談無料</span>
-            <p class="text-xs font-extrabold text-emerald-950">💬 {city['name_ja']}の現地旅行会社に日本語で直接相談【Oooh（ウー）】</p>
-            <span class="text-[9px] bg-white/80 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">PR</span>
+      <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div class="p-3.5 rounded-xl bg-violet-50/80 border border-violet-200 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[10px] font-extrabold bg-violet-600 text-white px-2 py-0.5 rounded">最大80%OFF</span>
+              <span class="text-[9px] bg-white/80 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">PR</span>
+            </div>
+            <p class="text-xs font-extrabold text-violet-950 mt-1.5">🏨 {city['name_ja']}の人気ホテル格安予約【アゴダ】</p>
+            <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">
+              空港アクセスが良く治安の安定したエリアのホテル・アパートメントを格安検索。予約手数料なし・即時確定・24時間サポート（WEBブラウザから簡単予約）。
+            </p>
           </div>
-          <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">
-            空港送迎・プライベートツアー・穴場グルメ・子連れ向けレストラン手配まで、<strong>現地在住の旅のプロにスマホから日本語チャットで無料相談</strong>できます。大手パッケージにない自由な日程作成・直接手配に最適です。
-          </p>
+          <a href="{AFFILIATE_AGODA_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition shadow-sm">
+            アゴダで{city['name_ja']}の宿を見る →
+          </a>
         </div>
-        <a href="{AFFILIATE_OOOH_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-lg text-center transition shadow-sm">
-          無料で現地に相談する →
-        </a>
+
+        <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[10px] font-extrabold bg-emerald-600 text-white px-2 py-0.5 rounded">チャット相談無料</span>
+              <span class="text-[9px] bg-white/80 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">PR</span>
+            </div>
+            <p class="text-xs font-extrabold text-emerald-950 mt-1.5">💬 現地旅行会社に日本語で直接相談【Oooh】</p>
+            <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">
+              専用車の空港送迎・プライベートツアー・穴場レストラン手配まで、現地在住の旅のプロにスマホから日本語チャットで無料相談＆直接手配できます。
+            </p>
+          </div>
+          <a href="{AFFILIATE_OOOH_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition shadow-sm">
+            無料で現地プロに相談する →
+          </a>
+        </div>
       </div>"""
 
 
@@ -553,14 +577,14 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       </div>
     </section>
 
-    <!-- 機能②：出発カウントダウン＆保存式渡航前チェックリスト -->
+    <!-- 機能②：出発カウントダウン＆保存式渡航前チェックリスト（6項目） -->
     {render_countdown_and_checklist(city)}
 
     <!-- 機能①：チップ＆割り勘シミュレーター -->
     {render_tip_split_calculator(city, local_to_jpy)}
 
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
-      <h2 class="text-sm font-bold flex items-center gap-1.5 text-slate-800">✈️ {city['airport_access']['airport_name']}から市内への移動</h2>
+      <h2 class="text-sm font-bold flex items-center gap-1.5 text-slate-800">✈️ {city['airport_access']['airport_name']}から市内への移動 ＆ 宿泊・現地手配</h2>
       <div class="text-xs space-y-2 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
         <p><span class="inline-block bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">最速・快適</span>{city['airport_access']['fastest']}</p>
         <p><span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">最安・定番</span>{city['airport_access']['cheapest']}</p>
@@ -568,7 +592,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       <div class="text-xs text-slate-700 pt-1">
         <strong class="text-slate-900">必須の移動・配車アプリ：</strong>{', '.join(city['transport_apps'])}
       </div>
-      {render_oooh_box(city)}
+      {render_agoda_and_oooh_box(city)}
     </section>
 
     {render_telecom_box(city)}
@@ -670,7 +694,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       localOutput.textContent = `≒ ${{(val * rate).toFixed(2)}} {code}`;
     }});
 
-    // チップ＆割り勘計算機ロジック
     const billAmount = document.getElementById('bill-amount');
     const billTip = document.getElementById('bill-tip');
     const billSplit = document.getElementById('bill-split');
@@ -690,7 +713,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
     [billAmount, billTip, billSplit].forEach(el => el.addEventListener('input', updateBillCalc));
     updateBillCalc();
 
-    // 出発日カウントダウン＆チェックリスト保存ロジック
     const dateInput = document.getElementById('trip-date-input');
     const countdownMsg = document.getElementById('trip-countdown-msg');
     const savedDate = localStorage.getItem('trip_date_' + citySlug) || localStorage.getItem('trip_date_global');
@@ -705,7 +727,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       const target = new Date(dateInput.value + 'T00:00:00');
       const diffDays = Math.round((target - today) / 86400000);
       if (diffDays > 14) {{
-        countdownMsg.textContent = `✈️ 出発まであと${{diffDays}}日！クレカ保険や現地ツアー相談に最適な時期です`;
+        countdownMsg.textContent = `✈️ 出発まであと${{diffDays}}日！アゴダでの宿確保やクレカ保険準備に最適な時期です`;
       }} else if (diffDays >= 1) {{
         countdownMsg.textContent = `🔥 出発まであと${{diffDays}}日！eSIMとVPNの事前インストールをお忘れなく！`;
       }} else if (diffDays === 0) {{
@@ -738,7 +760,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
     }});
     updateChecklistUI();
 
-    // 1タップ投票ロジック
     function castVote(type) {{
       localStorage.setItem('voted_' + citySlug, type);
       document.getElementById('poll-thanks').textContent = '✨ ご回答ありがとうございます！統計に反映しました。';
@@ -793,7 +814,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
 
 
 def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) -> str:
-    """機能③：人気2都市の徹底比較ページ生成 (/compare/slug1-vs-slug2/)"""
     pair_slug = f"{c1['slug']}-vs-{c2['slug']}"
     page_url = f"{SITE_URL}/compare/{pair_slug}/"
     title = f"{c1['name_ja']}と{c2['name_ja']}を徹底比較｜プラグ・チップ・気候・治安・空港移動の違い｜{SITE_NAME}"
@@ -830,7 +850,6 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
       <p class="text-xs text-slate-600 leading-relaxed">{summary_text}</p>
     </div>
 
-    <!-- 2都市横並び比較テーブル -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <table class="w-full text-left border-collapse text-xs">
         <thead>
@@ -885,8 +904,12 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
       <a href="../../{c2['slug']}/" class="block bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs p-3.5 rounded-xl text-center transition">📍 {c2['name_ja']}のリアルタイム時計・天気を見る →</a>
     </div>
 
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+      <h2 class="text-sm font-bold text-slate-800">🏨 {c1['name_ja']}・{c2['name_ja']}のホテル予約 ＆ 現地ツアー相談</h2>
+      {render_agoda_and_oooh_box(c1)}
+    </section>
+
     {render_telecom_box(c1)}
-    {render_oooh_box(c1)}
     {render_share_buttons(page_url, title)}
   </main>
   {render_pixels()}
@@ -896,7 +919,6 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
 
 
 def build_feature_html(feat: dict, all_cities: list) -> str:
-    """機能③：季節・テーマ別まとめハブページ生成 (/features/slug/)"""
     page_url = f"{SITE_URL}/features/{feat['slug']}/"
     city_map = {c["slug"]: c for c in all_cities}
     selected = [city_map[s] for s in feat["cities"] if s in city_map]
@@ -944,8 +966,12 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">{cards}</div>
 
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+      <h2 class="text-sm font-bold text-slate-800">🏨 渡航先のホテル格安予約 ＆ 現地オーダーメイド相談</h2>
+      {render_agoda_and_oooh_box(selected[0])}
+    </section>
+
     {render_telecom_box(selected[0])}
-    {render_oooh_box(selected[0])}
     {render_share_buttons(page_url, feat['title'])}
   </main>
   {render_pixels()}
@@ -1040,7 +1066,6 @@ def build_index_html(cities: list, rates_data: dict) -> str:
         )
     cards_html = "\n".join(card_list)
 
-    # 特集リンク＆2都市比較リンク生成
     feature_links = "".join([
         f'<a href="./features/{f["slug"]}/" class="block bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-3.5 rounded-2xl hover:border-blue-500 transition">'
         f'<span class="text-[10px] font-extrabold bg-blue-600 text-white px-2 py-0.5 rounded">{f["badge"]}</span>'
@@ -1087,7 +1112,6 @@ def build_index_html(cities: list, rates_data: dict) -> str:
 
     <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{cards_html}</div>
 
-    <!-- 季節・テーマ別特集ハブ＆2都市徹底比較セクション -->
     <section class="space-y-3 pt-2">
       <h2 class="text-sm font-extrabold text-slate-800">✈️ 季節特集・人気2都市比較ガイド</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">{feature_links}</div>
