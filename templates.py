@@ -2,12 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 HTML・UIデザイン・テンプレート管理ファイル (templates.py)
+- トップページ：検索＆都市一覧のみのシンプルUX（4本柱バーなし）
+- 各都市ページ：文脈に合わせて4社（Oooh / Cross eSIM / NordVPN / エポスカード）を最適配置
 """
 
 import json
 from config import (
     SITE_URL, SITE_NAME, GA4_ID,
-    AFFILIATE_ESIM_URL, AFFILIATE_VPN_URL, AFFILIATE_CARD_URL, A8_PIXEL_URLS
+    AFFILIATE_ESIM_URL, AFFILIATE_VPN_URL, AFFILIATE_CARD_URL, AFFILIATE_OOOH_URL,
+    A8_PIXEL_URLS
 )
 
 
@@ -98,6 +101,25 @@ def render_share_script() -> str:
         });
       }
     }"""
+
+
+def render_oooh_box(city: dict) -> str:
+    return f"""
+      <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-[10px] font-extrabold bg-emerald-600 text-white px-2 py-0.5 rounded">チャット相談無料</span>
+            <p class="text-xs font-extrabold text-emerald-950">💬 {city['name_ja']}の現地旅行会社に日本語で直接相談【Oooh（ウー）】</p>
+            <span class="text-[9px] bg-white/80 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">PR</span>
+          </div>
+          <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">
+            空港送迎・プライベートツアー・穴場グルメ・子連れ向けレストラン手配まで、<strong>現地在住の旅のプロにスマホから日本語チャットで無料相談</strong>できます。大手パッケージにない自由な日程作成・直接手配に最適です。
+          </p>
+        </div>
+        <a href="{AFFILIATE_OOOH_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-lg text-center transition shadow-sm">
+          無料で現地に相談する →
+        </a>
+      </div>"""
 
 
 def render_telecom_box(city: dict) -> str:
@@ -222,91 +244,6 @@ def render_epos_affiliate(city: dict) -> str:
           エポスカード詳細 →
         </a>
       </div>"""
-
-
-def render_recommended_services_section() -> str:
-    """トップページ用：なぜこの3つのサービスが海外渡航におすすめなのかを解説する記事セクション"""
-    return f"""
-    <section class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5 mt-6">
-      <div class="border-b border-slate-100 pb-3 flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <span class="text-[10px] font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">渡航前の必須チェック</span>
-          <h2 class="text-base sm:text-lg font-extrabold text-slate-900 mt-1">✈️ 海外旅行・留学・出張で「これだけは準備すべき」3大定番サービス</h2>
-        </div>
-        <span class="text-[10px] text-slate-400 border border-slate-200 px-2 py-0.5 rounded">PR・おすすめ解説</span>
-      </div>
-      <p class="text-xs text-slate-600 leading-relaxed">
-        海外に着いてから一番困るのが<strong>「空港でネットが繋がらず配車アプリが呼べない」「ホテルやカフェのフリーWi-Fiのセキュリティ不安」「急な体調不良や携行品トラブル時の高額出費」</strong>の3つです。当サイトでは、手続きがオンラインで完結し、コストパフォーマンスと信頼性に優れた以下の3サービスを推奨しています。
-      </p>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- 1. Cross eSIM -->
-        <div class="rounded-2xl border border-blue-200 bg-blue-50/40 p-4 flex flex-col justify-between space-y-3">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] font-extrabold bg-blue-600 text-white px-2 py-0.5 rounded">おすすめ① 通信・eSIM</span>
-              <span class="text-[10px] text-blue-800 font-bold">世界125以上の国と地域</span>
-            </div>
-            <h3 class="text-sm font-extrabold text-slate-900">📱 Cross eSIM（クロスeSIM）</h3>
-            <p class="text-xs text-slate-700 leading-relaxed">
-              <strong>なぜおすすめ？：</strong>従来のポケットWi-Fiのように空港カウンターで並んだり、帰国後に返却したりする手間が一切ありません。また物理SIMカードの差し替えも不要なため、日本のSIMを紛失するリスクもゼロです。
-            </p>
-            <ul class="text-[11px] text-slate-600 space-y-1 pl-1">
-              <li>✅ <strong>QRコード読み取りで最短3分開通</strong></li>
-              <li>✅ 日本国内で事前に設定でき、現地到着直後からUberやマップが即利用可能</li>
-              <li>✅ 渡航日数や複数国周遊に合わせて柔軟にプラン選択可能</li>
-            </ul>
-          </div>
-          <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow noopener" class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl text-center transition shadow-sm">
-            Cross eSIMの対応国・料金を見る →
-          </a>
-        </div>
-
-        <!-- 2. NordVPN -->
-        <div class="rounded-2xl border border-slate-300 bg-slate-50 p-4 flex flex-col justify-between space-y-3">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] font-extrabold bg-slate-800 text-white px-2 py-0.5 rounded">おすすめ② 通信保護・VPN</span>
-              <span class="text-[10px] text-slate-700 font-bold">30日間返金保証あり</span>
-            </div>
-            <h3 class="text-sm font-extrabold text-slate-900">🔒 NordVPN（ノードVPN）</h3>
-            <p class="text-xs text-slate-700 leading-relaxed">
-              <strong>なぜおすすめ？：</strong>海外の空港・ホテル・カフェのフリーWi-Fiは暗号化されていないことが多く、そのまま繋ぐとクレジットカード情報やパスワードを盗み見られるリスクがあります。また中国や中東など通信制限がある国では渡航前の導入が必須です。
-            </p>
-            <ul class="text-[11px] text-slate-600 space-y-1 pl-1">
-              <li>✅ <strong>ワンタップで通信を強力に暗号化</strong>しフリーWi-Fiも安全に利用可能</li>
-              <li>✅ 海外滞在中でも日本の動画配信サービスやWebサイトに快適アクセス</li>
-              <li>✅ 独立研究機関AV-TEST評価の高速通信＆24時間年中無休サポート</li>
-            </ul>
-          </div>
-          <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow noopener" class="block w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2.5 px-3 rounded-xl text-center transition shadow-sm">
-            NordVPN公式サイトを見る →
-          </a>
-        </div>
-
-        <!-- 3. エポスカード -->
-        <div class="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 flex flex-col justify-between space-y-3">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] font-extrabold bg-amber-600 text-white px-2 py-0.5 rounded">おすすめ③ クレカ・保険</span>
-              <span class="text-[10px] text-amber-900 font-bold">入会金・年会費永年無料</span>
-            </div>
-            <h3 class="text-sm font-extrabold text-slate-900">💳 エポスカード</h3>
-            <p class="text-xs text-slate-700 leading-relaxed">
-              <strong>なぜおすすめ？：</strong>欧米やオセアニア、アジア主要都市では地下鉄の改札から屋台まで「タッチ決済」が主流です。さらに海外では救急搬送や入院で数百万円の医療費がかかるケースがあるため、補償内容が充実したカードが1枚あると安心感が違います。
-            </p>
-            <ul class="text-[11px] text-slate-600 space-y-1 pl-1">
-              <li>✅ <strong>入会金・年会費永年無料</strong>で維持コストが一切かからない</li>
-              <li>✅ 旅行代金等のお支払いで<strong>充実の海外旅行傷害保険（利用付帯）</strong>が適用</li>
-              <li>✅ <strong>カード番号が裏面記載＆タッチ決済対応</strong>で周囲から番号が見えず安全</li>
-            </ul>
-          </div>
-          <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="block w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl text-center transition shadow-sm">
-            エポスカードの特典・詳細を見る →
-          </a>
-        </div>
-      </div>
-    </section>"""
 
 
 def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
@@ -447,6 +384,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       <div class="text-xs text-slate-700 pt-1">
         <strong class="text-slate-900">必須の移動・配車アプリ：</strong>{', '.join(city['transport_apps'])}
       </div>
+      {render_oooh_box(city)}
     </section>
 
     {render_telecom_box(city)}
@@ -701,34 +639,10 @@ def build_index_html(cities: list, rates_data: dict) -> str:
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased pb-16">
   {render_pr_banner()}
-  <main class="max-w-3xl mx-auto px-4 pt-6 space-y-6">
+  <main class="max-w-3xl mx-auto px-4 pt-8 space-y-6">
     <div class="text-center space-y-2">
       <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">🌐 {SITE_NAME}</h1>
       <p class="text-xs sm:text-sm text-slate-600">世界{len(cities)}都市の「時差・気温/気候・プラグ・チップ・為替・空港移動・外務省危険情報」を1画面で即答</p>
-    </div>
-
-    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-      <div class="flex items-center justify-between bg-blue-50/70 border border-blue-200 rounded-xl p-3">
-        <div>
-          <p class="text-xs font-extrabold text-blue-900">📱 海外eSIM【Cross eSIM】</p>
-          <p class="text-[10px] text-slate-600">125以上の国対応・最短3分開通</p>
-        </div>
-        <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition">詳細 →</a>
-      </div>
-      <div class="flex items-center justify-between bg-slate-100 border border-slate-300 rounded-xl p-3">
-        <div>
-          <p class="text-xs font-extrabold text-slate-900">🔒 通信保護【NordVPN】</p>
-          <p class="text-[10px] text-slate-600">Wi-Fi暗号化・制限回避・30日保証</p>
-        </div>
-        <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition">詳細 →</a>
-      </div>
-      <div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl p-3">
-        <div>
-          <p class="text-xs font-extrabold text-amber-900">💳 年会費無料【エポスカード】</p>
-          <p class="text-[10px] text-slate-600">海外保険(利用付帯)＆タッチ決済</p>
-        </div>
-        <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition">詳細 →</a>
-      </div>
     </div>
 
     <div class="sticky top-2 z-30 bg-slate-50/95 backdrop-blur py-2 space-y-2.5">
@@ -741,8 +655,6 @@ def build_index_html(cities: list, rates_data: dict) -> str:
     </div>
 
     <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{cards_html}</div>
-
-    {render_recommended_services_section()}
 
     {render_share_buttons(SITE_URL + "/", share_title)}
 
