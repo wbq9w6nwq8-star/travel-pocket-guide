@@ -96,6 +96,9 @@ def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
 
 def write_auxiliary_files(dist_dir: Path):
     (dist_dir / "CNAME").write_text("tokou-pocket.com\n", encoding="utf-8")
+    favicon_src = Path(FAVICON_FILENAME)
+    if favicon_src.exists():
+        shutil.copy2(favicon_src, dist_dir / FAVICON_FILENAME)
 
     # リポジトリ直下に ogp.png があれば dist/ogp.png に自動コピー
     ogp_src = Path(OGP_IMAGE_FILENAME)
