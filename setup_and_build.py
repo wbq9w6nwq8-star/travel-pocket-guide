@@ -3,8 +3,8 @@
 """
 渡航ポケット辞典（世界150都市プログラムSEOサイト）オールインワン生成スクリプト
 - GA4 (G-2Q2NX4NSVQ) 直接計測タグ完全組込済み
-- A8.net アフィリエイトリンク (Cross eSIM / NordVPN) 組込済み
-- 全都市に「eSIM ＋ VPN（フリーWi-Fi防犯＆日本動画視聴・検閲対策）」のW収益導線を実装
+- A8.net 3大アフィリエイト (Cross eSIM / NordVPN / エポスカード) 完全組込済み
+- 全都市に「eSIM ＋ VPN」＆「エポスカード（海外旅行保険・タッチ決済）」の収益導線を実装
 - 現地リアルタイム天気・気温・服装アドバイス（Open-Meteo API連携）搭載
 - プライバシーポリシー・免責事項・運営者情報 (/policy/) 自動生成
 - Service Worker (sw.js) 自動解除・キャッシュパージ対応
@@ -22,13 +22,11 @@ SITE_URL = "https://tokou-pocket.com"
 SITE_NAME = "渡航ポケット辞典"
 GA4_ID = "G-2Q2NX4NSVQ"
 
-# A8.net 取得済みリンク
+# A8.net 取得済みアフィリエイトリンク（3大案件完備）
 AFFILIATE_ESIM_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+16VZM+2W74+NTJWY"
 AFFILIATE_VPN_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+7QNN6+3YFI+674EQ"
-
-# カード・保険/ツアー枠（審査承認後に差し替え可能。未設定時はeSIM/VPNへ誘導）
-AFFILIATE_CARD_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+16VZM+2W74+NTJWY"
-AFFILIATE_INSURANCE_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+7QNN6+3YFI+674EQ"
+AFFILIATE_CARD_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+BB99U+38L8+62MDE"
+AFFILIATE_INSURANCE_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+BB99U+38L8+62MDE"
 
 # ==========================================
 # 2. 国・地域別ベースプロファイル
@@ -88,7 +86,7 @@ COUNTRY_PROFILES = {
         "embassy": "在シンガポール日本国大使館（+65-6235-8855）",
         "mofa_url": "https://www.anzen.mofa.go.jp/info/pcinfectionspothazardinfo_005.html",
         "safety_note": "世界トップクラスの治安ですが、チューインガムの持ち込み禁止、電子タバコの所持禁止、指定場所以外での喫煙・ポイ捨てに対する高額罰金に注意してください。",
-        "special_ui": "standard"
+        "special_ui": "europe_cashless"
     },
     "VN": {
         "country_ja": "ベトナム", "country_kana": "べとなむ", "region": "アジア",
@@ -242,7 +240,7 @@ COUNTRY_PROFILES = {
         "embassy": "在ネパール日本国大使館（カトマンズ: +977-1-4426680）",
         "mofa_url": "https://www.anzen.mofa.go.jp/info/pcinfectionspothazardinfo_010.html",
         "safety_note": "高地トレッキング時は高山病とヘリコプター救援に対応した海外旅行保険への加入が必須です。",
-        "special_ui": "standard"
+        "special_ui": "altitude_alert"
     },
     "MV": {
         "country_ja": "モルディブ", "country_kana": "もるでぃぶ", "region": "アジア",
@@ -411,7 +409,7 @@ COUNTRY_PROFILES = {
         "embassy": "在アルゼンチン日本国大使館（ブエノスアイレス: +54-11-4318-8200）",
         "mofa_url": "https://www.anzen.mofa.go.jp/info/pcinfectionspothazardinfo_242.html",
         "safety_note": "海外発行のVisa/Mastercardで決済すると「旅行者向け優遇レート（MEPレート）」が自動適用されお得に決済できます。",
-        "special_ui": "standard"
+        "special_ui": "europe_cashless"
     },
 
     "GB": {
@@ -721,7 +719,7 @@ COUNTRY_PROFILES = {
         "embassy": "在オーストラリア日本国大使館（キャンベラ）/ シドニー・メルボルン・ブリスベン・パース各総領事館 / ケアンズ領事事務所",
         "mofa_url": "https://www.anzen.mofa.go.jp/info/pcinfectionspothazardinfo_071.html",
         "safety_note": "渡航前に公式アプリ「AustralianETA」から電子渡航許可（ETA）の取得が必須です。また食品・動植物の検疫が世界一厳しいため、わずかなお菓子・常備薬も必ず入国カードで申告してください。",
-        "special_ui": "standard"
+        "special_ui": "europe_cashless"
     },
     "NZ": {
         "country_ja": "ニュージーランド", "country_kana": "にゅーじーらんど", "region": "オセアニア",
@@ -735,7 +733,7 @@ COUNTRY_PROFILES = {
         "embassy": "在ニュージーランド日本国大使館（ウェリントン）/ 在オークランド総領事館 / 在クライストチャーチ領事事務所",
         "mofa_url": "https://www.anzen.mofa.go.jp/info/pcinfectionspothazardinfo_074.html",
         "safety_note": "渡航前に電子渡航認証「NZeTA」および環境保護・観光税（IVL）の支払いが必須です。食品や泥のついた登山靴などの検疫申告が極めて厳格です。",
-        "special_ui": "standard"
+        "special_ui": "europe_cashless"
     },
     "FJ": {
         "country_ja": "フィジー", "country_kana": "ふぃじー", "region": "オセアニア",
@@ -867,7 +865,7 @@ COUNTRY_PROFILES = {
 }
 
 # ==========================================
-# 3. 世界150都市リスト（既存の112都市＋人気の38都市を追加）
+# 3. 世界150都市リスト
 # ==========================================
 RAW_CITIES = [
     ("seoul", "ソウル", "そうる かんこく みょんどん ほんで", "Seoul", "KR", "Asia/Seoul", False, "仁川国際空港(ICN) / 金浦空港(GMP)", "空港鉄道A'REX直通列車（ソウル駅まで43分 / 11,000₩）", "A'REX一般列車（ソウル駅まで約60分 / 4,450〜5,050₩）"),
@@ -1285,6 +1283,54 @@ def render_telecom_box(city: dict) -> str:
     </section>"""
 
 
+def render_epos_affiliate(city: dict) -> str:
+    ui = city.get("special_ui", "standard")
+    if ui == "us_tip_medical":
+        return f"""
+      <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p class="text-xs font-extrabold text-rose-900">🏥 {city['name_ja']}は医療費が超高額＆カード必須社会</p>
+          <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">北米の救急搬送・入院は数百万円の請求になるケースが珍しくありません。<strong>年会費永年無料で最高3,000万円の海外旅行傷害保険が付帯する「エポスカード」</strong>（Visaタッチ決済対応）を1枚持っておくと安心です。</p>
+        </div>
+        <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-lg text-center transition">
+          エポスカード詳細 →
+        </a>
+      </div>"""
+    elif ui == "europe_cashless":
+        return f"""
+      <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-200 mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p class="text-xs font-extrabold text-indigo-900">💳 {city['name_ja']}の地下鉄・カフェは「Visaタッチ決済」が必須</p>
+          <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">現金お断りの店舗や改札タッチ乗車が主流です。<strong>年会費永年無料でVisaタッチ決済＆最高3,000万円の海外旅行保険・携行品損害補償（スリ・スマホ破損対応）</strong>がつく「エポスカード」が渡航者の定番です。</p>
+        </div>
+        <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-lg text-center transition">
+          エポスカード詳細 →
+        </a>
+      </div>"""
+    elif ui == "altitude_alert":
+        return f"""
+      <div class="p-4 rounded-xl bg-amber-50 border border-amber-300 mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p class="text-xs font-extrabold text-amber-900">⛰️ 高地（標高3,000m超）の体調不良・医療費対策に</p>
+          <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">{city['name_ja']}周辺では高山病や急な体調不良によるクリニック受診・救援費用に備える必要があります。<strong>年会費永年無料で手厚い海外旅行傷害保険が付帯する「エポスカード」</strong>を旅費決済に使って補償を確保しましょう。</p>
+        </div>
+        <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-lg text-center transition">
+          エポスカード詳細 →
+        </a>
+      </div>"""
+    else:
+        return f"""
+      <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p class="text-xs font-extrabold text-amber-900">⚠️ {city['name_ja']}での急な体調不良・スマホ盗難/破損対策に</p>
+          <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">水質の違いによる胃腸炎での病院受診や、スリ・携行品破損に備え、<strong>年会費永年無料で最高3,000万円の海外旅行傷害保険（キャッシュレス診療対応）が付帯する「エポスカード」</strong>を出発前に準備しておくのが鉄則です。</p>
+        </div>
+        <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-lg text-center transition">
+          エポスカード詳細 →
+        </a>
+      </div>"""
+
+
 def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
     code = city["currency_code"]
     jpy_to_local = rates_data["rates"].get(code, 0.01)
@@ -1429,6 +1475,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
         <p><strong class="text-slate-900">💧 水道水・氷：</strong>{city['tap_water_note']}</p>
         <p><strong class="text-slate-900">☀️ サマータイム：</strong>{city['dst_note']}</p>
       </div>
+      {render_epos_affiliate(city)}
     </section>
 
     <section class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-l-rose-500 border border-slate-200 space-y-3">
@@ -1464,9 +1511,10 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
     </footer>
   </main>
 
-  <!-- A8.net インプレッション計測ピクセル -->
+  <!-- A8.net インプレッション計測ピクセル (VPN / eSIM / エポスカード) -->
   <img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4BGO4G+7QNN6+3YFI+674EQ" alt="" class="hidden">
   <img border="0" width="1" height="1" src="https://www11.a8.net/0.gif?a8mat=4BGO4G+16VZM+2W74+NTJWY" alt="" class="hidden">
+  <img border="0" width="1" height="1" src="https://www13.a8.net/0.gif?a8mat=4BGO4G+BB99U+38L8+62MDE" alt="" class="hidden">
 
   <script>
     const targetTz = "{city['timezone']}";
@@ -1504,7 +1552,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       localOutput.textContent = `≒ ${{(val * rate).toFixed(2)}} {code}`;
     }});
 
-    // Open-Meteo APIで現地のリアルタイム気温・天気を自動取得
     async function fetchWeather() {{
       try {{
         const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${{encodeURIComponent(cityNameEn)}}&count=1&language=en&format=json`);
@@ -1543,7 +1590,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
     }}
     fetchWeather();
 
-    // 既存のService Workerキャッシュを削除して登録解除する
     if ('serviceWorker' in navigator) {{
       navigator.serviceWorker.getRegistrations().then(regs => {{
         for (const reg of regs) reg.unregister();
@@ -1664,21 +1710,28 @@ def build_index_html(cities: list, rates_data: dict) -> str:
       <p class="text-xs sm:text-sm text-slate-600">世界{len(cities)}都市の「時差・現地気温・プラグ・チップ・為替・空港移動・外務省安全情報」を1画面で即答</p>
     </div>
 
-    <!-- トップページ共通：渡航前の通信＆セキュリティ準備バー -->
-    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <!-- トップページ共通：海外渡航の3大必須アイテム準備バー -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-2.5">
       <div class="flex items-center justify-between bg-blue-50/70 border border-blue-200 rounded-xl p-3">
         <div>
-          <p class="text-xs font-extrabold text-blue-900">📱 海外専用eSIM【Cross eSIM】</p>
-          <p class="text-[11px] text-slate-600">最短3分・QRコードだけで即開通！</p>
+          <p class="text-xs font-extrabold text-blue-900">📱 海外eSIM【Cross eSIM】</p>
+          <p class="text-[10px] text-slate-600">最短3分・QRで現地即開通</p>
         </div>
-        <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition">詳細 →</a>
+        <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition">詳細 →</a>
       </div>
       <div class="flex items-center justify-between bg-slate-100 border border-slate-300 rounded-xl p-3">
         <div>
-          <p class="text-xs font-extrabold text-slate-900">🔒 海外Wi-Fi防犯＆壁越え【NordVPN】</p>
-          <p class="text-[11px] text-slate-600">フリーWi-Fi保護・中国検閲・日本動画視聴に</p>
+          <p class="text-xs font-extrabold text-slate-900">🔒 通信保護【NordVPN】</p>
+          <p class="text-[10px] text-slate-600">Wi-Fi防犯・中国検閲・動画</p>
         </div>
-        <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-lg transition">詳細 →</a>
+        <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition">詳細 →</a>
+      </div>
+      <div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl p-3">
+        <div>
+          <p class="text-xs font-extrabold text-amber-900">💳 保険付帯【エポスカード】</p>
+          <p class="text-[10px] text-slate-600">年会費無料・海外保険＆タッチ</p>
+        </div>
+        <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition">詳細 →</a>
       </div>
     </div>
 
@@ -1699,6 +1752,10 @@ def build_index_html(cities: list, rates_data: dict) -> str:
       <p>© {SITE_NAME} ({SITE_URL})</p>
     </footer>
   </main>
+
+  <img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4BGO4G+7QNN6+3YFI+674EQ" alt="" class="hidden">
+  <img border="0" width="1" height="1" src="https://www11.a8.net/0.gif?a8mat=4BGO4G+16VZM+2W74+NTJWY" alt="" class="hidden">
+  <img border="0" width="1" height="1" src="https://www13.a8.net/0.gif?a8mat=4BGO4G+BB99U+38L8+62MDE" alt="" class="hidden">
 
   <script>
     let currentRegion = 'すべて';
@@ -1880,7 +1937,7 @@ def main():
     (dist_dir / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
 
     write_auxiliary_files(dist_dir)
-    print(f"✅ 完了！ 全 {len(cities)} 都市のページ・リアルタイム気象・VPN全都市展開・ポリシーページを生成しました。")
+    print(f"✅ 完了！ 全 {len(cities)} 都市のページ・エポスカード・eSIM・VPN・気象連携・ポリシーページを生成しました。")
 
 
 if __name__ == "__main__":
