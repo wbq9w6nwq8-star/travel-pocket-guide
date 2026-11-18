@@ -2,19 +2,22 @@
 # -*- coding: utf-8 -*-
 """
 HTML・UIデザイン・テンプレート管理ファイル (templates.py)
-- 5大アフィリエイト完備（Agoda / Cross eSIM / NordVPN / エポスカード / Oooh）
-- 機能①：チップ＆割り勘・リアルタイム計算機
-- 機能②：出発日カウントダウン＆ブラウザ保存式チェックリスト（6項目）
-- 機能③：人気2都市比較ページ＆季節特集ハブページ生成
-- 機能④：1タップ現地リアル度投票＆Atrium相互送客
+- OGP画像 (ogp.png) 全ページ完全対応
+- 絵文字を抑えた実用辞典トーン
+- 5段階星評価（★1.0〜5.0）による客観的な都市スペック評価
+- トップページの検索バー直下に「季節特集（6本）」＆「2都市比較ガイド」を配置
+- 全150都市が比較ページを持ち、各都市ページ内にも比較セクションを表示
+- チェックリストを廃止し、シンプルな「出発日カウントダウンカレンダー」に整理
+- 「お金・マナー・生活ルール詳細」の情報量を大幅拡充
 """
 
 import json
 from config import (
-    SITE_URL, SITE_NAME, GA4_ID, SISTER_SITE_URL, SISTER_SITE_NAME,
+    SITE_URL, SITE_NAME, GA4_ID, OGP_IMAGE_URL,
+    SISTER_SITE_URL, SISTER_SITE_NAME,
     AFFILIATE_ESIM_URL, AFFILIATE_VPN_URL, AFFILIATE_CARD_URL,
     AFFILIATE_OOOH_URL, AFFILIATE_AGODA_URL,
-    A8_PIXEL_URLS, COMPARE_PAIRS, FEATURE_PAGES
+    A8_PIXEL_URLS, FEATURE_PAGES
 )
 
 
@@ -45,10 +48,23 @@ def danger_badge_class(color: str) -> str:
     }.get(color, "bg-slate-100 text-slate-800")
 
 
-def render_common_head() -> str:
-    favicon_svg = "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>"
+def render_common_head(page_title: str, page_desc: str, page_url: str, og_type: str = "article") -> str:
+    """全ページ共通のOGP・Twitterカード（ogp.png）・AdSense・GA4タグを生成"""
+    favicon_svg = "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><text x=%2250%22 y=%2268%22 font-size=%2252%22 text-anchor=%22middle%22 fill=%22%23ffffff%22 font-family=%22sans-serif%22 font-weight=%22bold%22>渡</text></svg>"
     return f"""<link rel="icon" href="{favicon_svg}">
-  <link rel="apple-touch-icon" href="{favicon_svg}">
+  <link rel="apple-touch-icon" href="{OGP_IMAGE_URL}">
+  <meta property="og:site_name" content="{SITE_NAME}">
+  <meta property="og:title" content="{page_title}">
+  <meta property="og:description" content="{page_desc}">
+  <meta property="og:type" content="{og_type}">
+  <meta property="og:url" content="{page_url}">
+  <meta property="og:image" content="{OGP_IMAGE_URL}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{page_title}">
+  <meta name="twitter:description" content="{page_desc}">
+  <meta name="twitter:image" content="{OGP_IMAGE_URL}">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9644749026345882"
      crossorigin="anonymous"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id={GA4_ID}"></script>
@@ -76,19 +92,19 @@ def render_pixels() -> str:
 def render_share_buttons(page_url: str, share_title: str) -> str:
     return f"""
     <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
-      <span class="text-xs font-bold text-slate-700 flex items-center gap-1">📤 このページの渡航情報を同行者にシェア</span>
+      <span class="text-xs font-bold text-slate-700">このページの渡航情報を同行者に共有</span>
       <div class="flex items-center gap-1.5 flex-wrap">
         <a href="https://social-plugins.line.me/lineit/share?url={page_url}" target="_blank" rel="noopener noreferrer"
-          class="bg-[#06C755] hover:opacity-90 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+          class="bg-[#06C755] hover:opacity-90 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition">
           LINEで送る
         </a>
         <a href="https://twitter.com/intent/tweet?url={page_url}&text={share_title}" target="_blank" rel="noopener noreferrer"
-          class="bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+          class="bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition">
           Xでポスト
         </a>
         <button type="button" onclick="shareOrCopy('{page_url}', '{share_title}')"
           class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold px-3 py-1.5 rounded-lg border border-slate-300 transition">
-          🔗 URLをコピー
+          URLをコピー
         </button>
       </div>
     </div>"""
@@ -101,7 +117,7 @@ def render_share_script() -> str:
         navigator.share({ title: title, url: url }).catch(() => {});
       } else if (navigator.clipboard) {
         navigator.clipboard.writeText(url).then(() => {
-          alert('ページのURLをコピーしました！LINEやメモ帳に貼り付けて共有できます。');
+          alert('ページのURLをコピーしました。LINEやメモ帳に貼り付けて共有できます。');
         });
       }
     }"""
@@ -111,84 +127,25 @@ def render_sister_site_banner() -> str:
     return f"""
     <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
-        <span class="text-[10px] font-bold bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 px-2 py-0.5 rounded-full">姉妹プラットフォーム</span>
-        <p class="text-xs sm:text-sm font-extrabold mt-1">🎓 海外留学・ワーホリ・現地インターン・キャリア情報なら【Atrium】</p>
+        <span class="text-[10px] font-bold bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 px-2 py-0.5 rounded-full">姉妹メディア</span>
+        <p class="text-xs sm:text-sm font-extrabold mt-1">海外留学・ワーホリ・現地インターン・キャリア情報なら【Atrium】</p>
         <p class="text-[11px] text-slate-300 mt-0.5">世界各都市の留学生・駐在員のリアルタイム掲示板「Atrium Pulse」や奨学金・就活ニュースを毎日更新中。</p>
       </div>
       <a href="{SISTER_SITE_URL}/" target="_blank" rel="noopener" class="shrink-0 bg-white hover:bg-slate-100 text-slate-900 text-xs font-extrabold px-3.5 py-2.5 rounded-xl text-center transition">
-        Atriumを見る ↗
+        Atriumを見る
       </a>
     </div>"""
 
 
-def render_countdown_and_checklist(city: dict) -> str:
-    """機能②：出発日カウントダウン＆ブラウザ保存式チェックリスト（5大アフィ＋たびレジの6項目）"""
-    plug_info = f"{city['plug_type']}タイプ変換プラグの準備" if city['plug_type'] != "A" else "スマホ充電器・モバイルバッテリーの確認"
+def render_countdown_calendar(city: dict) -> str:
+    """チェックリストを廃止し、シンプルで使いやすい出発日カウントダウンカレンダーのみに整理"""
     return f"""
-    <section class="bg-white p-4 rounded-2xl shadow-sm border border-blue-200 space-y-3">
-      <div class="flex items-center justify-between flex-wrap gap-2">
-        <h2 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">✅ {city['name_ja']} 渡航前チェック＆出発カウントダウン</h2>
-        <span id="checklist-progress" class="text-[11px] font-extrabold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">準備完了: 0/6</span>
+    <section class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between flex-wrap gap-2">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-slate-700">{city['name_ja']}への出発日カレンダー:</span>
+        <input id="trip-date-input" type="date" class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 font-bold text-slate-800 focus:outline-none focus:border-blue-500">
       </div>
-
-      <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between flex-wrap gap-2">
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-bold text-slate-700">📅 出発日を設定:</span>
-          <input id="trip-date-input" type="date" class="text-xs bg-white border border-slate-300 rounded-lg px-2 py-1 font-bold text-slate-800 focus:outline-none focus:border-blue-500">
-        </div>
-        <div id="trip-countdown-msg" class="text-xs font-extrabold text-blue-700">出発日を入れると残り日数と準備目安を表示します</div>
-      </div>
-
-      <div class="divide-y divide-slate-100 text-xs">
-        <div class="py-2 flex items-center justify-between gap-2">
-          <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
-            <input type="checkbox" data-ck="hotel" class="prep-check w-4 h-4 accent-blue-600 rounded cursor-pointer">
-            <span>🏨 {city['name_ja']}のホテル・宿泊先の予約（最大80%OFF・即時確定）</span>
-          </label>
-          <a href="{AFFILIATE_AGODA_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 text-[10px] font-bold bg-violet-50 hover:bg-violet-100 text-violet-800 border border-violet-200 px-2.5 py-1 rounded-lg transition">アゴダ(WEB予約) [PR] →</a>
-        </div>
-
-        <div class="py-2 flex items-center justify-between gap-2">
-          <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
-            <input type="checkbox" data-ck="esim" class="prep-check w-4 h-4 accent-blue-600 rounded cursor-pointer">
-            <span>📱 現地用eSIMの事前購入（空港到着直後の配車・地図用）</span>
-          </label>
-          <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 text-[10px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-lg transition">Cross eSIM [PR] →</a>
-        </div>
-
-        <div class="py-2 flex items-center justify-between gap-2">
-          <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
-            <input type="checkbox" data-ck="vpn" class="prep-check w-4 h-4 accent-blue-600 rounded cursor-pointer">
-            <span>🔒 フリーWi-Fi暗号化・通信制限対策（VPNアプリ導入）</span>
-          </label>
-          <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-2.5 py-1 rounded-lg transition">NordVPN [PR] →</a>
-        </div>
-
-        <div class="py-2 flex items-center justify-between gap-2">
-          <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
-            <input type="checkbox" data-ck="card" class="prep-check w-4 h-4 accent-blue-600 rounded cursor-pointer">
-            <span>💳 海外旅行保険（利用付帯）＆タッチ決済対応カードの準備</span>
-          </label>
-          <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-lg transition">エポスカード [PR] →</a>
-        </div>
-
-        <div class="py-2 flex items-center justify-between gap-2">
-          <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
-            <input type="checkbox" data-ck="tour" class="prep-check w-4 h-4 accent-blue-600 rounded cursor-pointer">
-            <span>💬 空港送迎・現地ツアー・レストラン等の日本語手配相談</span>
-          </label>
-          <a href="{AFFILIATE_OOOH_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-lg transition">Oooh無料相談 [PR] →</a>
-        </div>
-
-        <div class="py-2 flex items-center justify-between gap-2">
-          <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
-            <input type="checkbox" data-ck="plug" class="prep-check w-4 h-4 accent-blue-600 rounded cursor-pointer">
-            <span>🔌 {plug_info} ＆ 外務省「たびレジ」登録</span>
-          </label>
-          <a href="https://www.ezairyu.mofa.go.jp/tabireg/index.html" target="_blank" rel="noopener noreferrer" class="shrink-0 text-[10px] font-bold bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-lg transition">たびレジ公式 ↗</a>
-        </div>
-      </div>
-      <p class="text-[10px] text-slate-400">※チェック状態と出発日はお使いのブラウザに自動保存され、次回開いたときも維持されます。</p>
+      <div id="trip-countdown-msg" class="text-xs font-bold text-blue-700">出発日を入力すると残り日数と準備時期の目安を表示します</div>
     </section>"""
 
 
@@ -198,21 +155,21 @@ def render_tip_split_calculator(city: dict, local_to_jpy: float) -> str:
     return f"""
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-bold flex items-center gap-1.5 text-slate-800">🧮 レストラン・タクシー用「チップ＆割り勘」即計算機</h2>
-        <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">現地会計で便利</span>
+        <h2 class="text-sm font-bold text-slate-800">レストラン・タクシー用「チップ＆割り勘」計算機</h2>
+        <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">現地会計ツール</span>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">① お会計金額（{code}）</label>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">1. お会計金額（{code}）</label>
           <div class="flex items-center">
             <input id="bill-amount" type="number" value="100" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 font-bold text-sm focus:outline-none">
             <span class="ml-1.5 font-bold text-slate-600">{code}</span>
           </div>
         </div>
         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">② チップ率（{city['name_ja']}目安: {city['tip_badge']}）</label>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">2. チップ率（目安: {city['tip_badge']}）</label>
           <select id="bill-tip" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 font-bold text-xs focus:outline-none">
-            <option value="0" {"selected" if default_tip == 0 else ""}>0%（チップなし）</option>
+            <option value="0" {"selected" if default_tip == 0 else ""}>0%（チップ不要）</option>
             <option value="5">5%（端数・気持ち程度）</option>
             <option value="10" {"selected" if default_tip == 10 else ""}>10%（一般的な目安）</option>
             <option value="15">15%（標準サービス）</option>
@@ -221,7 +178,7 @@ def render_tip_split_calculator(city: dict, local_to_jpy: float) -> str:
           </select>
         </div>
         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">③ 割り勘する人数</label>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">3. 割り勘する人数</label>
           <select id="bill-split" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 font-bold text-xs focus:outline-none">
             <option value="1">1人（割り勘なし）</option>
             <option value="2" selected>2人で割り勘</option>
@@ -232,62 +189,195 @@ def render_tip_split_calculator(city: dict, local_to_jpy: float) -> str:
           </select>
         </div>
       </div>
-      <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
         <div class="text-xs text-slate-700">
           <span>チップ込総額: <strong id="bill-total-local" class="text-slate-900">-- {code}</strong></span>
           <span class="text-[11px] text-slate-500 ml-1">（約 <span id="bill-total-jpy">--</span> 円）</span>
         </div>
-        <div class="text-xs font-extrabold text-emerald-900 bg-white px-3 py-1.5 rounded-lg border border-emerald-200">
-          1人あたり: <span id="bill-per-local" class="text-sm text-emerald-700">-- {code}</span>（約 <span id="bill-per-jpy">--</span> 円）
+        <div class="text-xs font-extrabold text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+          1人あたり: <span id="bill-per-local" class="text-sm text-blue-700">-- {code}</span>（約 <span id="bill-per-jpy">--</span> 円）
         </div>
       </div>
     </section>"""
 
 
-def render_quick_poll(city: dict) -> str:
-    base_seed = sum(ord(ch) for ch in city["slug"])
-    safety_pct = 92 if city["danger_color"] == "emerald" else 76
-    cashless_pct = 95 if city["special_ui"] in ("europe_cashless", "korea_nav", "us_tip_medical") else 81
-    total_votes = 48 + (base_seed % 65)
+def compute_city_star_ratings(city: dict) -> dict:
+    """各都市のデータから5段階（★1.0〜5.0）の客観的評価スコアを算出"""
+    # 1. 治安・夜間の安心度
+    if city["danger_color"] == "emerald":
+        safety = 4.6 if city["country_ja"] in ("シンガポール", "台湾", "韓国", "アイスランド", "フィンランド", "スイス", "オーストラリア", "ニュージーランド", "アラブ首長国連邦（UAE）", "カタール") else 4.2
+    else:
+        safety = 3.4
 
+    # 2. キャッシュレス普及度
+    if city["special_ui"] in ("europe_cashless", "korea_nav", "us_tip_medical"):
+        cashless = 4.8
+    elif city["special_ui"] == "china_vpn":
+        cashless = 4.7  # Alipay/WeChat Pay極度普及
+    else:
+        cashless = 3.8
+
+    # 3. 英語の通じやすさ
+    eng_high = ("アメリカ", "グアム・サイパン（米国準州）", "カナダ", "イギリス", "オーストラリア", "ニュージーランド", "シンガポール", "フィリピン", "マルタ", "オランダ", "スウェーデン", "ノルウェー", "デンマーク", "フィンランド", "アイスランド", "マレーシア", "アラブ首長国連邦（UAE）")
+    eng_mid = ("韓国", "台湾", "タイ", "香港", "スイス", "ドイツ", "オーストリア", "ギリシャ", "クロアチア", "ポルトガル", "インド")
+    if city["country_ja"] in eng_high:
+        english = 4.8
+    elif city["country_ja"] in eng_mid:
+        english = 4.0
+    else:
+        english = 3.3
+
+    # 4. 現地物価のコスパ（日本基準）
+    cheap_curr = ("VND", "THB", "IDR", "PHP", "MYR", "INR", "LKR", "NPR", "EGP", "UZS", "MAD", "PLN", "HUF", "CZK")
+    mid_curr = ("KRW", "TWD", "CNY", "TRY", "MXN", "PEN", "BRL", "ZAR")
+    if city["currency_code"] in cheap_curr:
+        cost = 4.6
+    elif city["currency_code"] in mid_curr:
+        cost = 4.0
+    else:
+        cost = 3.1
+
+    avg = round((safety + cashless + english + cost) / 4, 1)
+    return {
+        "avg": avg,
+        "safety": safety,
+        "cashless": cashless,
+        "english": english,
+        "cost": cost
+    }
+
+
+def render_star_bar(score: float) -> str:
+    full_stars = int(round(score))
+    stars_str = "★" * full_stars + "☆" * (5 - full_stars)
+    pct = int((score / 5.0) * 100)
+    return f"""
+      <div class="flex items-center gap-2">
+        <span class="text-amber-500 font-bold text-xs tracking-tight">{stars_str}</span>
+        <span class="font-extrabold text-xs text-slate-900">{score:.1f}</span>
+      </div>
+      <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
+        <div class="bg-amber-500 h-full" style="width: {pct}%"></div>
+      </div>"""
+
+
+def render_city_rating_box(city: dict) -> str:
+    """ダミー投票を廃止し、利用者に誠実な「5段階星評価（★1.0〜5.0）の渡航しやすさ指標」を表示"""
+    r = compute_city_star_ratings(city)
     return f"""
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
-      <div class="flex items-center justify-between">
-        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">📊 渡航者のリアル体感チェック（1タップ投票）</h2>
-        <span id="poll-count" class="text-[10px] text-slate-400">累計 {total_votes} 票</span>
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900">{city['name_ja']}の渡航しやすさ・現地スペック評価（5段階）</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5">外務省安全情報・決済インフラ・物価水準に基づく当サイト編集部の標準評価指標</p>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl flex items-center gap-1.5">
+          <span class="text-xs font-bold text-slate-700">総合評価</span>
+          <span class="text-amber-500 font-extrabold text-sm">★ {r['avg']:.1f}</span>
+          <span class="text-[10px] text-slate-400">/ 5.0</span>
+        </div>
       </div>
-      <div class="grid grid-cols-2 gap-2.5 text-xs">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <div class="flex justify-between font-bold text-slate-700 mb-1">
-            <span>🛡️ 観光エリアの安心感</span>
-            <span id="safety-val" class="text-emerald-700">{safety_pct}%</span>
-          </div>
-          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div id="safety-bar" class="bg-emerald-500 h-full" style="width: {safety_pct}%"></div>
-          </div>
+          <span class="text-[11px] font-bold text-slate-600 block">治安・観光安心度</span>
+          {render_star_bar(r['safety'])}
         </div>
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <div class="flex justify-between font-bold text-slate-700 mb-1">
-            <span>💳 キャッシュレス快適度</span>
-            <span id="cashless-val" class="text-blue-700">{cashless_pct}%</span>
-          </div>
-          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div id="cashless-bar" class="bg-blue-500 h-full" style="width: {cashless_pct}%"></div>
-          </div>
+          <span class="text-[11px] font-bold text-slate-600 block">キャッシュレス決済</span>
+          {render_star_bar(r['cashless'])}
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <span class="text-[11px] font-bold text-slate-600 block">英語・案内通用度</span>
+          {render_star_bar(r['english'])}
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <span class="text-[11px] font-bold text-slate-600 block">現地物価コスパ</span>
+          {render_star_bar(r['cost'])}
         </div>
       </div>
-      <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
-        <span id="poll-thanks" class="text-[11px] text-slate-600 font-medium">Q. {city['name_ja']}の渡航情報・現地体験はどうでしたか？</span>
-        <div class="flex gap-1.5">
-          <button type="button" onclick="castVote('good')" class="vote-btn text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 font-bold px-3 py-1.5 rounded-lg border border-slate-200 transition">👍 快適・役立った</button>
-          <button type="button" onclick="castVote('careful')" class="vote-btn text-[11px] bg-slate-100 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 font-bold px-3 py-1.5 rounded-lg border border-slate-200 transition">⚠️ 事前準備が必須</button>
+    </section>"""
+
+
+def render_detailed_rules_and_manners(city: dict) -> str:
+    """当サイトの肝である「お金・マナー・生活ルール詳細」を大幅に情報拡充"""
+    cc = city["country_ja"]
+    curr = city["currency_code"]
+
+    # 1. 両替・カード決済・ATMの鉄則
+    if city["special_ui"] == "china_vpn":
+        payment_rule = f"中国本土では現金（{curr}）以上に「Alipay（アリペイ）」と「WeChat Pay」が必須です。日本出発前にアプリを入れ、日本のクレジットカード（Visa/Mastercard）を紐付けて本人認証を済ませてください。屋台から地下鉄までQR決済で完結します。"
+    elif city["special_ui"] == "korea_nav":
+        payment_rule = f"韓国は95%以上がクレジットカードのタッチ決済で完結します。ただし地下鉄・バス用の交通カード（T-moneyまたはWOWPASS）へのチャージや屋台用に、1日あたり2万〜3万ウォン程度の少額現金を空港または市内公認両替所で用意すると便利です。"
+    elif city["special_ui"] == "europe_cashless":
+        payment_rule = f"公共交通機関の改札からカフェ・公衆トイレまで「クレジットカード（Visa/Mastercard）のタッチ決済」が標準です。高額な現金両替はスリのリスクになるため最小限（20〜50{curr}程度）にし、カード決済時に「JPY（円建て）か{curr}（現地通貨建て）か」を端末で聞かれたら、手数料が安い『現地通貨建て（{curr}）』を必ず選択してください。"
+    elif city["special_ui"] == "us_tip_medical":
+        payment_rule = f"ほぼ全店舗でクレジットカード（タッチ決済）が主流です。JCBやAmexは一部店舗で使えない場合があるため、VisaまたはMastercardをメインにしてください。ホテルのチェックイン時にはデポジット（保証金）としてクレジットカードの提示が必須です。チップ用の1ドル・5ドル紙幣のみ少量用意しておくと便利です。"
+    else:
+        payment_rule = f"大型ホテルやショッピングモールではクレジットカード（Visa/Mastercard）が使えますが、ローカル食堂・市場・チップ用に現地通貨（{curr}）の現金も必要です。日本の空港での両替はレートが悪いため、現地空港のATMでのキャッシングまたは市内公認両替所の利用が最もお得です。カード決済時は必ず『現地通貨建て（{curr}）』を選択してください。"
+
+    # 2. トイレ・衛生・街歩きルール
+    if cc in ("韓国", "台湾", "タイ", "ベトナム", "フィリピン", "インドネシア", "カンボジア", "中国", "ギリシャ", "トルコ", "エジプト", "モロッコ", "メキシコ", "ペルー", "ボリビア", "ブラジル"):
+        toilet_rule = "水圧や配管の構造上、トイレットペーパーを便器に流さず「備え付けのゴミ箱」に捨てる施設が多くあります（空港や最新高級ホテルを除く）。また紙が備え付けられていない公衆トイレもあるため、水に流せるポケットティッシュと除菌ウェットティッシュの携帯が必須です。"
+    elif city["region"] == "ヨーロッパ":
+        toilet_rule = "駅や観光地の公衆トイレは有料（0.5〜2ユーロ程度・クレジットカードのタッチ決済や硬貨でゲートを通過）が一般的です。美術館・カフェ・レストランを利用した際にこまめに済ませておくのが鉄則です。"
+    else:
+        toilet_rule = "トイレットペーパーはそのまま流せますが、日本のようにコンビニで自由にトイレを借りられない都市が多いため、大型ショッピングモール・ホテル・利用中のカフェやレストランで済ませておくのが安心です。"
+
+    # 3. 現地の重要マナー・法律規制（喫煙・飲酒・服装・写真撮影）
+    if cc in ("タイ", "シンガポール", "台湾", "香港", "マカオ", "インド"):
+        taboo_rule = f"{cc}では『電子タバコ（VAPE）や加熱式タバコ（IQOS等）の持ち込み・所持・使用』が法律で厳しく禁止されており、違反すると高額な罰金や没収の対象となります。また地下鉄・駅構内での飲食禁止（台湾・シンガポール・香港など）や、寺院訪問時の露出の多い服装（短パン・ノースリーブ）にも注意してください。"
+    elif cc in ("アラブ首長国連邦（UAE）", "カタール", "エジプト", "モロッコ", "トルコ", "マレーシア", "インドネシア", "モルディブ", "ウズベキスタン"):
+        taboo_rule = "イスラム文化圏（または宗教施設が多い地域）のため、モスク等の宗教施設を訪れる際は肌や髪の露出を控えた服装が必須です。また公共の場での過度な飲酒・泥酔、軍事施設・政府機関・現地女性への無断カメラ撮影はトラブルや処罰の原因となるため厳禁です。"
+    elif cc in ("アメリカ", "カナダ", "オーストラリア", "ニュージーランド", "イギリス"):
+        taboo_rule = "公共の屋外（路上・公園・ビーチ・車内など）での飲酒（オープン・コンテナ法）が法律で厳しく禁止されている州・都市が多くあります。また屋内施設は全面禁煙が徹底されており、飲酒やクラブ入店時は年齢を問わずパスポート等の顔写真付きID提示が求められます。"
+    else:
+        taboo_rule = "教会や大聖堂に入る際は帽子を脱ぎ、肩や膝が露出する服装は避けてください。またスリ防犯のためズボンの後ろポケットに財布やスマホを入れず、レストランのテーブル上にスマホを置いたままにしないことが重要です。日曜日・祝日は法律によりスーパーや商業施設が全面休業となる都市が多いため買い出しは土曜までに済ませましょう。"
+
+    return f"""
+    <section class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3.5">
+      <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
+        <h2 class="text-sm sm:text-base font-extrabold text-slate-900">{city['name_ja']}のお金・マナー・生活ルール詳細ガイド</h2>
+        <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2.5 py-0.5 rounded-full">現地実用辞典</span>
+      </div>
+      <div class="text-xs space-y-3 text-slate-700 leading-relaxed">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-900 mb-1">1. チップの相場とスマートな渡し方（目安：{city['tip_badge']}）</p>
+          <p>{city['tip_detail']}</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-900 mb-1">2. 両替・クレジットカード決済・ATM利用の鉄則（通貨：{city['currency_name']} / {curr}）</p>
+          <p>{payment_rule}</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-900 mb-1">3. 税金・免税手続き（Tax Free / VAT還付）</p>
+          <p>{city['tax_note']}</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-900 mb-1">4. コンセント（{city['plug_type']}タイプ）・電圧（{city['voltage']} / {city['frequency']}）・変圧器</p>
+          <p>{city['transformer_note']}</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-900 mb-1">5. 水道水・氷・飲食店での水注文</p>
+          <p>{city['tap_water_note']}</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-900 mb-1">6. トイレ事情・衛生ルール</p>
+          <p>{toilet_rule}</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-900 mb-1">7. 現地マナー・法律規制（喫煙・飲酒・服装・禁忌）</p>
+          <p>{taboo_rule}</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-900 mb-1">8. サマータイム（夏時間）制度</p>
+          <p>{city['dst_note']}</p>
         </div>
       </div>
+      {render_epos_affiliate(city)}
     </section>"""
 
 
 def render_agoda_and_oooh_box(city: dict) -> str:
-    """空港移動セクション直下：ホテル予約（Agoda）＆現地手配相談（Oooh）の2大旅行手配カード"""
     return f"""
       <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <div class="p-3.5 rounded-xl bg-violet-50/80 border border-violet-200 flex flex-col justify-between">
@@ -296,13 +386,13 @@ def render_agoda_and_oooh_box(city: dict) -> str:
               <span class="text-[10px] font-extrabold bg-violet-600 text-white px-2 py-0.5 rounded">最大80%OFF</span>
               <span class="text-[9px] bg-white/80 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">PR</span>
             </div>
-            <p class="text-xs font-extrabold text-violet-950 mt-1.5">🏨 {city['name_ja']}の人気ホテル格安予約【アゴダ】</p>
+            <p class="text-xs font-extrabold text-violet-950 mt-1.5">{city['name_ja']}の人気ホテル格安予約【アゴダ】</p>
             <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">
-              空港アクセスが良く治安の安定したエリアのホテル・アパートメントを格安検索。予約手数料なし・即時確定・24時間サポート（WEBブラウザから簡単予約）。
+              空港アクセスが良く治安の安定したエリアのホテル・アパートメントを格安検索。予約手数料なし・即時確定（WEBブラウザから簡単予約）。
             </p>
           </div>
           <a href="{AFFILIATE_AGODA_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition shadow-sm">
-            アゴダで{city['name_ja']}の宿を見る →
+            アゴダで{city['name_ja']}の宿を見る
           </a>
         </div>
 
@@ -312,13 +402,13 @@ def render_agoda_and_oooh_box(city: dict) -> str:
               <span class="text-[10px] font-extrabold bg-emerald-600 text-white px-2 py-0.5 rounded">チャット相談無料</span>
               <span class="text-[9px] bg-white/80 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">PR</span>
             </div>
-            <p class="text-xs font-extrabold text-emerald-950 mt-1.5">💬 現地旅行会社に日本語で直接相談【Oooh】</p>
+            <p class="text-xs font-extrabold text-emerald-950 mt-1.5">現地旅行会社に日本語で直接相談【Oooh】</p>
             <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">
-              専用車の空港送迎・プライベートツアー・穴場レストラン手配まで、現地在住の旅のプロにスマホから日本語チャットで無料相談＆直接手配できます。
+              専用車の空港送迎・プライベートツアー・レストラン手配まで、現地在住の旅のプロにスマホから日本語チャットで無料相談＆直接手配できます。
             </p>
           </div>
           <a href="{AFFILIATE_OOOH_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition shadow-sm">
-            無料で現地プロに相談する →
+            無料で現地プロに相談する
           </a>
         </div>
       </div>"""
@@ -330,56 +420,27 @@ def render_telecom_box(city: dict) -> str:
         return f"""
     <section class="bg-white p-4 rounded-2xl shadow-sm border-2 border-rose-300">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-extrabold flex items-center gap-1.5 text-rose-800">🛡️ 中国ネット検閲対策：Cross eSIM ＋ NordVPN</h2>
+        <h2 class="text-sm font-extrabold text-rose-800">中国ネット検閲対策：Cross eSIM ＋ NordVPN</h2>
         <span class="text-[10px] bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full">PR / 最重要</span>
       </div>
       <p class="text-xs text-slate-700 mt-1.5 leading-relaxed">{city['telecom_note']}</p>
       <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 flex flex-col justify-between">
           <div>
-            <p class="text-xs font-bold text-blue-900">📱 世界125以上の国・地域対応【Cross eSIM】</p>
-            <p class="text-[11px] text-slate-600 mt-0.5">日本国内で事前設定可能・QRコード読み取りだけで最短3分開通！SIM差し替え不要。</p>
+            <p class="text-xs font-bold text-blue-900">世界125以上の国・地域対応【Cross eSIM】</p>
+            <p class="text-[11px] text-slate-600 mt-0.5">日本国内で事前設定可能・QRコード読み取りだけで最短3分開通。SIM差し替え不要。</p>
           </div>
           <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition">
-            Cross eSIM公式サイトを見る →
+            Cross eSIM公式サイトを見る
           </a>
         </div>
         <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 flex flex-col justify-between">
           <div>
-            <p class="text-xs font-bold text-rose-900">🔒 制限回避＆通信暗号化【NordVPN】</p>
-            <p class="text-[11px] text-slate-600 mt-0.5">AV-TEST評価の高速VPN・30日間返金保証付き。必ず日本出発前にアプリを準備しましょう。</p>
+            <p class="text-xs font-bold text-rose-900">制限回避＆通信暗号化【NordVPN】</p>
+            <p class="text-[11px] text-slate-600 mt-0.5">AV-TEST評価の高速VPN・30日間返金保証付き。必ず日本出発前にアプリを準備してください。</p>
           </div>
           <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition">
-            NordVPN公式サイトを見る →
-          </a>
-        </div>
-      </div>
-    </section>"""
-    elif ui == "vpn_recommended":
-        return f"""
-    <section class="bg-white p-4 rounded-2xl shadow-sm border border-amber-300">
-      <div class="flex items-center justify-between">
-        <h2 class="text-sm font-bold flex items-center gap-1.5 text-slate-900">📶 現地の通信（Cross eSIM）＆ セキュリティ（NordVPN）</h2>
-        <span class="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full">PR / 通信対策</span>
-      </div>
-      <p class="text-xs text-slate-700 mt-1.5 leading-relaxed">{city['telecom_note']}</p>
-      <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 flex flex-col justify-between">
-          <div>
-            <p class="text-xs font-bold text-blue-900">📱 最短3分・QRで即開通！【Cross eSIM】</p>
-            <p class="text-[11px] text-slate-600 mt-0.5">125以上の国・地域対応。日本で事前設定でき、現地到着直後から配車アプリや地図が使えます。</p>
-          </div>
-          <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition">
-            Cross eSIMでプランを見る →
-          </a>
-        </div>
-        <div class="p-3 rounded-xl bg-indigo-50 border border-indigo-200 flex flex-col justify-between">
-          <div>
-            <p class="text-xs font-bold text-indigo-900">🔒 制限回避＆Wi-Fi保護【NordVPN】</p>
-            <p class="text-[11px] text-slate-600 mt-0.5">フリーWi-Fiでの通信暗号化や海外からの日本の動画サービス視聴に。30日間返金保証付き。</p>
-          </div>
-          <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition">
-            NordVPN公式サイトを見る →
+            NordVPN公式サイトを見る
           </a>
         </div>
       </div>
@@ -388,27 +449,27 @@ def render_telecom_box(city: dict) -> str:
         return f"""
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-bold flex items-center gap-1.5">📶 現地の通信（Cross eSIM）＆ フリーWi-Fi保護（NordVPN）</h2>
+        <h2 class="text-sm font-bold text-slate-900">現地の通信（Cross eSIM）＆ フリーWi-Fi保護（NordVPN）</h2>
         <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">PR</span>
       </div>
       <p class="text-xs text-slate-700 mt-1.5 leading-relaxed">{city['telecom_note']}</p>
       <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 flex flex-col justify-between">
           <div>
-            <p class="text-xs font-bold text-blue-900">📱 最短3分・QRで即開通！【Cross eSIM】</p>
-            <p class="text-[11px] text-slate-600 mt-0.5">125以上の国・地域対応！SIM差し替え・空港受取不要で、到着直後からネットが使えます。</p>
+            <p class="text-xs font-bold text-blue-900">最短3分・QRで即開通【Cross eSIM】</p>
+            <p class="text-[11px] text-slate-600 mt-0.5">125以上の国・地域対応。SIM差し替え・空港受取不要で、到着直後からネットが使えます。</p>
           </div>
           <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition">
-            Cross eSIM公式サイトを見る →
+            Cross eSIM公式サイトを見る
           </a>
         </div>
         <div class="p-3 rounded-xl bg-slate-100 border border-slate-300 flex flex-col justify-between">
           <div>
-            <p class="text-xs font-bold text-slate-900">🔒 海外Wi-Fiセキュリティに【NordVPN】</p>
+            <p class="text-xs font-bold text-slate-900">海外Wi-Fiセキュリティに【NordVPN】</p>
             <p class="text-[11px] text-slate-600 mt-0.5">空港・カフェ・ホテルのフリーWi-Fiでの通信を暗号化保護。日本のエンタメ視聴にも（30日間返金保証）。</p>
           </div>
           <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow noopener" class="mt-2.5 block bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-2.5 rounded-lg text-center transition">
-            NordVPN公式サイトを見る →
+            NordVPN公式サイトを見る
           </a>
         </div>
       </div>
@@ -418,17 +479,17 @@ def render_telecom_box(city: dict) -> str:
 def render_epos_affiliate(city: dict) -> str:
     ui = city.get("special_ui", "standard")
     if ui == "us_tip_medical":
-        headline = f"🏥 {city['name_ja']}の医療費・カード決済対策に【エポスカード】"
-        desc = "北米は医療費が極めて高額なため海外旅行保険の準備が必須です。<strong>入会金・年会費永年無料</strong>で、旅行代金等のお支払いで適用される<strong>充実の海外旅行傷害保険（利用付帯）</strong>、さらに<strong>タッチ決済＆裏面カード番号記載</strong>で安全・スムーズに決済できます。"
+        headline = f"{city['name_ja']}の高額医療費・カード決済対策に【エポスカード】"
+        desc = "北米は医療費が極めて高額なため海外旅行保険の準備が必須です。<strong>入会金・年会費永年無料</strong>で、旅行代金等のお支払いで適用される<strong>充実の海外旅行傷害保険（利用付帯）</strong>、さらに<strong>タッチ決済＆裏面カード番号記載</strong>で安全に決済できます。"
         bg_cls = "bg-rose-50 border-rose-200"
         btn_cls = "bg-rose-600 hover:bg-rose-700"
     elif ui == "europe_cashless":
-        headline = f"💳 {city['name_ja']}のタッチ決済＆保険対策に【エポスカード】"
+        headline = f"{city['name_ja']}のタッチ決済＆海外旅行保険対策に【エポスカード】"
         desc = "地下鉄やカフェでのタッチ決済が主流です。<strong>入会金・年会費永年無料</strong>で<strong>タッチ決済対応・裏面カード番号記載</strong>の安心設計に加え、旅行代金等のお支払いで適用される<strong>海外旅行傷害保険（利用付帯）</strong>も備えた定番の1枚です。"
         bg_cls = "bg-indigo-50 border-indigo-200"
         btn_cls = "bg-indigo-600 hover:bg-indigo-700"
     else:
-        headline = f"💳 {city['name_ja']}渡航の海外旅行保険・防犯対策に【エポスカード】"
+        headline = f"{city['name_ja']}渡航の海外旅行保険・防犯対策に【エポスカード】"
         desc = "<strong>入会金・年会費永年無料</strong>。旅行代金（ツアー料金や交通費等）のお支払いで適用される<strong>海外旅行傷害保険（利用付帯）</strong>が付帯し、さらに<strong>カード番号裏面記載＆タッチ決済</strong>で海外でも周囲から番号が見えず安心です。"
         bg_cls = "bg-amber-50 border-amber-200"
         btn_cls = "bg-amber-600 hover:bg-amber-700"
@@ -443,20 +504,70 @@ def render_epos_affiliate(city: dict) -> str:
           <p class="text-[11px] text-slate-700 mt-1 leading-relaxed">{desc}</p>
         </div>
         <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="shrink-0 {btn_cls} text-white text-xs font-bold px-3.5 py-2.5 rounded-lg text-center transition">
-          エポスカード詳細 →
+          エポスカード詳細
         </a>
       </div>"""
 
 
-def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
+def render_city_comparison_section(city: dict, all_cities: list, city_compare_links: list) -> str:
+    """全150都市のページ内に「他都市とのスペック比較表＆比較ページへのリンク」を表示"""
+    same_region = [c for c in all_cities if c["region"] == city["region"] and c["slug"] != city["slug"]][:3]
+    if not same_region:
+        same_region = [c for c in all_cities if c["slug"] != city["slug"]][:3]
+
+    rows = ""
+    for c in [city] + same_region:
+        is_self = (c["slug"] == city["slug"])
+        row_cls = "bg-blue-50/60 font-bold" if is_self else "hover:bg-slate-50"
+        name_cell = f"{c['name_ja']}（当ページ）" if is_self else f'<a href="../{c["slug"]}/" class="text-blue-700 underline">{c["name_ja"]}</a>'
+        rows += f"""
+          <tr class="{row_cls}">
+            <td class="p-2.5 border-t border-slate-200">{name_cell}</td>
+            <td class="p-2.5 border-t border-slate-200">{c['plug_type']} / {c['voltage']}</td>
+            <td class="p-2.5 border-t border-slate-200">{c['currency_code']}</td>
+            <td class="p-2.5 border-t border-slate-200">{c['tip_badge'].split('（')[0]}</td>
+          </tr>"""
+
+    comp_buttons = "".join([
+        f'<a href="../compare/{pair_slug}/" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 font-bold px-3 py-2 rounded-xl transition">'
+        f'{label} 徹底比較ページへ →'
+        f'</a>'
+        for pair_slug, label in city_compare_links
+    ])
+
+    return f"""
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+      <div class="flex items-center justify-between flex-wrap gap-1">
+        <h2 class="text-sm font-bold text-slate-900">{city['name_ja']}と周辺・人気都市のスペック比較</h2>
+        <span class="text-[10px] text-slate-500">{city['region']}エリア比較</span>
+      </div>
+      <div class="overflow-x-auto border border-slate-200 rounded-xl">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700">
+              <th class="p-2.5">都市名</th>
+              <th class="p-2.5">プラグ / 電圧</th>
+              <th class="p-2.5">通貨</th>
+              <th class="p-2.5">チップ</th>
+            </tr>
+          </thead>
+          <tbody>{rows}</tbody>
+        </table>
+      </div>
+      <div class="flex flex-wrap gap-2 pt-1">{comp_buttons}</div>
+    </section>"""
+
+
+def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare_links: list) -> str:
     code = city["currency_code"]
     jpy_to_local = rates_data["rates"].get(code, 0.01)
     local_to_jpy = round(1 / jpy_to_local, 2) if jpy_to_local >= 0.005 else round(1 / jpy_to_local, 4)
     thousand_jpy_in_local = round(1000 * jpy_to_local, 2)
     page_url = f"{SITE_URL}/{city['slug']}/"
-    share_title = f"{city['name_ja']}の現地情報（時差・天気・コンセント・チップ・治安）｜{SITE_NAME}"
+    page_title = f"{city['name_ja']}の現地情報まとめ｜時差・天気/気候・コンセント({city['plug_type']})・チップ・生活ルール・危険情報"
+    page_desc = f"{city['name_ja']}（{city['country_ja']}）の現在時刻・時差、現在の気温・年間の気候、コンセント（{city['plug_type']}）・電圧（{city['voltage']}）、チップ計算機、お金・トイレ・マナー詳細、外務省危険情報を1画面で即確認。"
 
-    related = [c for c in all_cities if c["region"] == city["region"] and c["slug"] != city["slug"]][:12]
+    related = [c for c in all_cities if c["region"] == city["region"] and c["slug"] != city["slug"]][:14]
     related_html = "".join([
         f'<a href="../{c["slug"]}/" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:border-blue-500 transition">{c["name_ja"]}</a>'
         for c in related
@@ -494,9 +605,9 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {render_common_head()}
-  <title>{city['name_ja']}の現地情報まとめ｜時差・天気/気候・コンセント({city['plug_type']})・チップ・危険情報・為替を1画面で即答</title>
-  <meta name="description" content="{city['name_ja']}（{city['country_ja']}）の現在時刻・時差、現在の天気・気温と年間の気候・乾燥度、コンセント形状（{city['plug_type']}）・電圧（{city['voltage']}）、チップ計算機、最新為替レート、外務省危険情報・大使館連絡先を1画面で即確認。">
+  {render_common_head(page_title, page_desc, page_url)}
+  <title>{page_title}</title>
+  <meta name="description" content="{page_desc}">
   <link rel="canonical" href="{page_url}">
   <link rel="manifest" href="../manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -506,7 +617,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
   {render_pr_banner()}
   <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
     <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="../" class="font-bold text-slate-800 text-sm flex items-center gap-1 hover:text-blue-600 transition">🌐 {SITE_NAME}（全都市一覧へ）</a>
+      <a href="../" class="font-bold text-slate-800 text-sm hover:text-blue-600 transition">{SITE_NAME}（全都市一覧へ）</a>
       <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">{city['region']} / {city['country_ja']}</span>
     </div>
   </header>
@@ -519,27 +630,24 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
 
     <section class="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200 rounded-2xl p-3.5 space-y-2">
       <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2.5">
-          <span id="weather-icon" class="text-2xl">⛅</span>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-bold text-slate-700">現在の現地気温・天気:</span>
-              <span id="weather-temp" class="text-sm font-extrabold text-sky-900">取得中...</span>
-            </div>
-            <p id="weather-outfit" class="text-[11px] font-medium text-sky-950 mt-0.5">現地の気象データから服装の目安を計算しています...</p>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-slate-700">現在の現地気温・天気:</span>
+            <span id="weather-temp" class="text-sm font-extrabold text-sky-900">取得中...</span>
           </div>
+          <p id="weather-outfit" class="text-[11px] font-medium text-sky-950 mt-0.5">現地の気象データから服装の目安を計算しています...</p>
         </div>
         <span class="text-[10px] bg-white/90 text-sky-800 px-2 py-0.5 rounded-full font-bold shrink-0 border border-sky-200">LIVE気象</span>
       </div>
       <div class="bg-white/75 rounded-xl p-2.5 text-[11px] text-slate-700 leading-relaxed border border-sky-100">
-        <strong class="text-slate-900">🌤️ 年間の気候・季節感・乾燥度：</strong>{city['climate']}
+        <strong class="text-slate-900">年間の気候・季節感・乾燥度：</strong>{city['climate']}
       </div>
     </section>
 
     <section class="grid grid-cols-2 gap-2.5">
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-500">🕒 現地時刻</span>
+          <span class="text-xs font-bold text-slate-500">現地時刻</span>
           <button id="tz-toggle" class="text-[10px] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded text-slate-600 font-medium">vs 日本</button>
         </div>
         <div id="local-clock" class="text-2xl font-mono font-bold mt-1.5 tracking-tight">--:--:--</div>
@@ -547,7 +655,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       </div>
 
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col justify-between">
-        <span class="text-xs font-bold text-slate-500 block text-left">🔌 プラグ・電圧</span>
+        <span class="text-xs font-bold text-slate-500 block text-left">プラグ・電圧</span>
         <div class="my-0.5">{render_plug_svg(city['plug_type'])}</div>
         <div>
           <div class="text-sm font-extrabold">{city['plug_type']}タイプ <span class="text-xs font-normal text-slate-500">/ {city['voltage']}</span></div>
@@ -556,17 +664,17 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       </div>
 
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-        <span class="text-xs font-bold text-slate-500">💵 チップ習慣</span>
+        <span class="text-xs font-bold text-slate-500">チップ習慣</span>
         <div class="my-1.5">
           <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold border {tip_color_class(city['tip_level'])}">
             {city['tip_badge']}
           </span>
         </div>
-        <div class="text-[11px] text-slate-500">水: {'💧飲用可' if city['tap_water_safe'] else '⚠️飲用不可（市販水）'}</div>
+        <div class="text-[11px] text-slate-500">水道水: {'飲用可' if city['tap_water_safe'] else '飲用不可（市販水推奨）'}</div>
       </div>
 
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-        <span class="text-xs font-bold text-slate-500">💱 1{code} ≒ {local_to_jpy}円</span>
+        <span class="text-xs font-bold text-slate-500">1{code} ≒ {local_to_jpy}円</span>
         <div class="mt-1">
           <div class="flex items-center border border-slate-300 rounded-lg px-2 py-1 bg-slate-50">
             <input id="jpy-input" type="number" value="1000" class="w-full bg-transparent text-sm font-bold focus:outline-none">
@@ -577,14 +685,16 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       </div>
     </section>
 
-    <!-- 機能②：出発カウントダウン＆保存式渡航前チェックリスト（6項目） -->
-    {render_countdown_and_checklist(city)}
+    {render_countdown_calendar(city)}
 
-    <!-- 機能①：チップ＆割り勘シミュレーター -->
+    {render_city_rating_box(city)}
+
+    {render_detailed_rules_and_manners(city)}
+
     {render_tip_split_calculator(city, local_to_jpy)}
 
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
-      <h2 class="text-sm font-bold flex items-center gap-1.5 text-slate-800">✈️ {city['airport_access']['airport_name']}から市内への移動 ＆ 宿泊・現地手配</h2>
+      <h2 class="text-sm font-bold text-slate-800">{city['airport_access']['airport_name']}から市内への移動 ＆ 宿泊・現地手配</h2>
       <div class="text-xs space-y-2 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
         <p><span class="inline-block bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">最速・快適</span>{city['airport_access']['fastest']}</p>
         <p><span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">最安・定番</span>{city['airport_access']['cheapest']}</p>
@@ -597,52 +707,37 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
 
     {render_telecom_box(city)}
 
-    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
-      <h2 class="text-sm font-bold">📌 お金・マナー・生活ルール詳細</h2>
-      <div class="text-xs space-y-2.5 text-slate-700 leading-relaxed">
-        <p><strong class="text-slate-900">💵 チップの詳細：</strong>{city['tip_detail']}</p>
-        <p><strong class="text-slate-900">🛍️ 税金・免税（Tax Free）：</strong>{city['tax_note']}</p>
-        <p><strong class="text-slate-900">🔌 変圧器・周波数（{city['frequency']}）：</strong>{city['transformer_note']}</p>
-        <p><strong class="text-slate-900">💧 水道水・氷：</strong>{city['tap_water_note']}</p>
-        <p><strong class="text-slate-900">☀️ サマータイム：</strong>{city['dst_note']}</p>
-      </div>
-      {render_epos_affiliate(city)}
-    </section>
-
     <section class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-l-rose-500 border border-slate-200 space-y-3">
       <div class="flex items-center justify-between flex-wrap gap-2">
-        <h2 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">🚨 安全・危険情報・日本大使館情報</h2>
+        <h2 class="text-sm font-extrabold text-slate-900">安全・危険情報・日本大使館連絡先</h2>
         <span class="text-[11px] bg-rose-50 text-rose-700 font-bold px-2.5 py-0.5 rounded-full border border-rose-200">緊急通報: {city['emergency_numbers']}</span>
       </div>
       <div class="p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between flex-wrap gap-1 {danger_badge_class(city['danger_color'])}">
-        <span>🛡️ 外務省 危険情報目安：{city['danger_level']}</span>
-        <a href="{city['mofa_url']}" target="_blank" rel="noopener noreferrer" class="underline text-[11px]">最新公式ページ ↗</a>
+        <span>外務省 危険情報目安：{city['danger_level']}</span>
+        <a href="{city['mofa_url']}" target="_blank" rel="noopener noreferrer" class="underline text-[11px]">外務省公式ページ ↗</a>
       </div>
       <div class="text-xs space-y-2 text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-        <p><strong class="text-slate-900">⚠️ 現地の治安・注意点：</strong>{city['safety_note']}</p>
-        <p><strong class="text-slate-900">🏛️ 日本大使館・総領事館：</strong>{city['embassy']}</p>
+        <p><strong class="text-slate-900">現地の治安・注意点：</strong>{city['safety_note']}</p>
+        <p><strong class="text-slate-900">日本大使館・総領事館：</strong>{city['embassy']}</p>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-        <a href="{city['mofa_url']}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition">
-          <span>🌐 外務省「{city['country_ja']}」安全情報を見る</span>
-          <span>↗</span>
+        <a href="{city['mofa_url']}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition">
+          外務省「{city['country_ja']}」安全情報を見る ↗
         </a>
-        <a href="https://www.ezairyu.mofa.go.jp/tabireg/index.html" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition">
-          <span>📩 外務省「たびレジ」に登録する（無料）</span>
-          <span>↗</span>
+        <a href="https://www.ezairyu.mofa.go.jp/tabireg/index.html" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition">
+          外務省「たびレジ」に登録する（無料） ↗
         </a>
       </div>
     </section>
 
-    <!-- 機能④：1タップ現地リアル度投票 -->
-    {render_quick_poll(city)}
+    {render_city_comparison_section(city, all_cities, city_compare_links)}
 
-    {render_share_buttons(page_url, share_title)}
+    {render_share_buttons(page_url, page_title)}
 
     {render_sister_site_banner()}
 
     <section class="pt-2">
-      <h3 class="text-xs font-bold text-slate-500 mb-2">🗺️ {city['region']}の他の都市をチェック</h3>
+      <h3 class="text-xs font-bold text-slate-500 mb-2">{city['region']}の他の都市をチェック</h3>
       <div class="flex flex-wrap gap-1.5">{related_html}</div>
     </section>
 
@@ -727,46 +822,17 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
       const target = new Date(dateInput.value + 'T00:00:00');
       const diffDays = Math.round((target - today) / 86400000);
       if (diffDays > 14) {{
-        countdownMsg.textContent = `✈️ 出発まであと${{diffDays}}日！アゴダでの宿確保やクレカ保険準備に最適な時期です`;
+        countdownMsg.textContent = `出発まであと${{diffDays}}日（パスポート残存期間・宿泊先・ビザ要件の確認時期です）`;
       }} else if (diffDays >= 1) {{
-        countdownMsg.textContent = `🔥 出発まであと${{diffDays}}日！eSIMとVPNの事前インストールをお忘れなく！`;
+        countdownMsg.textContent = `出発まであと${{diffDays}}日（通信手段・変換プラグ・常備薬の最終確認時期です）`;
       }} else if (diffDays === 0) {{
-        countdownMsg.textContent = `🎉 いよいよ本日出発！気をつけていってらっしゃいませ！`;
+        countdownMsg.textContent = `本日出発日です。安全なご渡航をお祈りいたします。`;
       }} else {{
-        countdownMsg.textContent = `🌟 渡航中・帰国後の現地チェックにもご活用ください`;
+        countdownMsg.textContent = `現地滞在中の時刻・為替・チップ確認にご活用ください。`;
       }}
     }}
     dateInput.addEventListener('change', updateCountdown);
     updateCountdown();
-
-    const checks = Array.from(document.querySelectorAll('.prep-check'));
-    function updateChecklistUI() {{
-      let done = 0;
-      checks.forEach(ch => {{
-        const key = `ck_${{citySlug}}_${{ch.dataset.ck}}`;
-        if (ch.checked) {{
-          done++;
-          localStorage.setItem(key, '1');
-        }} else {{
-          localStorage.removeItem(key);
-        }}
-      }});
-      document.getElementById('checklist-progress').textContent = `準備完了: ${{done}}/${{checks.length}}`;
-    }}
-    checks.forEach(ch => {{
-      const key = `ck_${{citySlug}}_${{ch.dataset.ck}}`;
-      if (localStorage.getItem(key) === '1') ch.checked = true;
-      ch.addEventListener('change', updateChecklistUI);
-    }});
-    updateChecklistUI();
-
-    function castVote(type) {{
-      localStorage.setItem('voted_' + citySlug, type);
-      document.getElementById('poll-thanks').textContent = '✨ ご回答ありがとうございます！統計に反映しました。';
-    }}
-    if (localStorage.getItem('voted_' + citySlug)) {{
-      document.getElementById('poll-thanks').textContent = '✨ 投票済み（ご協力ありがとうございます！）';
-    }}
 
     async function fetchWeather() {{
       try {{
@@ -781,30 +847,28 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list) -> str:
         const humidity = Math.round(wData.current.relative_humidity_2m);
         const code = wData.current.weather_code;
 
-        let icon = '☀️';
         let desc = '晴れ';
-        if (code >= 1 && code <= 3) {{ icon = '⛅'; desc = '晴れ時々曇り'; }}
-        else if (code >= 45 && code <= 48) {{ icon = '🌫️'; desc = '霧'; }}
-        else if (code >= 51 && code <= 67) {{ icon = '🌧️'; desc = '雨'; }}
-        else if (code >= 71 && code <= 77) {{ icon = '❄️'; desc = '雪'; }}
-        else if (code >= 80 && code <= 82) {{ icon = '🌦️'; desc = 'にわか雨'; }}
-        else if (code >= 95) {{ icon = '⛈️'; desc = '雷雨'; }}
+        if (code >= 1 && code <= 3) desc = '晴れ時々曇り';
+        else if (code >= 45 && code <= 48) desc = '霧';
+        else if (code >= 51 && code <= 67) desc = '雨';
+        else if (code >= 71 && code <= 77) desc = '雪';
+        else if (code >= 80 && code <= 82) desc = 'にわか雨';
+        else if (code >= 95) desc = '雷雨';
 
         let outfit = '';
-        if (temp >= 28) outfit = '服装目安：半袖・短パンで快適（屋内冷房対策に薄手の羽織りを1枚）';
+        if (temp >= 28) outfit = '服装目安：半袖・薄手の服（屋内冷房対策に薄手の羽織りを1枚）';
         else if (temp >= 22) outfit = '服装目安：半袖または薄手の長袖シャツが快適';
-        else if (temp >= 16) outfit = '服装目安：長袖＋カーディガンやパーカーなど羽織りもの必須';
-        else if (temp >= 10) outfit = '服装目安：ジャケットやトレンチコート・ニットが必要';
-        else outfit = '服装目安：冬物コート・ダウンやマフラーなどしっかり防寒対策を';
+        else if (temp >= 16) outfit = '服装目安：長袖＋カーディガンやジャケットなど羽織りもの必須';
+        else if (temp >= 10) outfit = '服装目安：コートやジャケット・ニットが必要';
+        else outfit = '服装目安：冬物コート・ダウンなど防寒対策が必須';
 
-        const dryNote = humidity <= 40 ? '（乾燥注意・保湿推奨）' : (humidity >= 80 ? '（高湿度・蒸し暑さ注意）' : '');
+        const dryNote = humidity <= 40 ? '（乾燥注意）' : (humidity >= 80 ? '（高湿度）' : '');
 
-        document.getElementById('weather-icon').textContent = icon;
         document.getElementById('weather-temp').textContent = `${{temp}}℃（${{desc}} / 湿度${{humidity}}%${{dryNote}}）`;
         document.getElementById('weather-outfit').textContent = outfit;
       }} catch (e) {{
         document.getElementById('weather-temp').textContent = '下の年間気候目安をご参照ください';
-        document.getElementById('weather-outfit').textContent = '渡航前に天気予報アプリで最新気温をご確認ください';
+        document.getElementById('weather-outfit').textContent = '渡航前に気象アプリ等で最新気温をご確認ください';
       }}
     }}
     fetchWeather();
@@ -817,20 +881,23 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
     pair_slug = f"{c1['slug']}-vs-{c2['slug']}"
     page_url = f"{SITE_URL}/compare/{pair_slug}/"
     title = f"{c1['name_ja']}と{c2['name_ja']}を徹底比較｜プラグ・チップ・気候・治安・空港移動の違い｜{SITE_NAME}"
+    desc = f"{c1['name_ja']}（{c1['country_ja']}）と{c2['name_ja']}（{c2['country_ja']}）の比較ガイド。コンセント・電圧・チップ・通貨レート・気候・5段階評価・外務省危険情報を1画面で比較。"
 
     r1 = rates_data["rates"].get(c1["currency_code"], 0.01)
     r2 = rates_data["rates"].get(c2["currency_code"], 0.01)
     jpy1 = round(1 / r1, 2) if r1 >= 0.005 else round(1 / r1, 4)
     jpy2 = round(1 / r2, 2) if r2 >= 0.005 else round(1 / r2, 4)
+    s1 = compute_city_star_ratings(c1)
+    s2 = compute_city_star_ratings(c2)
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {render_common_head()}
+  {render_common_head(title, desc, page_url)}
   <title>{title}</title>
-  <meta name="description" content="{c1['name_ja']}（{c1['country_ja']}）と{c2['name_ja']}（{c2['country_ja']}）のどっちに行くか迷っている方や2都市周遊する方向けに、コンセント・電圧・チップ・通貨レート・気候・外務省危険情報を1画面で比較。">
+  <meta name="description" content="{desc}">
   <link rel="canonical" href="{page_url}">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -838,15 +905,15 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
   {render_pr_banner()}
   <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
     <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="../../" class="font-bold text-slate-800 text-sm hover:text-blue-600 transition">🌐 {SITE_NAME}（トップへ戻る）</a>
+      <a href="../../" class="font-bold text-slate-800 text-sm hover:text-blue-600 transition">{SITE_NAME}（トップへ戻る）</a>
       <span class="text-xs bg-indigo-50 text-indigo-800 px-2.5 py-1 rounded-full font-bold">2都市比較ガイド</span>
     </div>
   </header>
 
   <main class="max-w-3xl mx-auto px-4 pt-5 space-y-5">
     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-      <span class="text-[10px] font-extrabold bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">旅行先比較・2都市周遊チェック</span>
-      <h1 class="text-xl sm:text-2xl font-extrabold">{c1['name_ja']} vs {c2['name_ja']} 現地情報・渡航スペック徹底比較</h1>
+      <span class="text-[10px] font-extrabold bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">渡航先比較・周遊チェック</span>
+      <h1 class="text-xl sm:text-2xl font-extrabold">{c1['name_ja']} vs {c2['name_ja']} 現地情報・渡航スペック比較</h1>
       <p class="text-xs text-slate-600 leading-relaxed">{summary_text}</p>
     </div>
 
@@ -861,37 +928,42 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
         </thead>
         <tbody class="divide-y divide-slate-200">
           <tr>
-            <th class="p-3 bg-slate-50 font-bold">🔌 コンセント・電圧</th>
+            <th class="p-3 bg-slate-50 font-bold">総合スペック評価</th>
+            <td class="p-3 border-l border-slate-100 font-bold text-amber-600">★ {s1['avg']:.1f} / 5.0（治安 ★{s1['safety']:.1f}・決済 ★{s1['cashless']:.1f}）</td>
+            <td class="p-3 border-l border-slate-100 font-bold text-amber-600">★ {s2['avg']:.1f} / 5.0（治安 ★{s2['safety']:.1f}・決済 ★{s2['cashless']:.1f}）</td>
+          </tr>
+          <tr>
+            <th class="p-3 bg-slate-50 font-bold">コンセント・電圧</th>
             <td class="p-3 border-l border-slate-100 font-bold">{c1['plug_type']}タイプ（{c1['voltage']} / {c1['frequency']}）</td>
             <td class="p-3 border-l border-slate-100 font-bold">{c2['plug_type']}タイプ（{c2['voltage']} / {c2['frequency']}）</td>
           </tr>
           <tr>
-            <th class="p-3 bg-slate-50 font-bold">💵 チップ習慣</th>
+            <th class="p-3 bg-slate-50 font-bold">チップ習慣</th>
             <td class="p-3 border-l border-slate-100"><strong>{c1['tip_badge']}</strong><br><span class="text-[11px] text-slate-500">{c1['tip_detail']}</span></td>
             <td class="p-3 border-l border-slate-100"><strong>{c2['tip_badge']}</strong><br><span class="text-[11px] text-slate-500">{c2['tip_detail']}</span></td>
           </tr>
           <tr>
-            <th class="p-3 bg-slate-50 font-bold">💱 通貨・為替目安</th>
+            <th class="p-3 bg-slate-50 font-bold">通貨・為替目安</th>
             <td class="p-3 border-l border-slate-100">{c1['currency_name']}（1{c1['currency_code']} ≒ {jpy1}円）</td>
             <td class="p-3 border-l border-slate-100">{c2['currency_name']}（1{c2['currency_code']} ≒ {jpy2}円）</td>
           </tr>
           <tr>
-            <th class="p-3 bg-slate-50 font-bold">💧 水道水</th>
-            <td class="p-3 border-l border-slate-100">{'💧飲用可' if c1['tap_water_safe'] else '⚠️飲用不可（市販水推奨）'}</td>
-            <td class="p-3 border-l border-slate-100">{'💧飲用可' if c2['tap_water_safe'] else '⚠️飲用不可（市販水推奨）'}</td>
+            <th class="p-3 bg-slate-50 font-bold">水道水</th>
+            <td class="p-3 border-l border-slate-100">{'飲用可' if c1['tap_water_safe'] else '飲用不可（市販水推奨）'}</td>
+            <td class="p-3 border-l border-slate-100">{'飲用可' if c2['tap_water_safe'] else '飲用不可（市販水推奨）'}</td>
           </tr>
           <tr>
-            <th class="p-3 bg-slate-50 font-bold">🌤️ 気候・季節感</th>
+            <th class="p-3 bg-slate-50 font-bold">気候・季節感</th>
             <td class="p-3 border-l border-slate-100 text-[11px] leading-relaxed">{c1['climate']}</td>
             <td class="p-3 border-l border-slate-100 text-[11px] leading-relaxed">{c2['climate']}</td>
           </tr>
           <tr>
-            <th class="p-3 bg-slate-50 font-bold">✈️ 空港アクセス</th>
+            <th class="p-3 bg-slate-50 font-bold">空港アクセス</th>
             <td class="p-3 border-l border-slate-100 text-[11px]">{c1['airport_access']['fastest']}</td>
             <td class="p-3 border-l border-slate-100 text-[11px]">{c2['airport_access']['fastest']}</td>
           </tr>
           <tr>
-            <th class="p-3 bg-slate-50 font-bold">🛡️ 外務省危険情報</th>
+            <th class="p-3 bg-slate-50 font-bold">外務省危険情報</th>
             <td class="p-3 border-l border-slate-100 text-[11px] font-bold">{c1['danger_level']}</td>
             <td class="p-3 border-l border-slate-100 text-[11px] font-bold">{c2['danger_level']}</td>
           </tr>
@@ -900,12 +972,12 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <a href="../../{c1['slug']}/" class="block bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs p-3.5 rounded-xl text-center transition">📍 {c1['name_ja']}のリアルタイム時計・天気を見る →</a>
-      <a href="../../{c2['slug']}/" class="block bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs p-3.5 rounded-xl text-center transition">📍 {c2['name_ja']}のリアルタイム時計・天気を見る →</a>
+      <a href="../../{c1['slug']}/" class="block bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs p-3.5 rounded-xl text-center transition">{c1['name_ja']}の生活ルール・詳細ページへ →</a>
+      <a href="../../{c2['slug']}/" class="block bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs p-3.5 rounded-xl text-center transition">{c2['name_ja']}の生活ルール・詳細ページへ →</a>
     </div>
 
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-      <h2 class="text-sm font-bold text-slate-800">🏨 {c1['name_ja']}・{c2['name_ja']}のホテル予約 ＆ 現地ツアー相談</h2>
+      <h2 class="text-sm font-bold text-slate-800">{c1['name_ja']}・{c2['name_ja']}のホテル予約 ＆ 現地ツアー相談</h2>
       {render_agoda_and_oooh_box(c1)}
     </section>
 
@@ -920,30 +992,33 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
 
 def build_feature_html(feat: dict, all_cities: list) -> str:
     page_url = f"{SITE_URL}/features/{feat['slug']}/"
+    page_title = f"{feat['title']}｜{SITE_NAME}"
     city_map = {c["slug"]: c for c in all_cities}
     selected = [city_map[s] for s in feat["cities"] if s in city_map]
 
-    cards = "".join([
-        f'<a href="../../{c["slug"]}/" class="block bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-500 shadow-sm transition space-y-1.5">'
-        f'<div class="flex items-center justify-between">'
-        f'<span class="font-extrabold text-sm text-slate-900">📍 {c["name_ja"]}</span>'
-        f'<span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold">{c["country_ja"]}</span>'
-        f'</div>'
-        f'<p class="text-[11px] text-slate-600 line-clamp-2">{c["climate"]}</p>'
-        f'<div class="text-[11px] text-slate-500 flex flex-wrap gap-2 pt-1">'
-        f'<span>🔌 {c["plug_type"]}</span><span>💵 チップ:{c["tip_badge"]}</span><span>💱 {c["currency_code"]}</span>'
-        f'</div>'
-        f'</a>'
-        for c in selected
-    ])
+    cards = ""
+    for c in selected:
+        r = compute_city_star_ratings(c)
+        cards += (
+            f'<a href="../../{c["slug"]}/" class="block bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-500 shadow-sm transition space-y-1.5">'
+            f'<div class="flex items-center justify-between">'
+            f'<span class="font-extrabold text-sm text-slate-900">{c["name_ja"]}</span>'
+            f'<span class="text-[11px] font-bold text-amber-600">★ {r["avg"]:.1f} <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded ml-1">{c["country_ja"]}</span></span>'
+            f'</div>'
+            f'<p class="text-[11px] text-slate-600 line-clamp-2">{c["climate"]}</p>'
+            f'<div class="text-[11px] text-slate-500 flex flex-wrap gap-2 pt-1">'
+            f'<span>プラグ: {c["plug_type"]}</span><span>チップ: {c["tip_badge"].split("（")[0]}</span><span>通貨: {c["currency_code"]}</span>'
+            f'</div>'
+            f'</a>'
+        )
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {render_common_head()}
-  <title>{feat['title']}｜{SITE_NAME}</title>
+  {render_common_head(page_title, feat['desc'], page_url)}
+  <title>{page_title}</title>
   <meta name="description" content="{feat['desc']}">
   <link rel="canonical" href="{page_url}">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -952,7 +1027,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
   {render_pr_banner()}
   <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
     <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="../../" class="font-bold text-slate-800 text-sm hover:text-blue-600 transition">🌐 {SITE_NAME}（全150都市一覧へ）</a>
+      <a href="../../" class="font-bold text-slate-800 text-sm hover:text-blue-600 transition">{SITE_NAME}（全150都市一覧へ）</a>
       <span class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded-full font-bold">{feat['badge']}</span>
     </div>
   </header>
@@ -967,7 +1042,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">{cards}</div>
 
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-      <h2 class="text-sm font-bold text-slate-800">🏨 渡航先のホテル格安予約 ＆ 現地オーダーメイド相談</h2>
+      <h2 class="text-sm font-bold text-slate-800">渡航先のホテル格安予約 ＆ 現地オーダーメイド相談</h2>
       {render_agoda_and_oooh_box(selected[0])}
     </section>
 
@@ -981,22 +1056,25 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
 
 
 def build_policy_html() -> str:
+    page_url = f"{SITE_URL}/policy/"
+    page_title = f"プライバシーポリシー・免責事項・運営者情報｜{SITE_NAME}"
+    page_desc = f"{SITE_NAME}のプライバシーポリシー、免責事項、運営者情報。"
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {render_common_head()}
-  <title>プライバシーポリシー・免責事項・運営者情報｜{SITE_NAME}</title>
+  {render_common_head(page_title, page_desc, page_url)}
+  <title>{page_title}</title>
   <meta name="robots" content="noindex">
-  <link rel="canonical" href="{SITE_URL}/policy/">
+  <link rel="canonical" href="{page_url}">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased pb-16">
   {render_pr_banner()}
   <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
     <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="../" class="font-bold text-slate-800 text-sm hover:text-blue-600 transition">🌐 {SITE_NAME}（トップへ戻る）</a>
+      <a href="../" class="font-bold text-slate-800 text-sm hover:text-blue-600 transition">{SITE_NAME}（トップへ戻る）</a>
     </div>
   </header>
 
@@ -1024,9 +1102,11 @@ def build_policy_html() -> str:
 </html>"""
 
 
-def build_index_html(cities: list, rates_data: dict) -> str:
+def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: list) -> str:
     unique_regions = ["すべて"] + sorted(list({c["region"] for c in cities}))
-    share_title = f"{SITE_NAME}｜世界{len(cities)}都市の時差・天気・コンセント・チップ・治安を1画面で即答"
+    page_url = f"{SITE_URL}/"
+    page_title = f"{SITE_NAME}｜世界{len(cities)}都市の時差・天気/気候・コンセント・チップ・生活ルール・危険情報"
+    page_desc = f"海外旅行や留学・出張の渡航前や空港ですぐに知りたい世界{len(cities)}都市の現在時刻・時差・リアルタイム気温・気候・コンセント・チップ計算機・生活マナー・最新為替・外務省危険情報を1画面で即解決。"
     city_map = {c["slug"]: c for c in cities}
 
     region_buttons = "".join([
@@ -1037,13 +1117,14 @@ def build_index_html(cities: list, rates_data: dict) -> str:
 
     card_list = []
     for c in cities:
+        r = compute_city_star_ratings(c)
         if c["special_ui"] == "china_vpn":
-            vpn_badge = '<span class="text-[10px] text-rose-600 font-bold">🛡️要VPN/eSIM</span>'
+            vpn_badge = '<span class="text-[10px] text-rose-600 font-bold">要VPN/eSIM</span>'
         elif c["special_ui"] == "vpn_recommended":
-            vpn_badge = '<span class="text-[10px] text-indigo-600 font-bold">🔒VPN推奨</span>'
+            vpn_badge = '<span class="text-[10px] text-indigo-600 font-bold">VPN推奨</span>'
         else:
             vpn_badge = ""
-        danger_dot = '<span class="text-[10px] text-amber-700 font-bold">⚠️危険情報あり</span>' if c["danger_color"] != "emerald" else ""
+        danger_dot = '<span class="text-[10px] text-amber-700 font-bold">注意喚起あり</span>' if c["danger_color"] != "emerald" else ""
         tip_short = c["tip_badge"].split("（")[0]
         search_str = f'{c["name_ja"]} {c["kana_kw"]} {c["name_en"].lower()} {c["country_ja"]} {c["currency_code"].lower()}'
         card_list.append(
@@ -1053,12 +1134,12 @@ def build_index_html(cities: list, rates_data: dict) -> str:
             f'class="city-card block bg-white p-3.5 rounded-2xl border border-slate-200 hover:border-blue-500 shadow-sm transition">'
             f'<div class="flex items-center justify-between gap-1">'
             f'<span class="font-extrabold text-sm text-slate-900">{c["name_ja"]}</span>'
-            f'<span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium shrink-0">{c["country_ja"]}</span>'
+            f'<span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium shrink-0">{c["country_ja"]} / ★{r["avg"]:.1f}</span>'
             f'</div>'
             f'<div class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-2 flex-wrap">'
-            f'<span>🔌 {c["plug_type"]}</span>'
-            f'<span>💱 {c["currency_code"]}</span>'
-            f'<span>💵 チップ{tip_short}</span>'
+            f'<span>プラグ:{c["plug_type"]}</span>'
+            f'<span>通貨:{c["currency_code"]}</span>'
+            f'<span>チップ:{tip_short}</span>'
             f'{vpn_badge}'
             f'{danger_dot}'
             f'</div>'
@@ -1067,18 +1148,18 @@ def build_index_html(cities: list, rates_data: dict) -> str:
     cards_html = "\n".join(card_list)
 
     feature_links = "".join([
-        f'<a href="./features/{f["slug"]}/" class="block bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-3.5 rounded-2xl hover:border-blue-500 transition">'
+        f'<a href="./features/{f["slug"]}/" class="block bg-white border border-slate-200 p-3 rounded-xl hover:border-blue-500 shadow-sm transition">'
         f'<span class="text-[10px] font-extrabold bg-blue-600 text-white px-2 py-0.5 rounded">{f["badge"]}</span>'
-        f'<p class="text-xs font-extrabold text-slate-900 mt-1">{f["title"]}</p>'
+        f'<p class="text-xs font-extrabold text-slate-900 mt-1 leading-snug">{f["title"]}</p>'
         f'</a>'
         for f in FEATURE_PAGES
     ])
 
     compare_links = "".join([
-        f'<a href="./compare/{s1}-vs-{s2}/" class="text-xs bg-white border border-slate-200 px-3 py-2 rounded-xl font-bold text-slate-700 hover:border-indigo-500 hover:text-indigo-700 transition">'
-        f'⚔️ {city_map[s1]["name_ja"]} vs {city_map[s2]["name_ja"]}'
+        f'<a href="./compare/{s1}-vs-{s2}/" class="text-[11px] bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg font-bold text-slate-700 hover:border-indigo-500 hover:text-indigo-700 transition">'
+        f'{city_map[s1]["name_ja"]} vs {city_map[s2]["name_ja"]}'
         f'</a>'
-        for s1, s2, _ in COMPARE_PAIRS if s1 in city_map and s2 in city_map
+        for s1, s2, _ in featured_compare_pairs if s1 in city_map and s2 in city_map
     ])
 
     return f"""<!DOCTYPE html>
@@ -1086,44 +1167,56 @@ def build_index_html(cities: list, rates_data: dict) -> str:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {render_common_head()}
-  <title>{SITE_NAME}｜世界{len(cities)}都市の時差・天気/気候・コンセント・チップ・危険情報・為替を1画面で即答</title>
-  <meta name="description" content="海外旅行や留学・出張の渡航前や空港ですぐに知りたい世界{len(cities)}都市の現在時刻・時差・リアルタイム気温・気候・コンセント形状・電圧・チップ計算機・最新為替レート・外務省危険情報をスクロールなしで即解決。">
-  <link rel="canonical" href="{SITE_URL}/">
+  {render_common_head(page_title, page_desc, page_url, og_type="website")}
+  <title>{page_title}</title>
+  <meta name="description" content="{page_desc}">
+  <link rel="canonical" href="{page_url}">
   <link rel="manifest" href="./manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased pb-16">
   {render_pr_banner()}
-  <main class="max-w-3xl mx-auto px-4 pt-7 space-y-6">
-    <div class="text-center space-y-2">
-      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">🌐 {SITE_NAME}</h1>
-      <p class="text-xs sm:text-sm text-slate-600">世界{len(cities)}都市の「時差・気温/気候・プラグ・チップ計算・為替・空港移動・外務省危険情報」を1画面で即答</p>
+  <main class="max-w-3xl mx-auto px-4 pt-7 space-y-5">
+    <div class="text-center space-y-1.5">
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">{SITE_NAME}</h1>
+      <p class="text-xs sm:text-sm text-slate-600">世界{len(cities)}都市の「時差・気温/気候・プラグ・チップ・生活マナー・為替・外務省危険情報」を1画面で即答</p>
     </div>
 
+    <!-- 検索バー（最上部固定） -->
     <div class="sticky top-2 z-30 bg-slate-50/95 backdrop-blur py-2 space-y-2.5">
       <div class="relative">
-        <input id="search" type="text" autocomplete="off" placeholder="🔍 ひらがな・都市名・国名で予測検索（例：ばり、ぷさん、ロンドン、たいわん）"
+        <input id="search" type="text" autocomplete="off" placeholder="ひらがな・都市名・国名で予測検索（例：ばり、ぷさん、ロンドン、たいわん）"
           class="w-full p-3.5 rounded-2xl border border-slate-300 bg-white shadow-sm text-sm focus:outline-none focus:border-blue-500">
         <div id="suggest-box" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-64 overflow-y-auto z-40 divide-y divide-slate-100"></div>
       </div>
       <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">{region_buttons}</div>
     </div>
 
-    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{cards_html}</div>
-
-    <section class="space-y-3 pt-2">
-      <h2 class="text-sm font-extrabold text-slate-800">✈️ 季節特集・人気2都市比較ガイド</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">{feature_links}</div>
-      <div class="flex flex-wrap gap-2 pt-1">{compare_links}</div>
+    <!-- 検索バーのすぐ下に「季節・テーマ別特集（6本）」＆「人気2都市比較ガイド」を配置 -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs sm:text-sm font-extrabold text-slate-900">季節・テーマ別特集 ＆ 人気2都市比較ガイド</h2>
+        <span class="text-[10px] text-slate-400">全150都市の比較に対応</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">{feature_links}</div>
+      <details class="group pt-1">
+        <summary class="cursor-pointer text-xs font-bold text-indigo-700 hover:text-indigo-900 flex items-center justify-between bg-indigo-50/60 px-3 py-2 rounded-xl border border-indigo-100 list-none">
+          <span>人気の2都市比較ページ一覧（ソウル vs 台北、ロンドン vs パリ、ホノルル vs グアム 他）</span>
+          <span class="text-[10px] group-open:hidden">一覧を開く ▼</span>
+          <span class="text-[10px] hidden group-open:inline">閉じる ▲</span>
+        </summary>
+        <div class="flex flex-wrap gap-1.5 pt-2.5">{compare_links}</div>
+      </details>
     </section>
+
+    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{cards_html}</div>
 
     {render_sister_site_banner()}
 
-    {render_share_buttons(SITE_URL + "/", share_title)}
+    {render_share_buttons(page_url, page_title)}
 
     <footer class="pt-6 text-center text-xs text-slate-400 space-y-2">
-      <p>🔗 安全な渡航のために：<a href="https://www.anzen.mofa.go.jp/" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-600">外務省 海外安全ホームページ</a> / <a href="https://www.ezairyu.mofa.go.jp/tabireg/index.html" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-600">たびレジ</a></p>
+      <p>安全な渡航のために：<a href="https://www.anzen.mofa.go.jp/" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-600">外務省 海外安全ホームページ</a> / <a href="https://www.ezairyu.mofa.go.jp/tabireg/index.html" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-600">たびレジ</a></p>
       <p><a href="./policy/" class="underline hover:text-slate-600">プライバシーポリシー・免責事項・運営者情報</a></p>
       <p>© {SITE_NAME} ({SITE_URL})</p>
     </footer>
@@ -1168,7 +1261,7 @@ def build_index_html(cities: list, rates_data: dict) -> str:
       if (q.length > 0 && matchedCards.length > 0) {{
         suggestBox.innerHTML = matchedCards.slice(0, 8).map(c => `
           <a href="./${{c.dataset.slug}}/" class="flex items-center justify-between px-4 py-2.5 hover:bg-blue-50 transition text-xs">
-            <span class="font-bold text-slate-900">📍 ${{c.dataset.name}}</span>
+            <span class="font-bold text-slate-900">${{c.dataset.name}}</span>
             <span class="text-slate-500">${{c.dataset.country}} →</span>
           </a>
         `).join('');
