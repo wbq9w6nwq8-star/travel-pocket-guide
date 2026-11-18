@@ -12,7 +12,7 @@ import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from config import SITE_URL, SITE_NAME, OGP_IMAGE_FILENAME, COMPARE_PAIRS, FEATURE_PAGES
+from config import SITE_URL, SITE_NAME, OGP_IMAGE_FILENAME, FAVICON_FILENAME, COMPARE_PAIRS, FEATURE_PAGES
 from cities_data import generate_cities_data
 from templates import (
     build_city_html, build_index_html, build_policy_html,
