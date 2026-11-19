@@ -815,19 +815,18 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
 
     <section class="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200 rounded-2xl p-3.5 space-y-2">
       <div class="flex items-center justify-between gap-2">
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-xs font-bold text-slate-700">現在の現地気温・天気:</span>
-            <span id="weather-temp" class="text-sm font-extrabold text-sky-900">取得中...</span>
+        <div class="flex items-center gap-2.5">
+          <span id="weather-icon" class="text-2xl">⛅</span>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold text-slate-700">現在の現地気温・天気:</span>
+              <span id="weather-temp" class="text-sm font-extrabold text-sky-900">取得中...</span>
+            </div>
+            <p id="weather-outfit" class="text-[11px] font-medium text-sky-950 mt-0.5">現地の気象データから服装の目安を計算しています...</p>
           </div>
-          <p id="weather-outfit" class="text-[11px] font-medium text-sky-950 mt-0.5">現地の気象データから服装の目安を計算しています...</p>
         </div>
         <span class="text-[10px] bg-white/90 text-sky-800 px-2 py-0.5 rounded-full font-bold shrink-0 border border-sky-200">LIVE気象</span>
       </div>
-      <div class="bg-white/75 rounded-xl p-2.5 text-[11px] text-slate-700 leading-relaxed border border-sky-100">
-        <strong class="text-slate-900">年間の気候・季節感・乾燥度：</strong>{city['climate']}
-      </div>
-    </section>
 
     <section class="grid grid-cols-2 gap-2.5">
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
@@ -1051,7 +1050,8 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
         else outfit = '服装目安：冬物コート・ダウンなど防寒対策が必須';
 
         const dryNote = humidity <= 40 ? '（乾燥注意）' : (humidity >= 80 ? '（高湿度）' : '');
-
+       
+        document.getElementById('weather-icon').textContent = icon;
         document.getElementById('weather-temp').textContent = `${{temp}}℃（${{desc}} / 湿度${{humidity}}%${{dryNote}}）`;
         document.getElementById('weather-outfit').textContent = outfit;
       }} catch (e) {{
