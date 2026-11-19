@@ -827,7 +827,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
         </div>
         <span class="text-[10px] bg-white/90 text-sky-800 px-2 py-0.5 rounded-full font-bold shrink-0 border border-sky-200">LIVE気象</span>
       </div>
-
+      
     <section class="grid grid-cols-2 gap-2.5">
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
         <div class="flex items-center justify-between">
@@ -1051,10 +1051,10 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
 
         const dryNote = humidity <= 40 ? '（乾燥注意）' : (humidity >= 80 ? '（高湿度）' : '');
        
-        document.getElementById('weather-icon').textContent = icon;
         document.getElementById('weather-temp').textContent = `${{temp}}℃（${{desc}} / 湿度${{humidity}}%${{dryNote}}）`;
         document.getElementById('weather-outfit').textContent = outfit;
       }} catch (e) {{
+        document.getElementById('weather-icon').textContent = icon;
         document.getElementById('weather-temp').textContent = '下の年間気候目安をご参照ください';
         document.getElementById('weather-outfit').textContent = '渡航前に気象アプリ等で最新気温をご確認ください';
       }}
