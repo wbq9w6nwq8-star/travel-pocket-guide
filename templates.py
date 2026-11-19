@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 HTML・UIデザイン・テンプレート管理ファイル (templates.py)
-- OGP画像 (ogp.png) 全ページ完全対応
+- OGP画像 (ogp.png) & ファビコン (youka.png) 全ページ完全対応
 - 絵文字を抑えた実用辞典トーン
-- 5段階星評価（★1.0〜5.0）による客観的な都市スペック評価
-- トップページの検索バー直下に「季節特集（6本）」＆「2都市比較ガイド」を配置
-- 全150都市が比較ページを持ち、各都市ページ内にも比較セクションを表示
-- チェックリストを廃止し、シンプルな「出発日カウントダウンカレンダー」に整理
-- 「お金・マナー・生活ルール詳細」の情報量を大幅拡充
+- ざっくり物価目安（水・ランチ・タクシーの3品目）
+- 5段階星評価の評価基準明記
+- 軽量・定番スポット3選＋旅行会社（Agoda / Oooh）導線
+- 150×150都市対応の動的2都市比較ツール
+- 1年カレンダー（おすすめ時期・穴場時期・雪＆冬シーズン目安）
 """
 
 import json
@@ -49,10 +49,9 @@ def danger_badge_class(color: str) -> str:
 
 
 def render_common_head(page_title: str, page_desc: str, page_url: str, og_type: str = "article") -> str:
-    """全ページ共通のOGP・Twitterカード（ogp.png）・AdSense・GA4タグを生成"""
     return f"""<link rel="icon" type="image/png" sizes="48x48" href="{FAVICON_URL}">
   <link rel="icon" type="image/png" sizes="192x192" href="{FAVICON_URL}">
-  <link rel="apple-touch-icon" href="{FAVICON_URL}"> href="{OGP_IMAGE_URL}">
+  <link rel="apple-touch-icon" href="{FAVICON_URL}">
   <meta property="og:site_name" content="{SITE_NAME}">
   <meta property="og:title" content="{page_title}">
   <meta property="og:description" content="{page_desc}">
@@ -138,7 +137,6 @@ def render_sister_site_banner() -> str:
 
 
 def render_countdown_calendar(city: dict) -> str:
-    """チェックリストを廃止し、シンプルで使いやすい出発日カウントダウンカレンダーのみに整理"""
     return f"""
     <section class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between flex-wrap gap-2">
       <div class="flex items-center gap-2">
@@ -149,15 +147,67 @@ def render_countdown_calendar(city: dict) -> str:
     </section>"""
 
 
-def render_tip_split_calculator(city: dict, local_to_jpy: float) -> str:
+def compute_price_benchmarks(city: dict, jpy_to_local: float, local_to_jpy: float) -> dict:
+    """身近な3品目（ペットボトル水500ml・ローカルランチ・タクシー移動目安）のざっくり相場観を算出"""
+    code = city["currency_code"]
+    cheap_curr = ("VND", "THB", "IDR", "PHP", "MYR", "INR", "LKR", "NPR", "EGP", "UZS", "MAD", "PLN", "HUF", "CZK")
+    mid_curr = ("KRW", "TWD", "CNY", "TRY", "MXN", "PEN", "BRL", "ZAR")
+
+    if code in cheap_curr:
+        water_jpy, lunch_jpy, taxi_jpy = 80, 700, 1200
+    elif code in mid_curr:
+        water_jpy, lunch_jpy, taxi_jpy = 140, 1200, 1800
+    else:
+        water_jpy, lunch_jpy, taxi_jpy = 260, 2400, 3200
+
+    def fmt_pair(jpy_val: int) -> str:
+        local_val = jpy_val * jpy_to_local
+        if local_val >= 1000:
+            loc_str = f"{round(local_val, -1):,.0f}"
+        elif local_val >= 10:
+            loc_str = f"{local_val:,.1f}"
+        else:
+            loc_str = f"{local_val:.2f}"
+        return f"約 {jpy_val:,}円（{loc_str} {code}）"
+
+    return {
+        "water": fmt_pair(water_jpy),
+        "lunch": fmt_pair(lunch_jpy),
+        "taxi": fmt_pair(taxi_jpy),
+    }
+
+
+def render_tip_split_calculator(city: dict, jpy_to_local: float, local_to_jpy: float) -> str:
     code = city["currency_code"]
     default_tip = 18 if city["tip_level"] == "required" else (10 if city["tip_level"] == "optional" else 0)
+    bench = compute_price_benchmarks(city, jpy_to_local, local_to_jpy)
+
     return f"""
-    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3.5">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-bold text-slate-800">レストラン・タクシー用「チップ＆割り勘」計算機</h2>
-        <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">現地会計ツール</span>
+        <h2 class="text-sm font-bold text-slate-800">チップ＆割り勘計算機 ＆ ざっくり物価目安</h2>
+        <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">現地予算ツール</span>
       </div>
+
+      <!-- 身近な3品目のざっくり相場観 -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5">
+        <p class="text-[11px] font-bold text-slate-800">{city['name_ja']}のざっくり物価目安（日本円換算の目安）</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+          <div class="bg-white p-2 rounded-lg border border-slate-100">
+            <span class="text-[10px] text-slate-500 block">水（500ml・商店目安）</span>
+            <strong class="text-slate-900">{bench['water']}</strong>
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-100">
+            <span class="text-[10px] text-slate-500 block">昼食（食堂・カジュアル店）</span>
+            <strong class="text-slate-900">{bench['lunch']}</strong>
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-100">
+            <span class="text-[10px] text-slate-500 block">市内タクシー（短〜中距離目安）</span>
+            <strong class="text-slate-900">{bench['taxi']}</strong>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
           <label class="block text-[10px] font-bold text-slate-500 mb-1">1. お会計金額（{code}）</label>
@@ -202,110 +252,229 @@ def render_tip_split_calculator(city: dict, local_to_jpy: float) -> str:
 
 
 def compute_city_star_ratings(city: dict) -> dict:
-    """各都市のデータから5段階（★1.0〜5.0）の客観的評価スコアを算出"""
-    # 1. 治安・夜間の安心度
+    """5段階（★1.0〜5.0）の評価スコアと各指標の根拠ラベルを算出"""
     if city["danger_color"] == "emerald":
-        safety = 4.6 if city["country_ja"] in ("シンガポール", "台湾", "韓国", "アイスランド", "フィンランド", "スイス", "オーストラリア", "ニュージーランド", "アラブ首長国連邦（UAE）", "カタール") else 4.2
+        if city["country_ja"] in ("シンガポール", "台湾", "韓国", "アイスランド", "フィンランド", "スイス", "オーストラリア", "ニュージーランド", "アラブ首長国連邦（UAE）", "カタール"):
+            safety, safety_note = 4.6, "治安安定・夜間も比較的安心"
+        else:
+            safety, safety_note = 4.2, "主要観光地は比較的安定"
     else:
-        safety = 3.4
+        safety, safety_note = 3.4, "スリ・夜間行動に注意が必要"
 
-    # 2. キャッシュレス普及度
     if city["special_ui"] in ("europe_cashless", "korea_nav", "us_tip_medical"):
-        cashless = 4.8
+        cashless, cashless_note = 4.8, "タッチ決済・カードが広く普及"
     elif city["special_ui"] == "china_vpn":
-        cashless = 4.7  # Alipay/WeChat Pay極度普及
+        cashless, cashless_note = 4.7, "QR決済主流（事前準備推奨）"
     else:
-        cashless = 3.8
+        cashless, cashless_note = 3.8, "カード＋少額現金の併用が安心"
 
-    # 3. 英語の通じやすさ
     eng_high = ("アメリカ", "グアム・サイパン（米国準州）", "カナダ", "イギリス", "オーストラリア", "ニュージーランド", "シンガポール", "フィリピン", "マルタ", "オランダ", "スウェーデン", "ノルウェー", "デンマーク", "フィンランド", "アイスランド", "マレーシア", "アラブ首長国連邦（UAE）")
     eng_mid = ("韓国", "台湾", "タイ", "香港", "スイス", "ドイツ", "オーストリア", "ギリシャ", "クロアチア", "ポルトガル", "インド")
     if city["country_ja"] in eng_high:
-        english = 4.8
+        english, english_note = 4.8, "英語が広く通じる環境"
     elif city["country_ja"] in eng_mid:
-        english = 4.0
+        english, english_note = 4.0, "観光地・ホテルで英語が通じやすい"
     else:
-        english = 3.3
+        english, english_note = 3.3, "翻訳アプリや指差し併用が安心"
 
-    # 4. 現地物価のコスパ（日本基準）
     cheap_curr = ("VND", "THB", "IDR", "PHP", "MYR", "INR", "LKR", "NPR", "EGP", "UZS", "MAD", "PLN", "HUF", "CZK")
     mid_curr = ("KRW", "TWD", "CNY", "TRY", "MXN", "PEN", "BRL", "ZAR")
     if city["currency_code"] in cheap_curr:
-        cost = 4.6
+        cost, cost_note = 4.6, "日本より割安感がある水準"
     elif city["currency_code"] in mid_curr:
-        cost = 4.0
+        cost, cost_note = 4.0, "日本と同等〜やや手頃な水準"
     else:
-        cost = 3.1
+        cost, cost_note = 3.1, "外食や宿泊はやや高めの水準"
 
     avg = round((safety + cashless + english + cost) / 4, 1)
     return {
         "avg": avg,
-        "safety": safety,
-        "cashless": cashless,
-        "english": english,
-        "cost": cost
+        "safety": safety, "safety_note": safety_note,
+        "cashless": cashless, "cashless_note": cashless_note,
+        "english": english, "english_note": english_note,
+        "cost": cost, "cost_note": cost_note,
     }
 
 
-def render_star_bar(score: float) -> str:
+def render_star_bar(score: float, note: str) -> str:
     full_stars = int(round(score))
     stars_str = "★" * full_stars + "☆" * (5 - full_stars)
     pct = int((score / 5.0) * 100)
     return f"""
-      <div class="flex items-center gap-2">
+      <div class="flex items-center justify-between gap-1">
         <span class="text-amber-500 font-bold text-xs tracking-tight">{stars_str}</span>
         <span class="font-extrabold text-xs text-slate-900">{score:.1f}</span>
       </div>
       <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
         <div class="bg-amber-500 h-full" style="width: {pct}%"></div>
-      </div>"""
+      </div>
+      <p class="text-[10px] text-slate-500 mt-1">{note}</p>"""
 
 
 def render_city_rating_box(city: dict) -> str:
-    """ダミー投票を廃止し、利用者に誠実な「5段階星評価（★1.0〜5.0）の渡航しやすさ指標」を表示"""
     r = compute_city_star_ratings(city)
     return f"""
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
       <div class="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h2 class="text-sm font-bold text-slate-900">{city['name_ja']}の渡航しやすさ・現地スペック評価（5段階）</h2>
-          <p class="text-[11px] text-slate-500 mt-0.5">外務省安全情報・決済インフラ・物価水準に基づく当サイト編集部の標準評価指標</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">評価基準：★5＝日本同等以上に快適・割安 / ★4＝一般的な海外旅行で問題なし / ★3＝事前対策や予算確保を推奨</p>
         </div>
         <div class="bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl flex items-center gap-1.5">
-          <span class="text-xs font-bold text-slate-700">総合評価</span>
+          <span class="text-xs font-bold text-slate-700">総合</span>
           <span class="text-amber-500 font-extrabold text-sm">★ {r['avg']:.1f}</span>
           <span class="text-[10px] text-slate-400">/ 5.0</span>
         </div>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <span class="text-[11px] font-bold text-slate-600 block">治安・観光安心度</span>
-          {render_star_bar(r['safety'])}
+          <span class="text-[11px] font-bold text-slate-700 block mb-0.5">治安・観光安心度</span>
+          {render_star_bar(r['safety'], r['safety_note'])}
         </div>
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <span class="text-[11px] font-bold text-slate-600 block">キャッシュレス決済</span>
-          {render_star_bar(r['cashless'])}
+          <span class="text-[11px] font-bold text-slate-700 block mb-0.5">キャッシュレス決済</span>
+          {render_star_bar(r['cashless'], r['cashless_note'])}
         </div>
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <span class="text-[11px] font-bold text-slate-600 block">英語・案内通用度</span>
-          {render_star_bar(r['english'])}
+          <span class="text-[11px] font-bold text-slate-700 block mb-0.5">英語・案内通用度</span>
+          {render_star_bar(r['english'], r['english_note'])}
         </div>
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <span class="text-[11px] font-bold text-slate-600 block">現地物価コスパ</span>
-          {render_star_bar(r['cost'])}
+          <span class="text-[11px] font-bold text-slate-700 block mb-0.5">現地物価コスパ</span>
+          {render_star_bar(r['cost'], r['cost_note'])}
         </div>
       </div>
     </section>"""
 
 
+def render_annual_calendar_box(city: dict) -> str:
+    """1年カレンダー（1月〜12月）：おすすめ時期・混んでない穴場時期・雪＆冬景色が楽しめる時期の一覧"""
+    region = city["region"]
+    climate = city["climate"]
+    is_snow_friendly = (
+        region in ("ヨーロッパ", "北米")
+        or "雪" in climate
+        or city["slug"] in ("sapporo", "seoul", "beijing", "harbin", "almaty", "astana", "reykjavik", "oslo", "stockholm", "helsinki", "zurich", "vienna", "munich", "prague", "toronto", "vancouver", "banff", "new-york", "chicago", "boston", "queenstown")
+    )
+
+    # 地域・気候に応じた12ヶ月のステータス定義（R: おすすめ / Q: 混みにくい穴場 / S: 雪・冬景色 / W: 雨・暑さ/寒さ注意）
+    months_info = []
+    for m in range(1, 13):
+        if region == "オセアニア":
+            if m in (11, 12, 1, 2):
+                tag, cls, tip = "おすすめ（暖候期）", "bg-blue-50 text-blue-800 border-blue-200", "日照が長く観光・アウトドアに好適"
+            elif m in (5, 6, 8):
+                tag, cls, tip = "穴場・比較的空く", "bg-emerald-50 text-emerald-800 border-emerald-200", "人混みを避けて落ち着いた滞在が可能"
+            else:
+                tag, cls, tip = "過ごしやすい時期", "bg-slate-100 text-slate-700 border-slate-200", "朝晩の寒暖差に羽織りものが便利"
+        elif region in ("ヨーロッパ", "北米"):
+            if m in (5, 6, 9, 10):
+                tag, cls, tip = "おすすめ・快適", "bg-blue-50 text-blue-800 border-blue-200", "気候が安定し街歩きしやすい季節"
+            elif m in (1, 2):
+                if is_snow_friendly:
+                    tag, cls, tip = "雪・冬景色＆穴場", "bg-indigo-50 text-indigo-900 border-indigo-200", "冬の街並み・雪景色と落ち着いた旅費"
+                else:
+                    tag, cls, tip = "穴場・オフシーズン", "bg-emerald-50 text-emerald-800 border-emerald-200", "観光客が少なく落ち着いた時期"
+            elif m in (11, 3):
+                tag, cls, tip = "穴場・比較的空く", "bg-emerald-50 text-emerald-800 border-emerald-200", "繁忙期を外した狙い目の時期"
+            else:
+                tag, cls, tip = "繁忙・日照長め", "bg-amber-50 text-amber-800 border-amber-200", "日没が遅いが混雑や暑さに注意"
+        else:
+            # アジア・中東・中南米・アフリカなど
+            if m in (11, 12, 1, 2, 3):
+                tag, cls, tip = "おすすめ・乾季/快適", "bg-blue-50 text-blue-800 border-blue-200", "雨が少なく観光しやすい時期"
+            elif m in (6, 9):
+                tag, cls, tip = "穴場・比較的空く", "bg-emerald-50 text-emerald-800 border-emerald-200", "大型連休を外した狙い目の時期"
+            else:
+                tag, cls, tip = "雨季・暑さ注意", "bg-amber-50 text-amber-800 border-amber-200", "スコールや蒸し暑さ対策が必要"
+
+        months_info.append((f"{m}月", tag, cls, tip))
+
+    snow_summary = (
+        "12月〜2月を中心に雪景色や冬の街並み・ウィンターシーズンが楽しめるエリアです（防寒対策必須）。"
+        if is_snow_friendly else
+        "年間を通じて降雪は少なく、冬でも雪景色より温暖・南国気候が中心のエリアです。"
+    )
+
+    month_cells = "".join([
+        f'<div class="p-2 rounded-xl border {cls} text-center">'
+        f'<div class="text-xs font-extrabold">{m_label}</div>'
+        f'<div class="text-[10px] font-bold mt-0.5">{tag}</div>'
+        f'</div>'
+        for m_label, tag, cls, _ in months_info
+    ])
+
+    return f"""
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+      <div class="flex items-center justify-between flex-wrap gap-1">
+        <h2 class="text-sm font-bold text-slate-900">{city['name_ja']}の1年カレンダー（おすすめ・穴場・雪シーズン）</h2>
+        <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2.5 py-0.5 rounded-full">1月〜12月一覧</span>
+      </div>
+
+      <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        {month_cells}
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5 text-slate-700 leading-relaxed">
+        <p><strong class="text-slate-900">おすすめの時期：</strong>気候が安定し観光しやすいシーズンを優先するのが基本です。{city['climate']}</p>
+        <p><strong class="text-slate-900">混んでない・穴場の時期：</strong>大型連休やピークシーズンを少し外した時期は、人混みや航空券・宿泊費のピークを避けやすくなります。</p>
+        <p><strong class="text-slate-900">雪・ウィンターシーズン目安：</strong>{snow_summary}</p>
+      </div>
+    </section>"""
+
+
+def render_sightseeing_and_agency_box(city: dict) -> str:
+    """軽量な定番スポット3選（画像なし・低負荷）＋旅行会社（アゴダ・Oooh）導線"""
+    name = city["name_ja"]
+    region = city["region"]
+    spots = [
+        {
+            "title": f"{name}の旧市街・歴史シンボル地区",
+            "desc": "街の成り立ちや建築・文化を体感できる定番エリア。午前中の早い時間帯に回ると比較的歩きやすく写真も撮りやすいスポットです。"
+        },
+        {
+            "title": f"{name}のローカル市場・グルメ横丁",
+            "desc": "現地の食文化や日常の活気を感じられる人気スポット。現金の扱い方やスリ対策を意識しつつ、昼食や軽食を楽しむのに最適です。"
+        },
+        {
+            "title": f"{name}の展望スポット・ waterfront / 公園エリア",
+            "desc": "街全体の景色や夕景を楽しめる開放的なエリア。移動ルートに合わせて組み込むと旅程のメリハリがつきやすくなります。"
+        }
+    ]
+
+    spot_cards = "".join([
+        f'<div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">'
+        f'<div class="flex items-center justify-between gap-2">'
+        f'<span class="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded">定番スポット 0{idx + 1}</span>'
+        f'<span class="text-[10px] text-slate-400">{region}</span>'
+        f'</div>'
+        f'<p class="text-xs font-extrabold text-slate-900 pt-0.5">{sp["title"]}</p>'
+        f'<p class="text-[11px] text-slate-600 leading-relaxed">{sp["desc"]}</p>'
+        f'</div>'
+        for idx, sp in enumerate(spots)
+    ])
+
+    return f"""
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+      <div class="flex items-center justify-between flex-wrap gap-1">
+        <h2 class="text-sm font-bold text-slate-900">{name}の定番観光スポット目安 ＆ 宿・現地手配</h2>
+        <span class="text-[10px] text-slate-400">軽量テキスト表示</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        {spot_cards}
+      </div>
+
+      {render_agoda_and_oooh_box(city)}
+    </section>"""
+
+
 def render_detailed_rules_and_manners(city: dict) -> str:
-    """当サイトの肝である「お金・マナー・生活ルール詳細」を大幅に情報拡充"""
     cc = city["country_ja"]
     curr = city["currency_code"]
 
-    # 1. 両替・カード決済・ATMの鉄則
     if city["special_ui"] == "china_vpn":
-        payment_rule = f"中国本土では現金（{curr}）以上に「Alipay（アリペイ）」と「WeChat Pay」が必須です。日本出発前にアプリを入れ、日本のクレジットカード（Visa/Mastercard）を紐付けて本人認証を済ませてください。屋台から地下鉄までQR決済で完結します。"
+        payment_rule = f"中国本土では現金（{curr}）以上に「Alipay」と「WeChat Pay」が必須です。日本出発前にアプリを入れ、日本のクレジットカード（Visa/Mastercard）を紐付けて本人認証を済ませてください。屋台から地下鉄までQR決済で完結します。"
     elif city["special_ui"] == "korea_nav":
         payment_rule = f"韓国は95%以上がクレジットカードのタッチ決済で完結します。ただし地下鉄・バス用の交通カード（T-moneyまたはWOWPASS）へのチャージや屋台用に、1日あたり2万〜3万ウォン程度の少額現金を空港または市内公認両替所で用意すると便利です。"
     elif city["special_ui"] == "europe_cashless":
@@ -315,7 +484,6 @@ def render_detailed_rules_and_manners(city: dict) -> str:
     else:
         payment_rule = f"大型ホテルやショッピングモールではクレジットカード（Visa/Mastercard）が使えますが、ローカル食堂・市場・チップ用に現地通貨（{curr}）の現金も必要です。日本の空港での両替はレートが悪いため、現地空港のATMでのキャッシングまたは市内公認両替所の利用が最もお得です。カード決済時は必ず『現地通貨建て（{curr}）』を選択してください。"
 
-    # 2. トイレ・衛生・街歩きルール
     if cc in ("韓国", "台湾", "タイ", "ベトナム", "フィリピン", "インドネシア", "カンボジア", "中国", "ギリシャ", "トルコ", "エジプト", "モロッコ", "メキシコ", "ペルー", "ボリビア", "ブラジル"):
         toilet_rule = "水圧や配管の構造上、トイレットペーパーを便器に流さず「備え付けのゴミ箱」に捨てる施設が多くあります（空港や最新高級ホテルを除く）。また紙が備え付けられていない公衆トイレもあるため、水に流せるポケットティッシュと除菌ウェットティッシュの携帯が必須です。"
     elif city["region"] == "ヨーロッパ":
@@ -323,7 +491,6 @@ def render_detailed_rules_and_manners(city: dict) -> str:
     else:
         toilet_rule = "トイレットペーパーはそのまま流せますが、日本のようにコンビニで自由にトイレを借りられない都市が多いため、大型ショッピングモール・ホテル・利用中のカフェやレストランで済ませておくのが安心です。"
 
-    # 3. 現地の重要マナー・法律規制（喫煙・飲酒・服装・写真撮影）
     if cc in ("タイ", "シンガポール", "台湾", "香港", "マカオ", "インド"):
         taboo_rule = f"{cc}では『電子タバコ（VAPE）や加熱式タバコ（IQOS等）の持ち込み・所持・使用』が法律で厳しく禁止されており、違反すると高額な罰金や没収の対象となります。また地下鉄・駅構内での飲食禁止（台湾・シンガポール・香港など）や、寺院訪問時の露出の多い服装（短パン・ノースリーブ）にも注意してください。"
     elif cc in ("アラブ首長国連邦（UAE）", "カタール", "エジプト", "モロッコ", "トルコ", "マレーシア", "インドネシア", "モルディブ", "ウズベキスタン"):
@@ -510,7 +677,6 @@ def render_epos_affiliate(city: dict) -> str:
 
 
 def render_city_comparison_section(city: dict, all_cities: list, city_compare_links: list) -> str:
-    """全150都市のページ内に「他都市とのスペック比較表＆比較ページへのリンク」を表示"""
     same_region = [c for c in all_cities if c["region"] == city["region"] and c["slug"] != city["slug"]][:3]
     if not same_region:
         same_region = [c for c in all_cities if c["slug"] != city["slug"]][:3]
@@ -564,8 +730,8 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
     local_to_jpy = round(1 / jpy_to_local, 2) if jpy_to_local >= 0.005 else round(1 / jpy_to_local, 4)
     thousand_jpy_in_local = round(1000 * jpy_to_local, 2)
     page_url = f"{SITE_URL}/{city['slug']}/"
-    page_title = f"{city['name_ja']}の現地情報まとめ｜時差・天気/気候・コンセント({city['plug_type']})・チップ・生活ルール・危険情報"
-    page_desc = f"{city['name_ja']}（{city['country_ja']}）の現在時刻・時差、現在の気温・年間の気候、コンセント（{city['plug_type']}）・電圧（{city['voltage']}）、チップ計算機、お金・トイレ・マナー詳細、外務省危険情報を1画面で即確認。"
+    page_title = f"{city['name_ja']}の現地情報まとめ｜時差・天気/1年カレンダー・コンセント({city['plug_type']})・チップ・生活ルール"
+    page_desc = f"{city['name_ja']}（{city['country_ja']}）の現在時刻・時差、現在の気温・1年カレンダー、コンセント（{city['plug_type']}）・電圧（{city['voltage']}）、チップ＆割り勘計算機、ざっくり物価目安、お金・トイレ・マナー詳細を1画面で即確認。"
 
     related = [c for c in all_cities if c["region"] == city["region"] and c["slug"] != city["slug"]][:14]
     related_html = "".join([
@@ -584,7 +750,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
             },
             {
                 "@type": "Question",
-                "name": f"{city['name_ja']}の気候・季節感・服装の目安は？",
+                "name": f"{city['name_ja']}の気候・季節感・おすすめの時期は？",
                 "acceptedAnswer": {"@type": "Answer", "text": city['climate']}
             },
             {
@@ -689,12 +855,14 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
 
     {render_city_rating_box(city)}
 
+    {render_annual_calendar_box(city)}
+
     {render_detailed_rules_and_manners(city)}
 
-    {render_tip_split_calculator(city, local_to_jpy)}
+    {render_tip_split_calculator(city, jpy_to_local, local_to_jpy)}
 
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
-      <h2 class="text-sm font-bold text-slate-800">{city['airport_access']['airport_name']}から市内への移動 ＆ 宿泊・現地手配</h2>
+      <h2 class="text-sm font-bold text-slate-800">{city['airport_access']['airport_name']}から市内への移動</h2>
       <div class="text-xs space-y-2 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
         <p><span class="inline-block bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">最速・快適</span>{city['airport_access']['fastest']}</p>
         <p><span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">最安・定番</span>{city['airport_access']['cheapest']}</p>
@@ -702,8 +870,9 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
       <div class="text-xs text-slate-700 pt-1">
         <strong class="text-slate-900">必須の移動・配車アプリ：</strong>{', '.join(city['transport_apps'])}
       </div>
-      {render_agoda_and_oooh_box(city)}
     </section>
+
+    {render_sightseeing_and_agency_box(city)}
 
     {render_telecom_box(city)}
 
@@ -877,11 +1046,12 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
 </html>"""
 
 
-def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) -> str:
+def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, all_cities: list) -> str:
+    """比較ページ（全150×150都市をプルダウンで自由に比較できるインタラクティブ機能付き）"""
     pair_slug = f"{c1['slug']}-vs-{c2['slug']}"
     page_url = f"{SITE_URL}/compare/{pair_slug}/"
     title = f"{c1['name_ja']}と{c2['name_ja']}を徹底比較｜プラグ・チップ・気候・治安・空港移動の違い｜{SITE_NAME}"
-    desc = f"{c1['name_ja']}（{c1['country_ja']}）と{c2['name_ja']}（{c2['country_ja']}）の比較ガイド。コンセント・電圧・チップ・通貨レート・気候・5段階評価・外務省危険情報を1画面で比較。"
+    desc = f"{c1['name_ja']}（{c1['country_ja']}）と{c2['name_ja']}（{c2['country_ja']}）の比較ガイド。任意の2都市の組み合わせ比較にも対応。"
 
     r1 = rates_data["rates"].get(c1["currency_code"], 0.01)
     r2 = rates_data["rates"].get(c2["currency_code"], 0.01)
@@ -889,6 +1059,39 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
     jpy2 = round(1 / r2, 2) if r2 >= 0.005 else round(1 / r2, 4)
     s1 = compute_city_star_ratings(c1)
     s2 = compute_city_star_ratings(c2)
+
+    compact_cities = []
+    for c in all_cities:
+        sr = compute_city_star_ratings(c)
+        rc = rates_data["rates"].get(c["currency_code"], 0.01)
+        jc = round(1 / rc, 2) if rc >= 0.005 else round(1 / rc, 4)
+        compact_cities.append({
+            "slug": c["slug"],
+            "name_ja": c["name_ja"],
+            "country_ja": c["country_ja"],
+            "plug_type": c["plug_type"],
+            "voltage": c["voltage"],
+            "frequency": c["frequency"],
+            "tip_badge": c["tip_badge"],
+            "tip_detail": c["tip_detail"],
+            "currency_name": c["currency_name"],
+            "currency_code": c["currency_code"],
+            "jpy_rate": jc,
+            "tap_water": "飲用可" if c["tap_water_safe"] else "飲用不可（市販水推奨）",
+            "climate": c["climate"],
+            "fastest": c["airport_access"]["fastest"],
+            "danger_level": c["danger_level"],
+            "avg_star": sr["avg"]
+        })
+
+    options_1 = "".join([
+        f'<option value="{c["slug"]}" {"selected" if c["slug"] == c1["slug"] else ""}>{c["name_ja"]}（{c["country_ja"]}）</option>'
+        for c in all_cities
+    ])
+    options_2 = "".join([
+        f'<option value="{c["slug"]}" {"selected" if c["slug"] == c2["slug"] else ""}>{c["name_ja"]}（{c["country_ja"]}）</option>'
+        for c in all_cities
+    ])
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
@@ -912,80 +1115,129 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict) 
 
   <main class="max-w-3xl mx-auto px-4 pt-5 space-y-5">
     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-      <span class="text-[10px] font-extrabold bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">渡航先比較・周遊チェック</span>
-      <h1 class="text-xl sm:text-2xl font-extrabold">{c1['name_ja']} vs {c2['name_ja']} 現地情報・渡航スペック比較</h1>
-      <p class="text-xs text-slate-600 leading-relaxed">{summary_text}</p>
+      <span class="text-[10px] font-extrabold bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">渡航先比較・150×150組み合わせ対応</span>
+      <h1 id="comp-h1" class="text-xl sm:text-2xl font-extrabold">{c1['name_ja']} vs {c2['name_ja']} 現地情報・渡航スペック比較</h1>
+      <p id="comp-summary" class="text-xs text-slate-600 leading-relaxed">{summary_text}</p>
     </div>
+
+    <!-- 任意の2都市を自由に選んでその場で比較できるセレクター -->
+    <section class="bg-white p-4 rounded-2xl border border-indigo-200 shadow-sm space-y-2.5">
+      <p class="text-xs font-extrabold text-slate-900">全{len(all_cities)}都市から好きな2都市を選んでその場で比較（{len(all_cities)}×{len(all_cities)}通り対応）</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">比較する都市 A</label>
+          <select id="sel-city-1" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800">{options_1}</select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">比較する都市 B</label>
+          <select id="sel-city-2" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800">{options_2}</select>
+        </div>
+      </div>
+    </section>
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <table class="w-full text-left border-collapse text-xs">
         <thead>
           <tr class="bg-slate-900 text-white">
             <th class="p-3 w-1/4">比較項目</th>
-            <th class="p-3 w-[37.5%] border-l border-slate-700"><a href="../../{c1['slug']}/" class="underline hover:text-blue-300">{c1['name_ja']}（{c1['country_ja']}）↗</a></th>
-            <th class="p-3 w-[37.5%] border-l border-slate-700"><a href="../../{c2['slug']}/" class="underline hover:text-blue-300">{c2['name_ja']}（{c2['country_ja']}）↗</a></th>
+            <th id="th-c1" class="p-3 w-[37.5%] border-l border-slate-700"><a href="../../{c1['slug']}/" class="underline hover:text-blue-300">{c1['name_ja']}（{c1['country_ja']}）↗</a></th>
+            <th id="th-c2" class="p-3 w-[37.5%] border-l border-slate-700"><a href="../../{c2['slug']}/" class="underline hover:text-blue-300">{c2['name_ja']}（{c2['country_ja']}）↗</a></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
           <tr>
             <th class="p-3 bg-slate-50 font-bold">総合スペック評価</th>
-            <td class="p-3 border-l border-slate-100 font-bold text-amber-600">★ {s1['avg']:.1f} / 5.0（治安 ★{s1['safety']:.1f}・決済 ★{s1['cashless']:.1f}）</td>
-            <td class="p-3 border-l border-slate-100 font-bold text-amber-600">★ {s2['avg']:.1f} / 5.0（治安 ★{s2['safety']:.1f}・決済 ★{s2['cashless']:.1f}）</td>
+            <td id="td-star-1" class="p-3 border-l border-slate-100 font-bold text-amber-600">★ {s1['avg']:.1f} / 5.0</td>
+            <td id="td-star-2" class="p-3 border-l border-slate-100 font-bold text-amber-600">★ {s2['avg']:.1f} / 5.0</td>
           </tr>
           <tr>
             <th class="p-3 bg-slate-50 font-bold">コンセント・電圧</th>
-            <td class="p-3 border-l border-slate-100 font-bold">{c1['plug_type']}タイプ（{c1['voltage']} / {c1['frequency']}）</td>
-            <td class="p-3 border-l border-slate-100 font-bold">{c2['plug_type']}タイプ（{c2['voltage']} / {c2['frequency']}）</td>
+            <td id="td-plug-1" class="p-3 border-l border-slate-100 font-bold">{c1['plug_type']}タイプ（{c1['voltage']} / {c1['frequency']}）</td>
+            <td id="td-plug-2" class="p-3 border-l border-slate-100 font-bold">{c2['plug_type']}タイプ（{c2['voltage']} / {c2['frequency']}）</td>
           </tr>
           <tr>
             <th class="p-3 bg-slate-50 font-bold">チップ習慣</th>
-            <td class="p-3 border-l border-slate-100"><strong>{c1['tip_badge']}</strong><br><span class="text-[11px] text-slate-500">{c1['tip_detail']}</span></td>
-            <td class="p-3 border-l border-slate-100"><strong>{c2['tip_badge']}</strong><br><span class="text-[11px] text-slate-500">{c2['tip_detail']}</span></td>
+            <td id="td-tip-1" class="p-3 border-l border-slate-100"><strong>{c1['tip_badge']}</strong><br><span class="text-[11px] text-slate-500">{c1['tip_detail']}</span></td>
+            <td id="td-tip-2" class="p-3 border-l border-slate-100"><strong>{c2['tip_badge']}</strong><br><span class="text-[11px] text-slate-500">{c2['tip_detail']}</span></td>
           </tr>
           <tr>
             <th class="p-3 bg-slate-50 font-bold">通貨・為替目安</th>
-            <td class="p-3 border-l border-slate-100">{c1['currency_name']}（1{c1['currency_code']} ≒ {jpy1}円）</td>
-            <td class="p-3 border-l border-slate-100">{c2['currency_name']}（1{c2['currency_code']} ≒ {jpy2}円）</td>
+            <td id="td-curr-1" class="p-3 border-l border-slate-100">{c1['currency_name']}（1{c1['currency_code']} ≒ {jpy1}円）</td>
+            <td id="td-curr-2" class="p-3 border-l border-slate-100">{c2['currency_name']}（1{c2['currency_code']} ≒ {jpy2}円）</td>
           </tr>
           <tr>
             <th class="p-3 bg-slate-50 font-bold">水道水</th>
-            <td class="p-3 border-l border-slate-100">{'飲用可' if c1['tap_water_safe'] else '飲用不可（市販水推奨）'}</td>
-            <td class="p-3 border-l border-slate-100">{'飲用可' if c2['tap_water_safe'] else '飲用不可（市販水推奨）'}</td>
+            <td id="td-water-1" class="p-3 border-l border-slate-100">{'飲用可' if c1['tap_water_safe'] else '飲用不可（市販水推奨）'}</td>
+            <td id="td-water-2" class="p-3 border-l border-slate-100">{'飲用可' if c2['tap_water_safe'] else '飲用不可（市販水推奨）'}</td>
           </tr>
           <tr>
             <th class="p-3 bg-slate-50 font-bold">気候・季節感</th>
-            <td class="p-3 border-l border-slate-100 text-[11px] leading-relaxed">{c1['climate']}</td>
-            <td class="p-3 border-l border-slate-100 text-[11px] leading-relaxed">{c2['climate']}</td>
+            <td id="td-clim-1" class="p-3 border-l border-slate-100 text-[11px] leading-relaxed">{c1['climate']}</td>
+            <td id="td-clim-2" class="p-3 border-l border-slate-100 text-[11px] leading-relaxed">{c2['climate']}</td>
           </tr>
           <tr>
             <th class="p-3 bg-slate-50 font-bold">空港アクセス</th>
-            <td class="p-3 border-l border-slate-100 text-[11px]">{c1['airport_access']['fastest']}</td>
-            <td class="p-3 border-l border-slate-100 text-[11px]">{c2['airport_access']['fastest']}</td>
+            <td id="td-air-1" class="p-3 border-l border-slate-100 text-[11px]">{c1['airport_access']['fastest']}</td>
+            <td id="td-air-2" class="p-3 border-l border-slate-100 text-[11px]">{c2['airport_access']['fastest']}</td>
           </tr>
           <tr>
             <th class="p-3 bg-slate-50 font-bold">外務省危険情報</th>
-            <td class="p-3 border-l border-slate-100 text-[11px] font-bold">{c1['danger_level']}</td>
-            <td class="p-3 border-l border-slate-100 text-[11px] font-bold">{c2['danger_level']}</td>
+            <td id="td-dan-1" class="p-3 border-l border-slate-100 text-[11px] font-bold">{c1['danger_level']}</td>
+            <td id="td-dan-2" class="p-3 border-l border-slate-100 text-[11px] font-bold">{c2['danger_level']}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <a href="../../{c1['slug']}/" class="block bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs p-3.5 rounded-xl text-center transition">{c1['name_ja']}の生活ルール・詳細ページへ →</a>
-      <a href="../../{c2['slug']}/" class="block bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs p-3.5 rounded-xl text-center transition">{c2['name_ja']}の生活ルール・詳細ページへ →</a>
+      <a id="btn-c1" href="../../{c1['slug']}/" class="block bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs p-3.5 rounded-xl text-center transition">{c1['name_ja']}の生活ルール・詳細ページへ →</a>
+      <a id="btn-c2" href="../../{c2['slug']}/" class="block bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs p-3.5 rounded-xl text-center transition">{c2['name_ja']}の生活ルール・詳細ページへ →</a>
     </div>
 
-    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-      <h2 class="text-sm font-bold text-slate-800">{c1['name_ja']}・{c2['name_ja']}のホテル予約 ＆ 現地ツアー相談</h2>
-      {render_agoda_and_oooh_box(c1)}
-    </section>
-
+    {render_sightseeing_and_agency_box(c1)}
     {render_telecom_box(c1)}
     {render_share_buttons(page_url, title)}
   </main>
   {render_pixels()}
-  <script>{render_share_script()}</script>
+  <script>
+    {render_share_script()}
+    const CITIES_DB = {json.dumps(compact_cities, ensure_ascii=False)};
+    const cityBySlug = Object.fromEntries(CITIES_DB.map(c => [c.slug, c]));
+    const sel1 = document.getElementById('sel-city-1');
+    const sel2 = document.getElementById('sel-city-2');
+
+    function renderDynamicCompare() {{
+      const a = cityBySlug[sel1.value];
+      const b = cityBySlug[sel2.value];
+      if (!a || !b) return;
+      document.getElementById('comp-h1').textContent = `${{a.name_ja}} vs ${{b.name_ja}} 現地情報・渡航スペック比較`;
+      document.getElementById('comp-summary').textContent = `${{a.name_ja}}（${{a.country_ja}}）と${{b.name_ja}}（${{b.country_ja}}）のコンセント・チップ・通貨・気候・安全情報を並べています。`;
+      document.getElementById('th-c1').innerHTML = `<a href="../../${{a.slug}}/" class="underline hover:text-blue-300">${{a.name_ja}}（${{a.country_ja}}）↗</a>`;
+      document.getElementById('th-c2').innerHTML = `<a href="../../${{b.slug}}/" class="underline hover:text-blue-300">${{b.name_ja}}（${{b.country_ja}}）↗</a>`;
+      document.getElementById('td-star-1').textContent = `★ ${{a.avg_star.toFixed(1)}} / 5.0`;
+      document.getElementById('td-star-2').textContent = `★ ${{b.avg_star.toFixed(1)}} / 5.0`;
+      document.getElementById('td-plug-1').textContent = `${{a.plug_type}}タイプ（${{a.voltage}} / ${{a.frequency}}）`;
+      document.getElementById('td-plug-2').textContent = `${{b.plug_type}}タイプ（${{b.voltage}} / ${{b.frequency}}）`;
+      document.getElementById('td-tip-1').innerHTML = `<strong>${{a.tip_badge}}</strong><br><span class="text-[11px] text-slate-500">${{a.tip_detail}}</span>`;
+      document.getElementById('td-tip-2').innerHTML = `<strong>${{b.tip_badge}}</strong><br><span class="text-[11px] text-slate-500">${{b.tip_detail}}</span>`;
+      document.getElementById('td-curr-1').textContent = `${{a.currency_name}}（1${{a.currency_code}} ≒ ${{a.jpy_rate}}円）`;
+      document.getElementById('td-curr-2').textContent = `${{b.currency_name}}（1${{b.currency_code}} ≒ ${{b.jpy_rate}}円）`;
+      document.getElementById('td-water-1').textContent = a.tap_water;
+      document.getElementById('td-water-2').textContent = b.tap_water;
+      document.getElementById('td-clim-1').textContent = a.climate;
+      document.getElementById('td-clim-2').textContent = b.climate;
+      document.getElementById('td-air-1').textContent = a.fastest;
+      document.getElementById('td-air-2').textContent = b.fastest;
+      document.getElementById('td-dan-1').textContent = a.danger_level;
+      document.getElementById('td-dan-2').textContent = b.danger_level;
+      document.getElementById('btn-c1').href = `../../${{a.slug}}/`;
+      document.getElementById('btn-c1').textContent = `${{a.name_ja}}の生活ルール・詳細ページへ →`;
+      document.getElementById('btn-c2').href = `../../${{b.slug}}/`;
+      document.getElementById('btn-c2').textContent = `${{b.name_ja}}の生活ルール・詳細ページへ →`;
+    }}
+    sel1.addEventListener('change', renderDynamicCompare);
+    sel2.addEventListener('change', renderDynamicCompare);
+  </script>
 </body>
 </html>"""
 
@@ -1041,11 +1293,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">{cards}</div>
 
-    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-      <h2 class="text-sm font-bold text-slate-800">渡航先のホテル格安予約 ＆ 現地オーダーメイド相談</h2>
-      {render_agoda_and_oooh_box(selected[0])}
-    </section>
-
+    {render_sightseeing_and_agency_box(selected[0])}
     {render_telecom_box(selected[0])}
     {render_share_buttons(page_url, feat['title'])}
   </main>
@@ -1105,8 +1353,8 @@ def build_policy_html() -> str:
 def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: list) -> str:
     unique_regions = ["すべて"] + sorted(list({c["region"] for c in cities}))
     page_url = f"{SITE_URL}/"
-    page_title = f"{SITE_NAME}｜世界{len(cities)}都市の時差・天気/気候・コンセント・チップ・生活ルール・危険情報"
-    page_desc = f"海外旅行や留学・出張の渡航前や空港ですぐに知りたい世界{len(cities)}都市の現在時刻・時差・リアルタイム気温・気候・コンセント・チップ計算機・生活マナー・最新為替・外務省危険情報を1画面で即解決。"
+    page_title = f"{SITE_NAME}｜世界{len(cities)}都市の時差・天気/1年カレンダー・コンセント・チップ・生活ルール"
+    page_desc = f"海外旅行や留学・出張の渡航前や空港ですぐに知りたい世界{len(cities)}都市の現在時刻・時差・リアルタイム気温・1年カレンダー・コンセント・チップ計算機・生活マナー・最新為替を1画面で即解決。"
     city_map = {c["slug"]: c for c in cities}
 
     region_buttons = "".join([
@@ -1179,10 +1427,9 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
   <main class="max-w-3xl mx-auto px-4 pt-7 space-y-5">
     <div class="text-center space-y-1.5">
       <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">{SITE_NAME}</h1>
-      <p class="text-xs sm:text-sm text-slate-600">世界{len(cities)}都市の「時差・気温/気候・プラグ・チップ・生活マナー・為替・外務省危険情報」を1画面で即答</p>
+      <p class="text-xs sm:text-sm text-slate-600">世界{len(cities)}都市の「時差・気温/1年カレンダー・プラグ・チップ計算・生活マナー・為替・外務省危険情報」を1画面で即答</p>
     </div>
 
-    <!-- 検索バー（最上部固定） -->
     <div class="sticky top-2 z-30 bg-slate-50/95 backdrop-blur py-2 space-y-2.5">
       <div class="relative">
         <input id="search" type="text" autocomplete="off" placeholder="ひらがな・都市名・国名で予測検索（例：ばり、ぷさん、ロンドン、たいわん）"
@@ -1192,16 +1439,15 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
       <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">{region_buttons}</div>
     </div>
 
-    <!-- 検索バーのすぐ下に「季節・テーマ別特集（6本）」＆「人気2都市比較ガイド」を配置 -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
       <div class="flex items-center justify-between">
-        <h2 class="text-xs sm:text-sm font-extrabold text-slate-900">季節・テーマ別特集 ＆ 人気2都市比較ガイド</h2>
-        <span class="text-[10px] text-slate-400">全150都市の比較に対応</span>
+        <h2 class="text-xs sm:text-sm font-extrabold text-slate-900">季節・テーマ別特集 ＆ 2都市比較ガイド</h2>
+        <span class="text-[10px] text-slate-400">全{len(cities)}×{len(cities)}都市比較に対応</span>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">{feature_links}</div>
       <details class="group pt-1">
         <summary class="cursor-pointer text-xs font-bold text-indigo-700 hover:text-indigo-900 flex items-center justify-between bg-indigo-50/60 px-3 py-2 rounded-xl border border-indigo-100 list-none">
-          <span>人気の2都市比較ページ一覧（ソウル vs 台北、ロンドン vs パリ、ホノルル vs グアム 他）</span>
+          <span>2都市比較ページを開く（任意の2都市を自由に組み合わせて比較可能）</span>
           <span class="text-[10px] group-open:hidden">一覧を開く ▼</span>
           <span class="text-[10px] hidden group-open:inline">閉じる ▲</span>
         </summary>
