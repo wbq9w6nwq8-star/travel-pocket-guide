@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ビルド実行エンジン (setup_and_build.py)
-- OGPサムネイル画像 (ogp.png) を dist/ に自動コピー
+- OGPサムネイル画像 (ogp.png) とファビコン (youka.png) を dist/ に自動コピー
 - 全150都市すべてが比較ページを持つように自動ペアリング生成
 """
 
@@ -51,9 +51,6 @@ def fetch_exchange_rates() -> dict:
 
 
 def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
-    """
-    指定された20ペアに加え、全150都市が必ず1つ以上の比較ページを持つように同地域の隣都市と自動ペアリング
-    """
     city_map = {c["slug"]: c for c in cities}
     all_pairs = []
     seen_slugs = set()
@@ -69,7 +66,6 @@ def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
                 city_to_links[s1].append((pair_slug, label))
                 city_to_links[s2].append((pair_slug, label))
 
-    # まだ比較ペアが1つもない都市を同地域の都市と自動ペアリング
     by_region = {}
     for c in cities:
         by_region.setdefault(c["region"], []).append(c)
@@ -96,14 +92,14 @@ def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
 
 def write_auxiliary_files(dist_dir: Path):
     (dist_dir / "CNAME").write_text("tokou-pocket.com\n", encoding="utf-8")
-    favicon_src = Path(FAVICON_FILENAME)
-    if favicon_src.exists():
-        shutil.copy2(favicon_src, dist_dir / FAVICON_FILENAME)
 
-    # リポジトリ直下に ogp.png があれば dist/ogp.png に自動コピー
     ogp_src = Path(OGP_IMAGE_FILENAME)
     if ogp_src.exists():
         shutil.copy2(ogp_src, dist_dir / OGP_IMAGE_FILENAME)
+
+    favicon_src = Path(FAVICON_FILENAME)
+    if favicon_src.exists():
+        shutil.copy2(favicon_src, dist_dir / FAVICON_FILENAME)
 
     manifest = {
         "name": SITE_NAME,
@@ -147,7 +143,6 @@ def main():
 
     urls = [f"{SITE_URL}/"]
 
-    # 1. 各都市ページ生成（全都市に比較リンク＆5段階評価＆生活ルール詳細を反映）
     for city in cities:
         city_dir = dist_dir / city["slug"]
         city_dir.mkdir(parents=True, exist_ok=True)
@@ -155,16 +150,14 @@ def main():
         (city_dir / "index.html").write_text(html, encoding="utf-8")
         urls.append(f"{SITE_URL}/{city['slug']}/")
 
-    # 2. 全都市網羅の2都市比較ページ生成 (/compare/slug1-vs-slug2/)
     for s1, s2, summary_text in all_compare_pairs:
         pair_slug = f"{s1}-vs-{s2}"
         comp_dir = dist_dir / "compare" / pair_slug
         comp_dir.mkdir(parents=True, exist_ok=True)
-        comp_html = build_compare_html(city_map[s1], city_map[s2], summary_text, rates_data)
+        comp_html = build_compare_html(city_map[s1], city_map[s2], summary_text, rates_data, cities)
         (comp_dir / "index.html").write_text(comp_html, encoding="utf-8")
         urls.append(f"{SITE_URL}/compare/{pair_slug}/")
 
-    # 3. 季節・テーマ別特集ハブページ生成（全6特集）
     for feat in FEATURE_PAGES:
         feat_dir = dist_dir / "features" / feat["slug"]
         feat_dir.mkdir(parents=True, exist_ok=True)
@@ -172,7 +165,6 @@ def main():
         (feat_dir / "index.html").write_text(feat_html, encoding="utf-8")
         urls.append(f"{SITE_URL}/features/{feat['slug']}/")
 
-    # 4. トップページ＆ポリシーページ生成
     index_html = build_index_html(cities, rates_data, COMPARE_PAIRS)
     (dist_dir / "index.html").write_text(index_html, encoding="utf-8")
 
@@ -180,14 +172,13 @@ def main():
     policy_dir.mkdir(parents=True, exist_ok=True)
     (policy_dir / "index.html").write_text(build_policy_html(), encoding="utf-8")
 
-    # 5. サイトマップ＆robots.txt更新
     sitemap_items = "\n".join([f"  <url><loc>{u}</loc></url>" for u in urls])
     sitemap_xml = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{sitemap_items}\n</urlset>'
     (dist_dir / "sitemap.xml").write_text(sitemap_xml, encoding="utf-8")
     (dist_dir / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
 
     write_auxiliary_files(dist_dir)
-    print(f"ビルド完了: 全 {len(urls)} ページ（150都市＋比較{len(all_compare_pairs)}ペア＋特集{len(FEATURE_PAGES)}本）を生成しました。")
+    print(f"ビルド完了: 全 {len(urls)} ページ（{len(cities)}都市＋比較{len(all_compare_pairs)}ペア＋特集{len(FEATURE_PAGES)}本）を生成しました。")
 
 
 if __name__ == "__main__":
