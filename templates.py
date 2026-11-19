@@ -1994,8 +1994,8 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
     city_map = {c["slug"]: c for c in cities}
 
     region_buttons = "".join([
-        f'<button type="button" data-region="{r}" class="region-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition" '
-        f'style="{"background: var(--text-primary); color: var(--bg-canvas);" if r == "すべて" else "background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary);"}">{r}</button>'
+        f'<button type="button" data-region="{r}" class="region-btn shrink-0 px-3 py-1 rounded-full text-xs transition" '
+        f'style="{"background: var(--accent); color: #ffffff; font-weight: 700; border: 1px solid var(--accent);" if r == "すべて" else "background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary); font-weight: 500;"}">{r}</button>'
         for r in unique_regions
     ])
 
@@ -2005,7 +2005,7 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
         if c["special_ui"] == "china_vpn":
             vpn_badge = '<span class="status-inline status-inline--danger"><span class="status-dot"></span>要VPN/eSIM</span>'
         elif c["special_ui"] == "vpn_recommended":
-            vpn_badge = '<span class="text-[10px] font-bold" style="color: var(--accent-text);">VPN推奨</span>'
+            vpn_badge = '<span class="text-[10px] font-semibold" style="color: var(--accent-text);">VPN推奨</span>'
         else:
             vpn_badge = ""
         danger_dot = '<span class="status-inline status-inline--warn"><span class="status-dot"></span>注意喚起</span>' if c["danger_color"] != "emerald" else ""
@@ -2015,12 +2015,12 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
             f'<a href="./{c["slug"]}/" data-region="{c["region"]}" '
             f'data-name="{c["name_ja"]}" data-country="{c["country_ja"]}" data-slug="{c["slug"]}" '
             f'data-search="{search_str}" '
-            f'class="city-card ed-surface block p-3.5">'
-            f'<div class="flex items-center justify-between gap-1">'
-            f'<span class="font-extrabold text-sm" style="color: var(--text-primary);">{c["name_ja"]}</span>'
-            f'<span class="text-[11px] font-bold tabular-nums" style="color: var(--accent-text);">{r["avg"]:.1f} <span class="text-[10px] font-normal ml-0.5" style="color: var(--text-muted);">/ {c["country_ja"]}</span></span>'
+            f'class="city-card ed-surface block px-3.5 py-3">'
+            f'<div class="flex items-baseline justify-between gap-2">'
+            f'<span class="font-bold text-sm" style="color: var(--text-primary);">{c["name_ja"]}</span>'
+            f'<span class="text-[11px] tabular-nums shrink-0" style="color: var(--text-muted);"><strong class="font-bold" style="color: var(--accent-text);">{r["avg"]:.1f}</strong> / {c["country_ja"]}</span>'
             f'</div>'
-            f'<div class="text-[11px] mt-1.5 flex items-center gap-2 flex-wrap tabular-nums" style="color: var(--text-muted);">'
+            f'<div class="text-[10.5px] mt-1 flex items-center gap-2 flex-wrap tabular-nums" style="color: var(--text-muted); opacity: 0.88;">'
             f'<span>プラグ:{c["plug_type"]}</span>'
             f'<span>通貨:{c["currency_code"]}</span>'
             f'<span>チップ:{tip_short}</span>'
@@ -2032,15 +2032,15 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
     cards_html = "\n".join(card_list)
 
     feature_links = "".join([
-        f'<a href="./features/{f["slug"]}/" class="ed-surface block p-3">'
-        f'<span class="text-[10px] font-extrabold" style="color: var(--accent-text);">{f["badge"]}</span>'
-        f'<p class="text-xs font-extrabold mt-0.5 leading-snug" style="color: var(--text-primary);">{f["title"]}</p>'
+        f'<a href="./features/{f["slug"]}/" class="ed-surface block p-3.5">'
+        f'<span class="text-[10px] font-medium tracking-wide block" style="color: var(--text-muted);">{f["badge"]}</span>'
+        f'<p class="text-xs font-semibold mt-1 leading-relaxed" style="color: var(--text-primary);">{f["title"]}</p>'
         f'</a>'
         for f in FEATURE_PAGES
     ])
 
     compare_links = "".join([
-        f'<a href="./compare/{s1}-vs-{s2}/" class="text-[11px] px-2.5 py-1.5 rounded-full font-bold transition" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary);">'
+        f'<a href="./compare/{s1}-vs-{s2}/" class="text-[11px] px-2.5 py-1 rounded-full font-medium transition" style="background: var(--bg-tint); color: var(--text-secondary);">'
         f'{city_map[s1]["name_ja"]} vs {city_map[s2]["name_ja"]}'
         f'</a>'
         for s1, s2, _ in featured_compare_pairs if s1 in city_map and s2 in city_map
@@ -2053,6 +2053,44 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   {render_common_head(page_title, page_desc, page_url, og_type="website")}
   {render_editorial_styles()}
+  <style>
+    .region-scroll-wrap {{
+      position: relative;
+    }}
+    .region-scroll-wrap::after {{
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 4px;
+      width: 36px;
+      background: linear-gradient(to right, transparent, var(--bg-canvas));
+      pointer-events: none;
+    }}
+    .sub-link-chip {{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      background-color: transparent;
+      border: 1px solid var(--border-soft);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 500;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }}
+    .sub-link-chip:hover {{
+      background-color: var(--bg-tint);
+      color: var(--text-primary);
+    }}
+    .sub-link-chip svg {{
+      transition: transform 0.3s var(--ease-out-expo);
+    }}
+    .sub-link-chip[aria-expanded="true"] svg {{
+      transform: rotate(180deg);
+    }}
+  </style>
   <title>{page_title}</title>
   <meta name="description" content="{page_desc}">
   <link rel="canonical" href="{page_url}">
@@ -2064,22 +2102,27 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
   <header class="ed-header">
     <div id="scroll-progress" class="scroll-progress"></div>
     <div class="max-w-[780px] mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
-      <span class="font-bold text-xs flex items-center gap-1.5" style="color: var(--text-primary);">
-        <i data-lucide="compass" class="w-4 h-4"></i>
+      <span class="font-bold text-xs flex items-center gap-2" style="color: var(--text-primary);">
+        <img src="{FAVICON_URL}" alt="" width="20" height="20" class="w-5 h-5 rounded-md object-cover shrink-0" onerror="this.style.display='none'">
         <span>{SITE_NAME}</span>
       </span>
-      <button id="theme-toggle" type="button" class="text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary);">
+      <button id="theme-toggle" type="button" class="text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary);">
         <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
         <span id="theme-name">Light</span>
       </button>
     </div>
   </header>
 
-  <main class="max-w-[780px] mx-auto px-4 pt-6 space-y-6">
-    <div class="space-y-1 anim-enter">
-      <div class="text-[11px] tracking-wider" style="color: var(--text-muted);">WORLD TRAVEL POCKET DICTIONARY · {len(cities)} CITIES</div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">{SITE_NAME}</h1>
-      <p class="text-xs sm:text-sm" style="color: var(--text-secondary);">世界{len(cities)}都市の「時差・気温/1年カレンダー・プラグ・チップ計算・生活マナー・為替・外務省危険情報」を1画面で即答</p>
+  <main class="max-w-[780px] mx-auto px-4 pt-6 space-y-7">
+    <div class="space-y-1.5 anim-enter">
+      <div class="flex items-center gap-2 text-[11px] tracking-wider" style="color: var(--text-muted);">
+        <span>WORLD TRAVEL POCKET DICTIONARY · {len(cities)} CITIES</span>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <img src="{FAVICON_URL}" alt="{SITE_NAME}" width="32" height="32" class="w-8 h-8 rounded-lg object-cover shrink-0" style="border: 1px solid var(--divider);" onerror="this.style.display='none'">
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">{SITE_NAME}</h1>
+      </div>
+      <p class="text-xs sm:text-sm leading-relaxed" style="color: var(--text-secondary);">世界{len(cities)}都市の時差・気温/1年カレンダー・コンセント・チップ計算・生活マナー・為替・外務省危険情報を1画面で即答</p>
     </div>
 
     <div class="space-y-2.5 anim-enter delay-1">
@@ -2088,17 +2131,19 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
           class="w-full p-3.5 rounded-xl text-sm focus:outline-none" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">
         <div id="suggest-box" class="ed-surface hidden absolute left-0 right-0 mt-1 max-h-64 overflow-y-auto z-40" style="box-shadow: var(--shadow-hover);"></div>
       </div>
-      <div class="flex gap-1.5 overflow-x-auto pb-1">{region_buttons}</div>
+      <div class="region-scroll-wrap">
+        <div class="flex gap-1.5 overflow-x-auto pr-8 pb-1" style="scrollbar-width: none;">{region_buttons}</div>
+      </div>
     </div>
 
     <section class="space-y-3 anim-enter delay-2">
       <div class="flex items-baseline justify-between pb-2" style="border-bottom: 1px solid var(--divider);">
-        <h2 class="text-sm sm:text-base font-extrabold" style="color: var(--text-primary);">季節・テーマ別特集 ＆ 2都市比較ガイド</h2>
+        <h2 class="text-sm font-bold" style="color: var(--text-primary);">季節・テーマ別特集</h2>
         <span class="text-[11px] tabular-nums" style="color: var(--text-muted);">{len(cities)}×{len(cities)}比較対応</span>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">{feature_links}</div>
-      <div class="pt-1">
-        <button id="comp-toggle-btn" type="button" class="accordion-trigger" aria-expanded="false">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{feature_links}</div>
+      <div class="pt-0.5">
+        <button id="comp-toggle-btn" type="button" class="sub-link-chip" aria-expanded="false">
           <span>2都市比較ページ一覧を開く</span>
           <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
         </button>
@@ -2110,7 +2155,13 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
       </div>
     </section>
 
-    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{cards_html}</div>
+    <section class="space-y-2.5">
+      <div class="flex items-baseline justify-between pb-1.5" style="border-bottom: 1px solid var(--divider);">
+        <h2 class="text-sm font-bold" style="color: var(--text-primary);">都市一覧</h2>
+        <span id="index-city-count" class="text-[11px] tabular-nums" style="color: var(--text-muted);">{len(cities)}都市</span>
+      </div>
+      <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{cards_html}</div>
+    </section>
 
     {render_sister_site_banner()}
 
@@ -2158,6 +2209,7 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
     const suggestBox = document.getElementById('suggest-box');
     const cards = Array.from(document.querySelectorAll('.city-card'));
     const regionBtns = document.querySelectorAll('.region-btn');
+    const countEl = document.getElementById('index-city-count');
 
     function toHiragana(str) {{
       return str.replace(/[\\u30a1-\\u30f6]/g, function(match) {{
@@ -2173,6 +2225,7 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
     function filterCards() {{
       const q = normalizeText(searchInput.value);
       const matchedCards = [];
+      let visibleCount = 0;
 
       cards.forEach(card => {{
         const haystack = normalizeText(card.dataset.search);
@@ -2180,8 +2233,11 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
         const matchRegion = (currentRegion === 'すべて' || card.dataset.region === currentRegion);
         const visible = matchSearch && matchRegion;
         card.style.display = visible ? 'block' : 'none';
+        if (visible) visibleCount += 1;
         if (q && matchSearch) matchedCards.push(card);
       }});
+
+      if (countEl) countEl.textContent = `${{visibleCount}}都市`;
 
       if (q.length > 0 && matchedCards.length > 0) {{
         suggestBox.innerHTML = matchedCards.slice(0, 8).map(c => `
@@ -2211,10 +2267,12 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
           b.style.background = 'var(--bg-surface)';
           b.style.border = '1px solid var(--border-soft)';
           b.style.color = 'var(--text-secondary)';
+          b.style.fontWeight = '500';
         }});
-        btn.style.background = 'var(--text-primary)';
-        btn.style.border = '1px solid var(--text-primary)';
-        btn.style.color = 'var(--bg-canvas)';
+        btn.style.background = 'var(--accent)';
+        btn.style.border = '1px solid var(--accent)';
+        btn.style.color = '#ffffff';
+        btn.style.fontWeight = '700';
         filterCards();
       }});
     }});
