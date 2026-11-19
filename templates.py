@@ -419,8 +419,11 @@ def render_theme_and_toast_script() -> str:
           revealObserver.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.06 });
+    }, { threshold: 0, rootMargin: '0px 0px -20px 0px' });
     document.querySelectorAll('.reveal-section').forEach((sec) => revealObserver.observe(sec));
+    setTimeout(() => {
+      document.querySelectorAll('.reveal-section').forEach((sec) => sec.classList.add('is-visible'));
+    }, 1000);
     """
 
 
@@ -1982,7 +1985,7 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
       </div>
     </section>
 
-    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 reveal-section">{cards_html}</div>
+    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{cards_html}</div>
 
     {render_sister_site_banner()}
 
