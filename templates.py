@@ -348,52 +348,71 @@ def render_city_rating_box(city: dict) -> str:
 
 
 def render_annual_calendar_box(city: dict) -> str:
-    """1年カレンダー（1月〜12月）：おすすめ時期・混んでない穴場時期・雪＆冬景色が楽しめる時期の一覧"""
+    """
+    1年カレンダー（1月〜12月）：
+    一律の季節分けではなく、気候・緯度・地形から「その街ならではの要素が発揮される時期」を表示
+    - ベスト・快適期
+    - 穴場・比較的落ち着く時期
+    - 雪・ウィンターシーズン（実際に降雪・雪山・冬の街並みを楽しめる都市のみ）
+    """
     region = city["region"]
     climate = city["climate"]
-    is_snow_friendly = (
-        region in ("ヨーロッパ", "北米")
-        or "雪" in climate
-        or city["slug"] in ("sapporo", "seoul", "beijing", "harbin", "almaty", "astana", "reykjavik", "oslo", "stockholm", "helsinki", "zurich", "vienna", "munich", "prague", "toronto", "vancouver", "banff", "new-york", "chicago", "boston", "queenstown")
-    )
+    slug = city["slug"]
 
-    # 地域・気候に応じた12ヶ月のステータス定義（R: おすすめ / Q: 混みにくい穴場 / S: 雪・冬景色 / W: 雨・暑さ/寒さ注意）
+    # 実際に雪・ウィンタースポーツ・雪景色が楽しめる都市の判定
+    snow_cities = {
+        "zurich", "geneva", "basel", "bern", "lucerne", "interlaken", "zermatt",
+        "vienna", "salzburg", "innsbruck", "munich", "berlin", "hamburg", "frankfurt",
+        "prague", "budapest", "warsaw", "krakow",
+        "oslo", "stockholm", "helsinki", "copenhagen", "reykjavik", "tallinn", "riga", "vilnius",
+        "new-york", "boston", "chicago", "washington-dc", "philadelphia",
+        "toronto", "vancouver", "montreal", "calgary", "banff", "quebec-city",
+        "seoul", "busan", "beijing", "harbin", "almaty", "astana", "tbilisi", "queenstown"
+    }
+    has_real_snow = (slug in snow_cities) or ("雪" in climate and "積雪" not in f"非{climate}")
+
+    # 都市ごとの「この街ならではのシーズン」説明文
+    if slug in ("zurich", "geneva", "interlaken", "zermatt", "lucerne", "bern"):
+        unique_season_note = "夏（6〜8月）はアルプスの緑の牧草地と湖畔のハイキングが美しく、冬（12〜2月）は雪山・スキーや冬の澄んだ景色が映える二面性があります。"
+    elif region == "オセアニア":
+        unique_season_note = "南半球のため日本と季節が逆転し、12〜2月は日照時間が長く夏本番のアクティビティに最適。6〜8月は落ち着いた気候で街歩きや冬の空気が楽しめます。"
+    elif has_real_snow:
+        unique_season_note = "春〜初夏や秋は街歩きや歴史・文化巡りに適し、冬（12〜2月）は雪景色・ウィンターシーズン・クリスマス/冬の街並みといった季節ならではの風景が魅力です。"
+    else:
+        unique_season_note = "年間を通して降雪は少なく、乾季や温暖な時期ほど青空・海・街歩きやローカルグルメの快適さが際立ちます。雨季や真夏はスコール・日差し対策を前提に組み立てるのがおすすめです。"
+
     months_info = []
     for m in range(1, 13):
         if region == "オセアニア":
             if m in (11, 12, 1, 2):
-                tag, cls, tip = "おすすめ（暖候期）", "bg-blue-50 text-blue-800 border-blue-200", "日照が長く観光・アウトドアに好適"
+                tag, cls = "好適・夏シーズン", "bg-blue-50 text-blue-800 border-blue-200"
             elif m in (5, 6, 8):
-                tag, cls, tip = "穴場・比較的空く", "bg-emerald-50 text-emerald-800 border-emerald-200", "人混みを避けて落ち着いた滞在が可能"
+                tag, cls = "穴場・落ち着き期", "bg-emerald-50 text-emerald-800 border-emerald-200"
             else:
-                tag, cls, tip = "過ごしやすい時期", "bg-slate-100 text-slate-700 border-slate-200", "朝晩の寒暖差に羽織りものが便利"
-        elif region in ("ヨーロッパ", "北米"):
+                tag, cls = "中間・散策向き", "bg-slate-100 text-slate-700 border-slate-200"
+        elif has_real_snow:
             if m in (5, 6, 9, 10):
-                tag, cls, tip = "おすすめ・快適", "bg-blue-50 text-blue-800 border-blue-200", "気候が安定し街歩きしやすい季節"
-            elif m in (1, 2):
-                if is_snow_friendly:
-                    tag, cls, tip = "雪・冬景色＆穴場", "bg-indigo-50 text-indigo-900 border-indigo-200", "冬の街並み・雪景色と落ち着いた旅費"
-                else:
-                    tag, cls, tip = "穴場・オフシーズン", "bg-emerald-50 text-emerald-800 border-emerald-200", "観光客が少なく落ち着いた時期"
-            elif m in (11, 3):
-                tag, cls, tip = "穴場・比較的空く", "bg-emerald-50 text-emerald-800 border-emerald-200", "繁忙期を外した狙い目の時期"
+                tag, cls = "快適・散策ベスト", "bg-blue-50 text-blue-800 border-blue-200"
+            elif m in (12, 1, 2):
+                tag, cls = "雪・ウィンター期", "bg-indigo-50 text-indigo-900 border-indigo-200"
+            elif m in (3, 4, 11):
+                tag, cls = "穴場・季節の変わり目", "bg-emerald-50 text-emerald-800 border-emerald-200"
             else:
-                tag, cls, tip = "繁忙・日照長め", "bg-amber-50 text-amber-800 border-amber-200", "日没が遅いが混雑や暑さに注意"
+                tag, cls = "夏・日照長め", "bg-amber-50 text-amber-800 border-amber-200"
         else:
-            # アジア・中東・中南米・アフリカなど
             if m in (11, 12, 1, 2, 3):
-                tag, cls, tip = "おすすめ・乾季/快適", "bg-blue-50 text-blue-800 border-blue-200", "雨が少なく観光しやすい時期"
-            elif m in (6, 9):
-                tag, cls, tip = "穴場・比較的空く", "bg-emerald-50 text-emerald-800 border-emerald-200", "大型連休を外した狙い目の時期"
+                tag, cls = "快適・乾季/好適期", "bg-blue-50 text-blue-800 border-blue-200"
+            elif m in (5, 6, 9, 10):
+                tag, cls = "穴場・比較的空く", "bg-emerald-50 text-emerald-800 border-emerald-200"
             else:
-                tag, cls, tip = "雨季・暑さ注意", "bg-amber-50 text-amber-800 border-amber-200", "スコールや蒸し暑さ対策が必要"
+                tag, cls = "雨・暑さ注意期", "bg-amber-50 text-amber-800 border-amber-200"
 
-        months_info.append((f"{m}月", tag, cls, tip))
+        months_info.append((f"{m}月", tag, cls))
 
-    snow_summary = (
-        "12月〜2月を中心に雪景色や冬の街並み・ウィンターシーズンが楽しめるエリアです（防寒対策必須）。"
-        if is_snow_friendly else
-        "年間を通じて降雪は少なく、冬でも雪景色より温暖・南国気候が中心のエリアです。"
+    snow_line = (
+        "12〜2月を中心に雪景色やウィンターシーズンを体感できる都市です（防寒・滑り止め対策を推奨）。"
+        if has_real_snow else
+        "雪やウィンタースポーツ目的の渡航先ではなく、温暖気候・海・街歩き・グルメを楽しむスタイルに向いています。"
     )
 
     month_cells = "".join([
@@ -401,13 +420,13 @@ def render_annual_calendar_box(city: dict) -> str:
         f'<div class="text-xs font-extrabold">{m_label}</div>'
         f'<div class="text-[10px] font-bold mt-0.5">{tag}</div>'
         f'</div>'
-        for m_label, tag, cls, _ in months_info
+        for m_label, tag, cls in months_info
     ])
 
     return f"""
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
       <div class="flex items-center justify-between flex-wrap gap-1">
-        <h2 class="text-sm font-bold text-slate-900">{city['name_ja']}の1年カレンダー（おすすめ・穴場・雪シーズン）</h2>
+        <h2 class="text-sm font-bold text-slate-900">{city['name_ja']}の1年カレンダー（季節ごとの魅力・穴場・雪目安）</h2>
         <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2.5 py-0.5 rounded-full">1月〜12月一覧</span>
       </div>
 
@@ -416,9 +435,9 @@ def render_annual_calendar_box(city: dict) -> str:
       </div>
 
       <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5 text-slate-700 leading-relaxed">
-        <p><strong class="text-slate-900">おすすめの時期：</strong>気候が安定し観光しやすいシーズンを優先するのが基本です。{city['climate']}</p>
-        <p><strong class="text-slate-900">混んでない・穴場の時期：</strong>大型連休やピークシーズンを少し外した時期は、人混みや航空券・宿泊費のピークを避けやすくなります。</p>
-        <p><strong class="text-slate-900">雪・ウィンターシーズン目安：</strong>{snow_summary}</p>
+        <p><strong class="text-slate-900">この街ならではの季節の見どころ：</strong>{unique_season_note}</p>
+        <p><strong class="text-slate-900">気候・季節感の補足：</strong>{climate}</p>
+        <p><strong class="text-slate-900">雪・ウィンターシーズン目安：</strong>{snow_line}</p>
       </div>
     </section>"""
 
