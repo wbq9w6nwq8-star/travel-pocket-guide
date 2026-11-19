@@ -2056,6 +2056,8 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
   <style>
     .region-scroll-wrap {{
       position: relative;
+      display: flex;
+      align-items: center;
     }}
     .region-scroll-wrap::after {{
       content: "";
@@ -2063,31 +2065,48 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
       top: 0;
       right: 0;
       bottom: 4px;
-      width: 36px;
-      background: linear-gradient(to right, transparent, var(--bg-canvas));
+      width: 52px;
+      background: linear-gradient(to right, transparent, var(--bg-canvas) 75%);
       pointer-events: none;
     }}
-    .sub-link-chip {{
+    .region-scroll-hint {{
+      position: sticky;
+      right: 2px;
+      z-index: 2;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 5px 12px;
-      border-radius: var(--radius-full);
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 9999px;
+      color: var(--text-muted);
+      pointer-events: none;
+      flex-shrink: 0;
+    }}
+    .sub-text-link {{
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 2px;
+      border-radius: var(--radius-sm);
       background-color: transparent;
-      border: 1px solid var(--border-soft);
-      color: var(--text-secondary);
+      border: none;
+      color: var(--text-muted);
       font-size: 11px;
       font-weight: 500;
-      transition: background-color 0.15s ease, color 0.15s ease;
+      transition: color 0.15s ease;
     }}
-    .sub-link-chip:hover {{
-      background-color: var(--bg-tint);
+    .sub-text-link:hover {{
       color: var(--text-primary);
     }}
-    .sub-link-chip svg {{
+    .sub-text-link svg {{
       transition: transform 0.3s var(--ease-out-expo);
     }}
-    .sub-link-chip[aria-expanded="true"] svg {{
+    .sub-text-link[aria-expanded="true"] {{
+      color: var(--text-primary);
+      font-weight: 600;
+    }}
+    .sub-text-link[aria-expanded="true"] svg {{
       transform: rotate(180deg);
     }}
   </style>
@@ -2127,12 +2146,13 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
 
     <div class="space-y-2.5 anim-enter delay-1">
       <div class="relative">
-        <input id="search" type="text" autocomplete="off" placeholder="ひらがな・都市名・国名で予測検索（例：ばり、ぷさん、ロンドン、たいわん）"
+        <input id="search" type="text" autocomplete="off" placeholder="都市・国・ひらがな検索（例：ばり、ロンドン）"
           class="w-full p-3.5 rounded-xl text-sm focus:outline-none" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">
         <div id="suggest-box" class="ed-surface hidden absolute left-0 right-0 mt-1 max-h-64 overflow-y-auto z-40" style="box-shadow: var(--shadow-hover);"></div>
       </div>
       <div class="region-scroll-wrap">
-        <div class="flex gap-1.5 overflow-x-auto pr-8 pb-1" style="scrollbar-width: none;">{region_buttons}</div>
+        <div class="flex gap-1.5 overflow-x-auto pr-10 pb-1" style="scrollbar-width: none;">{region_buttons}</div>
+        <span class="region-scroll-hint" aria-hidden="true"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
       </div>
     </div>
 
@@ -2143,9 +2163,9 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{feature_links}</div>
       <div class="pt-0.5">
-        <button id="comp-toggle-btn" type="button" class="sub-link-chip" aria-expanded="false">
+        <button id="comp-toggle-btn" type="button" class="sub-text-link" aria-expanded="false">
           <span>2都市比較ページ一覧を開く</span>
-          <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+          <i data-lucide="chevron-down" class="w-3 h-3"></i>
         </button>
         <div id="comp-toggle-panel" class="accordion-content">
           <div class="accordion-inner">
@@ -2195,6 +2215,16 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
         compPanel.classList.toggle('is-open', !expanded);
       }});
     }}
+
+    function syncSearchPlaceholder() {{
+      const inputEl = document.getElementById('search');
+      if (!inputEl) return;
+      inputEl.placeholder = window.innerWidth >= 640
+        ? 'ひらがな・都市名・国名で予測検索（例：ばり、ぷさん、ロンドン、たいわん）'
+        : '都市・国・ひらがな検索（例：ばり、ロンドン）';
+    }}
+    syncSearchPlaceholder();
+    window.addEventListener('resize', syncSearchPlaceholder, {{ passive: true }});
 
     const progressBar = document.getElementById('scroll-progress');
     window.addEventListener('scroll', () => {{
