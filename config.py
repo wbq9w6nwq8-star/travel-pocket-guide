@@ -25,6 +25,7 @@ AFFILIATE_VPN_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+7QNN6+3YFI+674EQ"
 AFFILIATE_CARD_URL = "https://px.a8.net/svt/ejp?a8mat=4BGO4G+BB99U+38L8+62MDE"
 AFFILIATE_OOOH_URL = "https://px.a8.net/svt/ejp?a8mat=4BGOWJ+5YCTU+5OEM+5YRHE"
 AFFILIATE_AGODA_URL = "https://px.a8.net/svt/ejp?a8mat=4BGOWK+1HL182+4X1W+5YRHE"
+AFFILIATE_WISE_URL = "https://wise.prf.hn/click/camref:1011l6vLmr"
 
 # A8.net インプレッション計測用ピクセルURL
 A8_PIXEL_URLS = [
