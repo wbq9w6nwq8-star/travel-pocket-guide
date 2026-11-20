@@ -1,0 +1,26 @@
+{
+  "lisbon": {
+    "city_name_ja": "リスボン",
+    "spots": []
+  },
+  "seoul": {
+    "city_name_ja": "ソウル",
+    "spots": []
+  },
+  "sydney": {
+    "city_name_ja": "シドニー",
+    "spots": []
+  },
+  "melbourne": {
+    "city_name_ja": "メルボルン",
+    "spots": []
+  },
+  "los-angeles": {
+    "city_name_ja": "ロサンゼルス",
+    "spots": []
+  },
+  "new-york": {
+    "city_name_ja": "ニューヨーク",
+    "spots": []
+  }
+}
