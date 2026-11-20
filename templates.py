@@ -1011,98 +1011,106 @@ def render_detailed_rules_and_manners(city: dict) -> str:
     </section>"""
 
 
-def render_agoda_and_oooh_box(city: dict) -> str:
+def render_agoda_and_oooh_box(city: dict | None = None, context_label: str | None = None) -> str:
+    label = context_label or (city["name_ja"] if city else "渡航先")
+    hotel_title = f"{label}のホテルをエリア別に探す【アゴダ】"
+    hotel_cta = f"アゴダで{label}の宿を見る"
     return f"""
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="pr-card pr-card--accent flex flex-col justify-between gap-3">
-          <div>
-            <div class="flex items-center justify-between gap-1">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: var(--accent); color: #ffffff;">ホテル比較 · 宿泊予約</span>
-              <span class="text-[10px] font-semibold" style="color: var(--text-muted);">PR</span>
-            </div>
-            <p class="text-sm font-bold mt-2" style="color: var(--text-primary);">{city['name_ja']}のホテルをエリア別に探す【アゴダ】</p>
-            <p class="text-[11px] mt-1 leading-relaxed" style="color: var(--text-secondary);">
-              立地や口コミを見ながら宿を探したい人向けです。プランによってキャンセル条件や税・サービス料の扱いが異なるため、予約画面で最終条件をご確認ください。
-            </p>
-          </div>
-          <a href="{AFFILIATE_AGODA_URL}" target="_blank" rel="nofollow sponsored noopener" class="pr-cta w-full" style="background: var(--accent); color: #ffffff;">
-            <span>アゴダで{city['name_ja']}の宿を見る</span>
-            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-          </a>
-        </div>
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div class="pr-card pr-card--accent flex flex-col justify-between gap-3">
+ <div>
+ <div class="flex items-center justify-between gap-1">
+ <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: var(--accent); color: #ffffff;">ホテル比較 · 宿泊予約</span>
+ <span class="text-[10px] font-semibold" style="color: var(--text-muted);">PR</span>
+ </div>
+ <p class="text-sm font-bold mt-2" style="color: var(--text-primary);">{hotel_title}</p>
+ <p class="text-[11px] mt-1 leading-relaxed" style="color: var(--text-secondary);">
+ 立地や口コミを見ながら宿を探したい人向けです。プランによってキャンセル条件や税・サービス料の扱いが異なるため、予約画面で最終条件をご確認ください。
+ </p>
+ </div>
+ <a href="{AFFILIATE_AGODA_URL}" target="_blank" rel="nofollow sponsored noopener" class="pr-cta w-full" style="background: var(--accent); color: #ffffff;">
+ <span>{hotel_cta}</span>
+ <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+ </a>
+ </div>
 
-        <div class="pr-card pr-card--sage flex flex-col justify-between gap-3">
-          <div>
-            <div class="flex items-center justify-between gap-1">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: var(--sage-text); color: #ffffff;">日本語相談 · 現地手配</span>
-              <span class="text-[10px] font-semibold" style="color: var(--text-muted);">PR</span>
-            </div>
-            <p class="text-sm font-bold mt-2" style="color: var(--text-primary);">送迎やツアーを現地会社に相談【Oooh】</p>
-            <p class="text-[11px] mt-1 leading-relaxed" style="color: var(--text-secondary);">
-              空港送迎や郊外・離島プランなどを日本語で相談したい人向けです。旅程や希望に合わせて現地側の手配可否を確認できます。
-            </p>
-          </div>
-          <a href="{AFFILIATE_OOOH_URL}" target="_blank" rel="nofollow sponsored noopener" class="pr-cta w-full" style="background: var(--sage-text); color: #ffffff;">
-            <span>現地プロに相談する</span>
-            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-          </a>
-        </div>
-      </div>"""
+ <div class="pr-card pr-card--sage flex flex-col justify-between gap-3">
+ <div>
+ <div class="flex items-center justify-between gap-1">
+ <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: var(--sage-text); color: #ffffff;">日本語相談 · 現地手配</span>
+ <span class="text-[10px] font-semibold" style="color: var(--text-muted);">PR</span>
+ </div>
+ <p class="text-sm font-bold mt-2" style="color: var(--text-primary);">送迎やツアーを現地会社に相談【Oooh】</p>
+ <p class="text-[11px] mt-1 leading-relaxed" style="color: var(--text-secondary);">
+ 空港送迎や郊外・離島プランなどを日本語で相談したい人向けです。旅程や希望に合わせて現地側の手配可否を確認できます。
+ </p>
+ </div>
+ <a href="{AFFILIATE_OOOH_URL}" target="_blank" rel="nofollow sponsored noopener" class="pr-cta w-full" style="background: var(--sage-text); color: #ffffff;">
+ <span>現地プロに相談する</span>
+ <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+ </a>
+ </div>
+ </div>"""
 
 
-def render_telecom_box(city: dict) -> str:
-    ui = city.get("special_ui", "standard")
+def render_telecom_box(city: dict | None = None, custom_note: str | None = None) -> str:
+    ui = (city.get("special_ui", "standard") if city else "standard")
     vpn_card_cls = "pr-card--rose" if ui == "china_vpn" else "pr-card--accent"
     vpn_btn_bg = "var(--rose-text)" if ui == "china_vpn" else "var(--text-primary)"
     vpn_btn_color = "#ffffff" if ui == "china_vpn" else "var(--bg-canvas)"
     vpn_badge = "通信環境の確認を推奨" if ui == "china_vpn" else "公衆Wi-Fiの暗号化対策"
+    note_text = custom_note or (
+        city["telecom_note"]
+        if city else
+        "渡航先での地図や配車アプリ利用に向けて、eSIM・ローミング・レンタルWi-Fiなど自分の端末や旅程に合う通信手段を出発前に確認しておくと安心です。"
+    )
 
     return f"""
-    <section class="space-y-3 reveal-section">
-      <div class="flex items-baseline justify-between flex-wrap gap-1 pb-2" style="border-bottom: 1px solid var(--divider);">
-        <h2 class="text-base font-bold flex items-center gap-1.5" style="color: var(--text-primary);">
-          <i data-lucide="wifi" class="w-4 h-4"></i>
-          <span>現地の通信手段（eSIM）＆ 公衆Wi-Fi保護（VPN）</span>
-        </h2>
-        <span class="text-[11px]" style="color: var(--text-muted);">PR / 出発前準備</span>
-      </div>
-      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">{city['telecom_note']}</p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="pr-card pr-card--accent flex flex-col justify-between gap-3">
-          <div>
-            <div class="flex items-center justify-between gap-1">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: var(--accent); color: #ffffff;">eSIM · 事前設定対応</span>
-              <span class="text-[10px] font-semibold" style="color: var(--text-muted);">PR</span>
-            </div>
-            <p class="text-sm font-bold mt-2" style="color: var(--text-primary);">海外向けeSIMプランを探す【Cross eSIM】</p>
-            <p class="text-[11px] mt-1 leading-relaxed" style="color: var(--text-secondary);">
-              物理SIMの入れ替えを減らしたい人向けの選択肢です。ご利用のスマホがeSIM対応・SIMロック解除済みか、対応国・容量条件を事前にご確認ください。
-            </p>
-          </div>
-          <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow sponsored noopener" class="pr-cta w-full" style="background: var(--accent); color: #ffffff;">
-            <span>Cross eSIM公式サイトを見る</span>
-            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-          </a>
-        </div>
+ <section class="space-y-3 reveal-section">
+ <div class="flex items-baseline justify-between flex-wrap gap-1 pb-2" style="border-bottom: 1px solid var(--divider);">
+ <h2 class="text-base font-bold flex items-center gap-1.5" style="color: var(--text-primary);">
+ <i data-lucide="wifi" class="w-4 h-4"></i>
+ <span>現地の通信手段（eSIM）＆ 公衆Wi-Fi保護（VPN）</span>
+ </h2>
+ <span class="text-[11px]" style="color: var(--text-muted);">PR / 出発前準備</span>
+ </div>
+ <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">{note_text}</p>
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div class="pr-card pr-card--accent flex flex-col justify-between gap-3">
+ <div>
+ <div class="flex items-center justify-between gap-1">
+ <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: var(--accent); color: #ffffff;">eSIM · 事前設定対応</span>
+ <span class="text-[10px] font-semibold" style="color: var(--text-muted);">PR</span>
+ </div>
+ <p class="text-sm font-bold mt-2" style="color: var(--text-primary);">海外向けeSIMプランを探す【Cross eSIM】</p>
+ <p class="text-[11px] mt-1 leading-relaxed" style="color: var(--text-secondary);">
+ 物理SIMの入れ替えを減らしたい人向けの選択肢です。ご利用のスマホがeSIM対応・SIMロック解除済みか、対応国・容量条件を事前にご確認ください。
+ </p>
+ </div>
+ <a href="{AFFILIATE_ESIM_URL}" target="_blank" rel="nofollow sponsored noopener" class="pr-cta w-full" style="background: var(--accent); color: #ffffff;">
+ <span>Cross eSIM公式サイトを見る</span>
+ <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+ </a>
+ </div>
 
-        <div class="pr-card {vpn_card_cls} flex flex-col justify-between gap-3">
-          <div>
-            <div class="flex items-center justify-between gap-1">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: {vpn_btn_bg}; color: {vpn_btn_color};">{vpn_badge}</span>
-              <span class="text-[10px] font-semibold" style="color: var(--text-muted);">PR</span>
-            </div>
-            <p class="text-sm font-bold mt-2" style="color: var(--text-primary);">公衆Wi-Fiの通信暗号化に【NordVPN】</p>
-            <p class="text-[11px] mt-1 leading-relaxed" style="color: var(--text-secondary);">
-              空港・カフェ・ホテルなどの公衆Wi-Fi利用時に通信を暗号化したい人向けです。対応端末や返金保証などの条件は公式ページでご確認ください。
-            </p>
-          </div>
-          <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow sponsored noopener" class="pr-cta w-full" style="background: {vpn_btn_bg}; color: {vpn_btn_color};">
-            <span>NordVPN公式サイトを見る</span>
-            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-          </a>
-        </div>
-      </div>
-    </section>"""
+ <div class="pr-card {vpn_card_cls} flex flex-col justify-between gap-3">
+ <div>
+ <div class="flex items-center justify-between gap-1">
+ <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: {vpn_btn_bg}; color: {vpn_btn_color};">{vpn_badge}</span>
+ <span class="text-[10px] font-semibold" style="color: var(--text-muted);">PR</span>
+ </div>
+ <p class="text-sm font-bold mt-2" style="color: var(--text-primary);">公衆Wi-Fiの通信暗号化に【NordVPN】</p>
+ <p class="text-[11px] mt-1 leading-relaxed" style="color: var(--text-secondary);">
+ 空港・カフェ・ホテルなどの公衆Wi-Fi利用時に通信を暗号化したい人向けです。対応端末や返金保証などの条件は公式ページでご確認ください。
+ </p>
+ </div>
+ <a href="{AFFILIATE_VPN_URL}" target="_blank" rel="nofollow sponsored noopener" class="pr-cta w-full" style="background: {vpn_btn_bg}; color: {vpn_btn_color};">
+ <span>NordVPN公式サイトを見る</span>
+ <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+ </a>
+ </div>
+ </div>
+ </section>"""
 
 
 def render_city_comparison_section(city: dict, all_cities: list, city_compare_links: list) -> str:
@@ -1705,18 +1713,81 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
 </html>"""
 
 
+def _build_compare_payload(c1: dict, c2: dict, rates_data: dict) -> dict:
+    """2都市の共通項目と差分項目を自動分離し、見出し・結論・metaを実態に連動させる"""
+    def fmt_jpy(c: dict) -> float:
+        r = rates_data["rates"].get(c["currency_code"], 0.01)
+        return round(1 / r, 2) if r >= 0.005 else round(1 / r, 4)
+
+    s1 = compute_city_star_ratings(c1)
+    s2 = compute_city_star_ratings(c2)
+    j1, j2 = fmt_jpy(c1), fmt_jpy(c2)
+
+    common_items = []
+    diff_rows = []
+
+    # 1. 都市の個性・移動・キャッシュレス（違いが出やすい軸を先頭に）
+    if c1.get("city_vibe") or c2.get("city_vibe"):
+        diff_rows.append((
+            "街の雰囲気・個性",
+            c1.get("city_vibe") or f"{c1['name_ja']}（{c1['country_ja']}）の滞在エリア",
+            c2.get("city_vibe") or f"{c2['name_ja']}（{c2['country_ja']}）の滞在エリア",
+        ))
+    if c1.get("transit_style") or c2.get("transit_style"):
+        diff_rows.append((
+            "市内移動スタイル",
+            c1.get("transit_style") or f"{', '.join(c1['transport_apps'][:2])}等を利用",
+            c2.get("transit_style") or f"{', '.join(c2['transport_apps'][:2])}等を利用",
+        ))
+    if c1.get("cashless_note") or c2.get("cashless_note"):
+        diff_rows.append((
+            "キャッシュレス事情",
+            c1.get("cashless_note") or s1["cashless_note"],
+            c2.get("cashless_note") or s2["cashless_note"],
+        ))
+
+    # 2. 基本スペック（同じ値なら共通枠へ、違う値だけ表へ）
+    spec_checks = [
+        ("空港アクセス", c1["airport_access"]["fastest"], c2["airport_access"]["fastest"], c1["airport_access"]["fastest"] == c2["airport_access"]["fastest"], None),
+        ("気候・季節感", c1["climate"], c2["climate"], c1["climate"] == c2["climate"], "気候傾向はほぼ共通"),
+        ("通貨・為替目安", f"{c1['currency_name']}（1{c1['currency_code']} ≒ {j1}円）", f"{c2['currency_name']}（1{c2['currency_code']} ≒ {j2}円）", c1["currency_code"] == c2["currency_code"], f"通貨：{c1['currency_name']}（{c1['currency_code']}）"),
+        ("コンセント・電圧", f"{c1['plug_type']}タイプ（{c1['voltage']} / {c1['frequency']}）", f"{c2['plug_type']}タイプ（{c2['voltage']} / {c2['frequency']}）", (c1["plug_type"] == c2["plug_type"] and c1["voltage"] == c2["voltage"]), f"プラグ：{c1['plug_type']}（{c1['voltage']}）"),
+        ("チップ習慣", f"{c1['tip_badge']}（{c1['tip_detail']}）", f"{c2['tip_badge']}（{c2['tip_detail']}）", (c1["tip_badge"] == c2["tip_badge"] and c1["tip_detail"] == c2["tip_detail"]), f"チップ：{c1['tip_badge']}"),
+        ("水道水", format_water_status(c1), format_water_status(c2), format_water_status(c1) == format_water_status(c2), f"水道水：{format_water_status(c1)}"),
+        ("外務省危険情報", c1["danger_level"], c2["danger_level"], c1["danger_level"] == c2["danger_level"], f"危険情報：{c1['danger_level'].split('（')[0]}"),
+        ("総合評価（目安）", f"{s1['avg']:.1f} / 5.0", f"{s2['avg']:.1f} / 5.0", s1["avg"] == s2["avg"], f"総合目安：{s1['avg']:.1f} / 5.0"),
+    ]
+
+    for label, v1, v2, is_same, common_label in spec_checks:
+        if is_same and common_label:
+            common_items.append(common_label)
+        else:
+            diff_rows.append((label, v1, v2))
+
+    # 3. 実際の差分ラベルから見出し・meta・結論を連動生成
+    diff_labels = [r[0] for r in diff_rows[:4]]
+    diff_topic_str = "・".join(diff_labels) if diff_labels else "空港アクセス・気候・基本スペック"
+
+    best1 = c1.get("best_for") or f"{c1['name_ja']}の雰囲気やアクセス（{c1['airport_access']['fastest'].split('（')[0]}等）を重視する人"
+    best2 = c2.get("best_for") or f"{c2['name_ja']}の雰囲気やアクセス（{c2['airport_access']['fastest'].split('（')[0]}等）を重視する人"
+
+    return {
+        "common_items": common_items,
+        "diff_rows": diff_rows,
+        "diff_topic_str": diff_topic_str,
+        "best1": best1,
+        "best2": best2,
+    }
+
+
 def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, all_cities: list) -> str:
     pair_slug = f"{c1['slug']}-vs-{c2['slug']}"
     page_url = f"{SITE_URL}/compare/{pair_slug}/"
-    title = f"{c1['name_ja']}と{c2['name_ja']}を比較｜プラグ・チップ・気候・治安・空港移動の違い｜{SITE_NAME}"
-    desc = f"{c1['name_ja']}（{c1['country_ja']}）と{c2['name_ja']}（{c2['country_ja']}）の比較ページ。違いと選び方の目安をまとめています。"
+    payload = _build_compare_payload(c1, c2, rates_data)
 
-    r1 = rates_data["rates"].get(c1["currency_code"], 0.01)
-    r2 = rates_data["rates"].get(c2["currency_code"], 0.01)
-    jpy1 = round(1 / r1, 2) if r1 >= 0.005 else round(1 / r1, 4)
-    jpy2 = round(1 / r2, 2) if r2 >= 0.005 else round(1 / r2, 4)
-    s1 = compute_city_star_ratings(c1)
-    s2 = compute_city_star_ratings(c2)
+    title = f"{c1['name_ja']}と{c2['name_ja']}を比較｜{payload['diff_topic_str']}の違い｜{SITE_NAME}"
+    desc = f"{c1['name_ja']}（{c1['country_ja']}）と{c2['name_ja']}（{c2['country_ja']}）を{payload['diff_topic_str']}で比較。共通条件をまとめ、どちらがどんな旅に向いているか一目で確認できます。"
+    subtitle = f"{c1['name_ja']}と{c2['name_ja']}の「{payload['diff_topic_str']}」を中心に違いを整理しています。"
 
     compact_cities = []
     for c in all_cities:
@@ -1739,7 +1810,11 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
             "climate": c["climate"],
             "fastest": c["airport_access"]["fastest"],
             "danger_level": c["danger_level"],
-            "avg_star": sr["avg"]
+            "avg_star": sr["avg"],
+            "city_vibe": c.get("city_vibe", ""),
+            "transit_style": c.get("transit_style", ""),
+            "cashless_note": c.get("cashless_note", ""),
+            "best_for": c.get("best_for", ""),
         })
 
     options_1 = "".join([
@@ -1751,174 +1826,212 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
         for c in all_cities
     ])
 
+    common_badges = "".join([
+        f'<span class="text-[11px] px-2.5 py-1 rounded-full font-medium" style="background: var(--bg-surface); border: 1px solid var(--divider); color: var(--text-secondary);">{item}</span>'
+        for item in payload["common_items"]
+    ])
+
+    diff_rows_html = "".join([
+        f"""
+ <tr>
+ <th class="p-3 font-semibold align-top" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">{lbl}</th>
+ <td class="p-3 align-top leading-relaxed" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{v1}</td>
+ <td class="p-3 align-top leading-relaxed" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{v2}</td>
+ </tr>"""
+        for lbl, v1, v2 in payload["diff_rows"]
+    ])
+
+    both_label = f"{c1['name_ja']}・{c2['name_ja']}"
+
     return f"""<!DOCTYPE html>
 <html lang="ja" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {render_common_head(title, desc, page_url)}
-  {render_editorial_styles()}
-  <title>{title}</title>
-  <meta name="description" content="{desc}">
-  <link rel="canonical" href="{page_url}">
-  <script src="https://cdn.tailwindcss.com"></script>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ {render_common_head(title, desc, page_url)}
+ {render_editorial_styles()}
+ <title>{title}</title>
+ <meta name="description" content="{desc}">
+ <link rel="canonical" href="{page_url}">
+ <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="pb-14">
-  {render_pr_banner()}
-  <header class="ed-header">
-    <div class="max-w-[780px] mx-auto px-4 py-3 flex items-center justify-between gap-2">
-      <a href="../../" class="font-bold text-xs flex items-center gap-1.5" style="color: var(--text-primary);">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-        <span>{SITE_NAME}（トップへ戻る）</span>
-      </a>
-      <button id="theme-toggle" type="button" class="text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary);">
-        <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
-        <span id="theme-name">Light</span>
-      </button>
-    </div>
-  </header>
+ {render_pr_banner()}
+ <header class="ed-header">
+ <div class="max-w-[780px] mx-auto px-4 py-3 flex items-center justify-between gap-2">
+ <a href="../../" class="font-bold text-xs flex items-center gap-1.5" style="color: var(--text-primary);">
+ <i data-lucide="arrow-left" class="w-4 h-4"></i>
+ <span>{SITE_NAME}（トップへ戻る）</span>
+ </a>
+ <button id="theme-toggle" type="button" class="text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary);">
+ <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
+ <span id="theme-name">Light</span>
+ </button>
+ </div>
+ </header>
 
-  <main class="max-w-[780px] mx-auto px-4 pt-5 space-y-6">
-    <div class="ed-surface p-5 space-y-2 anim-enter">
-      <span class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--accent-text);">2 CITY COMPARISON · {len(all_cities)}×{len(all_cities)}対応</span>
-      <h1 id="comp-h1" class="text-xl sm:text-2xl font-bold">{c1['name_ja']} vs {c2['name_ja']} 現地情報・渡航スペック比較</h1>
-      <p id="comp-summary" class="text-xs leading-relaxed" style="color: var(--text-secondary);">{summary_text}</p>
-    </div>
+ <main class="max-w-[780px] mx-auto px-4 pt-5 space-y-6">
+ <div class="ed-surface p-5 space-y-2 anim-enter">
+ <span class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--accent-text);">2 CITY COMPARISON · {len(all_cities)}×{len(all_cities)}対応</span>
+ <h1 id="comp-h1" class="text-xl sm:text-2xl font-bold">{c1['name_ja']} vs {c2['name_ja']} 違いと選び方比較</h1>
+ <p id="comp-summary" class="text-xs leading-relaxed" style="color: var(--text-secondary);">{subtitle}</p>
+ </div>
 
-    <div id="comp-conclusion-box" class="pr-card pr-card--accent space-y-1.5 anim-enter delay-1">
-      <span class="text-[10px] font-bold" style="color: var(--accent-text);">選び方の目安（結論）</span>
-      <p id="comp-conclusion-text" class="text-xs leading-relaxed" style="color: var(--text-primary);">
-        <strong>{c1['name_ja']}</strong>と<strong>{c2['name_ja']}</strong>のどちらを選ぶかは、重視したい気候・予算・移動スタイルで変わります。下の比較表で通貨・プラグ・チップ・空港アクセス・安全情報の差を見比べてみてください。
-      </p>
-    </div>
+ <div id="comp-conclusion-box" class="pr-card pr-card--accent space-y-2 anim-enter delay-1">
+ <span class="text-[10px] font-bold" style="color: var(--accent-text);">選び方の目安（結論）</span>
+ <div id="comp-conclusion-text" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs leading-relaxed" style="color: var(--text-primary);">
+ <div class="p-3 rounded-lg" style="background: var(--bg-surface); border: 1px solid var(--divider);">
+ <strong class="block mb-1" style="color: var(--accent-text);">{c1['name_ja']}が向いている人</strong>
+ <p style="color: var(--text-secondary);">{payload['best1']}</p>
+ </div>
+ <div class="p-3 rounded-lg" style="background: var(--bg-surface); border: 1px solid var(--divider);">
+ <strong class="block mb-1" style="color: var(--accent-text);">{c2['name_ja']}が向いている人</strong>
+ <p style="color: var(--text-secondary);">{payload['best2']}</p>
+ </div>
+ </div>
+ </div>
 
-    <section class="ed-tint p-4 space-y-2.5 anim-enter delay-2">
-      <p class="text-xs font-bold" style="color: var(--text-primary);">全{len(all_cities)}都市から好きな2都市を選んでその場で比較</p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-        <div>
-          <label class="block text-[11px] font-semibold mb-1" style="color: var(--text-muted);">比較する都市 A</label>
-          <select id="sel-city-1" class="w-full rounded-lg px-3 py-2 font-bold" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">{options_1}</select>
-        </div>
-        <div>
-          <label class="block text-[11px] font-semibold mb-1" style="color: var(--text-muted);">比較する都市 B</label>
-          <select id="sel-city-2" class="w-full rounded-lg px-3 py-2 font-bold" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">{options_2}</select>
-        </div>
-      </div>
-    </section>
+ <section class="ed-tint p-4 space-y-2.5 anim-enter delay-2">
+ <p class="text-xs font-bold" style="color: var(--text-primary);">全{len(all_cities)}都市から好きな2都市を選んでその場で比較</p>
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+ <div>
+ <label class="block text-[11px] font-semibold mb-1" style="color: var(--text-muted);">比較する都市 A</label>
+ <select id="sel-city-1" class="w-full rounded-lg px-3 py-2 font-bold" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">{options_1}</select>
+ </div>
+ <div>
+ <label class="block text-[11px] font-semibold mb-1" style="color: var(--text-muted);">比較する都市 B</label>
+ <select id="sel-city-2" class="w-full rounded-lg px-3 py-2 font-bold" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">{options_2}</select>
+ </div>
+ </div>
+ </section>
 
-    <div class="ed-surface overflow-x-auto reveal-section">
-      <table class="w-full text-left border-collapse text-xs">
-        <thead>
-          <tr style="background: var(--bg-tint); color: var(--text-primary);">
-            <th class="p-3 w-1/4 font-bold">比較項目</th>
-            <th id="th-c1" class="p-3 w-[37.5%] font-bold" style="border-left: 1px solid var(--divider);"><a href="../../{c1['slug']}/" class="underline" style="color: var(--accent-text);">{c1['name_ja']}（{c1['country_ja']}）</a></th>
-            <th id="th-c2" class="p-3 w-[37.5%] font-bold" style="border-left: 1px solid var(--divider);"><a href="../../{c2['slug']}/" class="underline" style="color: var(--accent-text);">{c2['name_ja']}（{c2['country_ja']}）</a></th>
-          </tr>
-        </thead>
-        <tbody class="tabular-nums" style="color: var(--text-secondary);">
-          <tr>
-            <th class="p-3 font-semibold" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">総合評価（目安）</th>
-            <td id="td-star-1" class="p-3 font-bold" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider); color: var(--accent-text);">{s1['avg']:.1f} / 5.0</td>
-            <td id="td-star-2" class="p-3 font-bold" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider); color: var(--accent-text);">{s2['avg']:.1f} / 5.0</td>
-          </tr>
-          <tr>
-            <th class="p-3 font-semibold" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">通貨・為替目安</th>
-            <td id="td-curr-1" class="p-3" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{c1['currency_name']}（1{c1['currency_code']} ≒ {jpy1}円）</td>
-            <td id="td-curr-2" class="p-3" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{c2['currency_name']}（1{c2['currency_code']} ≒ {jpy2}円）</td>
-          </tr>
-          <tr>
-            <th class="p-3 font-semibold" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">チップ習慣</th>
-            <td id="td-tip-1" class="p-3" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);"><strong>{c1['tip_badge']}</strong><br><span class="text-[11px]" style="color: var(--text-muted);">{c1['tip_detail']}</span></td>
-            <td id="td-tip-2" class="p-3" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);"><strong>{c2['tip_badge']}</strong><br><span class="text-[11px]" style="color: var(--text-muted);">{c2['tip_detail']}</span></td>
-          </tr>
-          <tr>
-            <th class="p-3 font-semibold" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">コンセント・電圧</th>
-            <td id="td-plug-1" class="p-3 font-bold" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider); color: var(--text-primary);">{c1['plug_type']}タイプ（{c1['voltage']} / {c1['frequency']}）</td>
-            <td id="td-plug-2" class="p-3 font-bold" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider); color: var(--text-primary);">{c2['plug_type']}タイプ（{c2['voltage']} / {c2['frequency']}）</td>
-          </tr>
-          <tr>
-            <th class="p-3 font-semibold" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">水道水</th>
-            <td id="td-water-1" class="p-3" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{format_water_status(c1)}</td>
-            <td id="td-water-2" class="p-3" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{format_water_status(c2)}</td>
-          </tr>
-          <tr>
-            <th class="p-3 font-semibold" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">気候・季節感</th>
-            <td id="td-clim-1" class="p-3 text-[11px]" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{c1['climate']}</td>
-            <td id="td-clim-2" class="p-3 text-[11px]" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{c2['climate']}</td>
-          </tr>
-          <tr>
-            <th class="p-3 font-semibold" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">空港アクセス</th>
-            <td id="td-air-1" class="p-3 text-[11px]" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{c1['airport_access']['fastest']}</td>
-            <td id="td-air-2" class="p-3 text-[11px]" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{c2['airport_access']['fastest']}</td>
-          </tr>
-          <tr>
-            <th class="p-3 font-semibold" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">外務省危険情報</th>
-            <td id="td-dan-1" class="p-3 text-[11px] font-bold" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{c1['danger_level']}</td>
-            <td id="td-dan-2" class="p-3 text-[11px] font-bold" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{c2['danger_level']}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+ <section id="comp-common-wrap" class="ed-tint p-3.5 space-y-2 reveal-section {'hidden' if not payload['common_items'] else ''}">
+ <p class="text-[11px] font-bold" style="color: var(--text-muted);">2都市で共通の条件（同じ項目をまとめています）</p>
+ <div id="comp-common-list" class="flex flex-wrap gap-1.5">{common_badges}</div>
+ </section>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 reveal-section">
-      <a id="btn-c1" href="../../{c1['slug']}/" class="pr-cta" style="background: var(--accent); color: #ffffff;">{c1['name_ja']}の生活ルール・詳細ページへ →</a>
-      <a id="btn-c2" href="../../{c2['slug']}/" class="pr-cta" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">{c2['name_ja']}の生活ルール・詳細ページへ →</a>
-    </div>
+ <div class="ed-surface overflow-x-auto reveal-section">
+ <table class="w-full text-left border-collapse text-xs">
+ <thead>
+ <tr style="background: var(--bg-tint); color: var(--text-primary);">
+ <th class="p-3 w-1/4 font-bold">違いが出る項目</th>
+ <th id="th-c1" class="p-3 w-[37.5%] font-bold" style="border-left: 1px solid var(--divider);"><a href="../../{c1['slug']}/" class="underline" style="color: var(--accent-text);">{c1['name_ja']}（{c1['country_ja']}）</a></th>
+ <th id="th-c2" class="p-3 w-[37.5%] font-bold" style="border-left: 1px solid var(--divider);"><a href="../../{c2['slug']}/" class="underline" style="color: var(--accent-text);">{c2['name_ja']}（{c2['country_ja']}）</a></th>
+ </tr>
+ </thead>
+ <tbody id="comp-diff-tbody" class="tabular-nums" style="color: var(--text-secondary);">
+ {diff_rows_html}
+ </tbody>
+ </table>
+ </div>
 
-    {render_agoda_and_oooh_box(c1)}
-    {render_telecom_box(c1)}
-    {render_share_buttons(page_url, title)}
-  </main>
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 reveal-section">
+ <a id="btn-c1" href="../../{c1['slug']}/" class="pr-cta" style="background: var(--accent); color: #ffffff;">{c1['name_ja']}の生活ルール・詳細ページへ →</a>
+ <a id="btn-c2" href="../../{c2['slug']}/" class="pr-cta" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">{c2['name_ja']}の生活ルール・詳細ページへ →</a>
+ </div>
 
-  <div id="toast" class="toast-msg" role="status" aria-live="polite">
-    <i data-lucide="check" class="w-3.5 h-3.5"></i>
-    <span id="toast-text">コピーしました</span>
-  </div>
+ {render_agoda_and_oooh_box(context_label=both_label)}
+ {render_telecom_box(custom_note=f"{both_label}のどちらに渡航する場合も、現地での地図・配車アプリ利用に向けて出発前にeSIMやローミングなどの通信手段を確認しておくと安心です。")}
+ {render_share_buttons(page_url, title)}
+ </main>
 
-  {render_pixels()}
-  <script>
-    lucide.createIcons();
-    {render_theme_and_toast_script()}
-    {render_share_script()}
-    const CITIES_DB = {json.dumps(compact_cities, ensure_ascii=False)};
-    const cityBySlug = Object.fromEntries(CITIES_DB.map(c => [c.slug, c]));
-    const sel1 = document.getElementById('sel-city-1');
-    const sel2 = document.getElementById('sel-city-2');
+ <div id="toast" class="toast-msg" role="status" aria-live="polite">
+ <i data-lucide="check" class="w-3.5 h-3.5"></i>
+ <span id="toast-text">コピーしました</span>
+ </div>
 
-    function renderDynamicCompare() {{
-      const a = cityBySlug[sel1.value];
-      const b = cityBySlug[sel2.value];
-      if (!a || !b) return;
-      document.getElementById('comp-h1').textContent = `${{a.name_ja}} vs ${{b.name_ja}} 現地情報・渡航スペック比較`;
-      document.getElementById('comp-summary').textContent = `${{a.name_ja}}（${{a.country_ja}}）と${{b.name_ja}}（${{b.country_ja}}）の通貨・チップ・プラグ・気候・安全情報を並べています。`;
-      document.getElementById('comp-conclusion-text').innerHTML =
-        `<strong>${{a.name_ja}}</strong>（通貨: ${{a.currency_code}} / プラグ: ${{a.plug_type}} / チップ: ${{a.tip_badge.split('（')[0]}}）と<strong>${{b.name_ja}}</strong>（通貨: ${{b.currency_code}} / プラグ: ${{b.plug_type}} / チップ: ${{b.tip_badge.split('（')[0]}}）を見比べて、旅程や持ち物・予算感に合う方を選びやすくしています。`;
-      document.getElementById('th-c1').innerHTML = `<a href="../../${{a.slug}}/" class="underline" style="color: var(--accent-text);">${{a.name_ja}}（${{a.country_ja}}）</a>`;
-      document.getElementById('th-c2').innerHTML = `<a href="../../${{b.slug}}/" class="underline" style="color: var(--accent-text);">${{b.name_ja}}（${{b.country_ja}}）</a>`;
-      document.getElementById('td-star-1').textContent = `${{a.avg_star.toFixed(1)}} / 5.0`;
-      document.getElementById('td-star-2').textContent = `${{b.avg_star.toFixed(1)}} / 5.0`;
-      document.getElementById('td-curr-1').textContent = `${{a.currency_name}}（1${{a.currency_code}} ≒ ${{a.jpy_rate}}円）`;
-      document.getElementById('td-curr-2').textContent = `${{b.currency_name}}（1${{b.currency_code}} ≒ ${{b.jpy_rate}}円）`;
-      document.getElementById('td-tip-1').innerHTML = `<strong>${{a.tip_badge}}</strong><br><span class="text-[11px]" style="color: var(--text-muted);">${{a.tip_detail}}</span>`;
-      document.getElementById('td-tip-2').innerHTML = `<strong>${{b.tip_badge}}</strong><br><span class="text-[11px]" style="color: var(--text-muted);">${{b.tip_detail}}</span>`;
-      document.getElementById('td-plug-1').textContent = `${{a.plug_type}}タイプ（${{a.voltage}} / ${{a.frequency}}）`;
-      document.getElementById('td-plug-2').textContent = `${{b.plug_type}}タイプ（${{b.voltage}} / ${{b.frequency}}）`;
-      document.getElementById('td-water-1').textContent = a.tap_water;
-      document.getElementById('td-water-2').textContent = b.tap_water;
-      document.getElementById('td-clim-1').textContent = a.climate;
-      document.getElementById('td-clim-2').textContent = b.climate;
-      document.getElementById('td-air-1').textContent = a.fastest;
-      document.getElementById('td-air-2').textContent = b.fastest;
-      document.getElementById('td-dan-1').textContent = a.danger_level;
-      document.getElementById('td-dan-2').textContent = b.danger_level;
-      document.getElementById('btn-c1').href = `../../${{a.slug}}/`;
-      document.getElementById('btn-c1').textContent = `${{a.name_ja}}の生活ルール・詳細ページへ →`;
-      document.getElementById('btn-c2').href = `../../${{b.slug}}/`;
-      document.getElementById('btn-c2').textContent = `${{b.name_ja}}の生活ルール・詳細ページへ →`;
-    }}
-    sel1.addEventListener('change', renderDynamicCompare);
-    sel2.addEventListener('change', renderDynamicCompare);
-  </script>
+ {render_pixels()}
+ <script>
+ lucide.createIcons();
+ {render_theme_and_toast_script()}
+ {render_share_script()}
+ const CITIES_DB = {json.dumps(compact_cities, ensure_ascii=False)};
+ const cityBySlug = Object.fromEntries(CITIES_DB.map(c => [c.slug, c]));
+ const sel1 = document.getElementById('sel-city-1');
+ const sel2 = document.getElementById('sel-city-2');
+
+ function escHtml(str) {{
+ return String(str || '').replace(/[&<>"']/g, s => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[s]));
+ }}
+
+ function renderDynamicCompare() {{
+ const a = cityBySlug[sel1.value];
+ const b = cityBySlug[sel2.value];
+ if (!a || !b) return;
+
+ const common = [];
+ const diffs = [];
+
+ if (a.city_vibe || b.city_vibe) {{
+ diffs.push(['街の雰囲気・個性', a.city_vibe || `${{a.name_ja}}（${{a.country_ja}}）の滞在エリア`, b.city_vibe || `${{b.name_ja}}（${{b.country_ja}}）の滞在エリア`]);
+ }}
+ if (a.transit_style || b.transit_style) {{
+ diffs.push(['市内移動スタイル', a.transit_style || '公共交通・徒歩・配車アプリ', b.transit_style || '公共交通・徒歩・配車アプリ']);
+ }}
+ if (a.cashless_note || b.cashless_note) {{
+ diffs.push(['キャッシュレス事情', a.cashless_note || 'カード・現金併用', b.cashless_note || 'カード・現金併用']);
+ }}
+
+ const specs = [
+ ['空港アクセス', a.fastest, b.fastest, a.fastest === b.fastest, null],
+ ['気候・季節感', a.climate, b.climate, a.climate === b.climate, '気候傾向はほぼ共通'],
+ ['通貨・為替目安', `${{a.currency_name}}（1${{a.currency_code}} ≒ ${{a.jpy_rate}}円）`, `${{b.currency_name}}（1${{b.currency_code}} ≒ ${{b.jpy_rate}}円）`, a.currency_code === b.currency_code, `通貨：${{a.currency_name}}（${{a.currency_code}}）`],
+ ['コンセント・電圧', `${{a.plug_type}}タイプ（${{a.voltage}} / ${{a.frequency}}）`, `${{b.plug_type}}タイプ（${{b.voltage}} / ${{b.frequency}}）`, (a.plug_type === b.plug_type && a.voltage === b.voltage), `プラグ：${{a.plug_type}}（${{a.voltage}}）`],
+ ['チップ習慣', `${{a.tip_badge}}（${{a.tip_detail}}）`, `${{b.tip_badge}}（${{b.tip_detail}}）`, (a.tip_badge === b.tip_badge && a.tip_detail === b.tip_detail), `チップ：${{a.tip_badge}}`],
+ ['水道水', a.tap_water, b.tap_water, a.tap_water === b.tap_water, `水道水：${{a.tap_water}}`],
+ ['外務省危険情報', a.danger_level, b.danger_level, a.danger_level === b.danger_level, `危険情報：${{a.danger_level.split('（')[0]}}`],
+ ['総合評価（目安）', `${{a.avg_star.toFixed(1)}} / 5.0`, `${{b.avg_star.toFixed(1)}} / 5.0`, a.avg_star === b.avg_star, `総合目安：${{a.avg_star.toFixed(1)}} / 5.0`],
+ ];
+
+ specs.forEach(([lbl, v1, v2, isSame, cLbl]) => {{
+ if (isSame && cLbl) common.push(cLbl);
+ else diffs.push([lbl, v1, v2]);
+ }});
+
+ const topicStr = diffs.slice(0, 4).map(d => d[0]).join('・') || '空港アクセス・気候';
+ document.getElementById('comp-h1').textContent = `${{a.name_ja}} vs ${{b.name_ja}} 違いと選び方比較`;
+ document.getElementById('comp-summary').textContent = `${{a.name_ja}}と${{b.name_ja}}の「${{topicStr}}」を中心に違いを整理しています。`;
+
+ const bestA = a.best_for || `${{a.name_ja}}の雰囲気やアクセス（${{a.fastest.split('（')[0]}}等）を重視する人`;
+ const bestB = b.best_for || `${{b.name_ja}}の雰囲気やアクセス（${{b.fastest.split('（')[0]}}等）を重視する人`;
+ document.getElementById('comp-conclusion-text').innerHTML = `
+ <div class="p-3 rounded-lg" style="background: var(--bg-surface); border: 1px solid var(--divider);">
+ <strong class="block mb-1" style="color: var(--accent-text);">${{escHtml(a.name_ja)}}が向いている人</strong>
+ <p style="color: var(--text-secondary);">${{escHtml(bestA)}}</p>
+ </div>
+ <div class="p-3 rounded-lg" style="background: var(--bg-surface); border: 1px solid var(--divider);">
+ <strong class="block mb-1" style="color: var(--accent-text);">${{escHtml(b.name_ja)}}が向いている人</strong>
+ <p style="color: var(--text-secondary);">${{escHtml(bestB)}}</p>
+ </div>`;
+
+ const commonWrap = document.getElementById('comp-common-wrap');
+ const commonList = document.getElementById('comp-common-list');
+ if (common.length > 0) {{
+ commonWrap.classList.remove('hidden');
+ commonList.innerHTML = common.map(item =>
+ `<span class="text-[11px] px-2.5 py-1 rounded-full font-medium" style="background: var(--bg-surface); border: 1px solid var(--divider); color: var(--text-secondary);">${{escHtml(item)}}</span>`
+ ).join('');
+ }} else {{
+ commonWrap.classList.add('hidden');
+ }}
+
+ document.getElementById('th-c1').innerHTML = `<a href="../../${{a.slug}}/" class="underline" style="color: var(--accent-text);">${{escHtml(a.name_ja)}}（${{escHtml(a.country_ja)}}）</a>`;
+ document.getElementById('th-c2').innerHTML = `<a href="../../${{b.slug}}/" class="underline" style="color: var(--accent-text);">${{escHtml(b.name_ja)}}（${{escHtml(b.country_ja)}}）</a>`;
+ document.getElementById('comp-diff-tbody').innerHTML = diffs.map(([lbl, v1, v2]) => `
+ <tr>
+ <th class="p-3 font-semibold align-top" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">${{escHtml(lbl)}}</th>
+ <td class="p-3 align-top leading-relaxed" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">${{escHtml(v1)}}</td>
+ <td class="p-3 align-top leading-relaxed" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">${{escHtml(v2)}}</td>
+ </tr>`).join('');
+
+ document.getElementById('btn-c1').href = `../../${{a.slug}}/`;
+ document.getElementById('btn-c1').textContent = `${{a.name_ja}}の生活ルール・詳細ページへ →`;
+ document.getElementById('btn-c2').href = `../../${{b.slug}}/`;
+ document.getElementById('btn-c2').textContent = `${{b.name_ja}}の生活ルール・詳細ページへ →`;
+ }}
+ sel1.addEventListener('change', renderDynamicCompare);
+ sel2.addEventListener('change', renderDynamicCompare);
+ </script>
 </body>
 </html>"""
 
@@ -1929,76 +2042,136 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
     city_map = {c["slug"]: c for c in all_cities}
     selected = [city_map[s] for s in feat["cities"] if s in city_map]
 
-    cards = ""
+    season_key_map = {
+        "summer-vacation": ("jul_aug", "7〜8月"),
+        "winter-newyear": ("dec_feb", "12〜2月"),
+        "golden-week": ("apr_may", "4〜5月"),
+        "autumn-silverweek": ("sep_nov", "9〜11月"),
+    }
+    season_key, season_label = season_key_map.get(feat["slug"], (None, ""))
+
+    table_rows = []
+    cards = []
+
     for c in selected:
         r = compute_city_star_ratings(c)
-        cards += (
-            f'<a href="../../{c["slug"]}/" class="ed-surface block p-4 space-y-1.5">'
-            f'<div class="flex items-center justify-between">'
+        s_info = (c.get("seasonal_notes", {}).get(season_key) if season_key else None) or {}
+        temp_str = s_info.get("temp", "各都市ページ参照")
+        season_tag = s_info.get("season_tag", "")
+        gear_str = s_info.get("gear", "気温差・日差し・冷房に対応できる重ね着")
+        card_desc = s_info.get("note") or c["climate"]
+
+        badge_html = (
+            f'<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" style="background: var(--accent-soft); color: var(--accent-text);">{season_tag} · {temp_str}</span>'
+            if season_tag else ""
+        )
+
+        table_rows.append(
+            f'<tr>'
+            f'<td class="p-2.5 font-bold whitespace-nowrap" style="border-top: 1px solid var(--divider);"><a href="../../{c["slug"]}/" class="underline" style="color: var(--accent-text);">{c["name_ja"]}</a></td>'
+            f'<td class="p-2.5 tabular-nums whitespace-nowrap" style="border-top: 1px solid var(--divider); color: var(--text-primary);">{temp_str}</td>'
+            f'<td class="p-2.5" style="border-top: 1px solid var(--divider); color: var(--text-secondary);">{gear_str}</td>'
+            f'<td class="p-2.5 tabular-nums whitespace-nowrap" style="border-top: 1px solid var(--divider); color: var(--text-muted);">{c["plug_type"]} / {c["currency_code"]}</td>'
+            f'</tr>'
+        )
+
+        cards.append(
+            f'<a href="../../{c["slug"]}/" class="ed-surface block p-4 space-y-2">'
+            f'<div class="flex items-center justify-between gap-2">'
             f'<span class="font-bold text-sm" style="color: var(--text-primary);">{c["name_ja"]}</span>'
-            f'<span class="text-[11px] font-semibold tabular-nums" style="color: var(--accent-text);">{r["avg"]:.1f} / 5.0 <span class="text-[10px] font-normal ml-1" style="color: var(--text-muted);">{c["country_ja"]}</span></span>'
+            f'<span class="text-[11px] font-semibold tabular-nums shrink-0" style="color: var(--accent-text);">{r["avg"]:.1f} / 5.0 <span class="text-[10px] font-normal ml-1" style="color: var(--text-muted);">{c["country_ja"]}</span></span>'
             f'</div>'
-            f'<p class="text-[11px] line-clamp-2" style="color: var(--text-secondary);">{c["climate"]}</p>'
-            f'<div class="text-[11px] flex flex-wrap gap-2 pt-1 tabular-nums" style="color: var(--text-muted);">'
+            + (f'<div>{badge_html}</div>' if badge_html else '')
+            + f'<p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">{card_desc}</p>'
+            f'<div class="text-[11px] flex flex-wrap gap-2 pt-1 tabular-nums" style="color: var(--text-muted); border-top: 1px solid var(--divider);">'
             f'<span>プラグ: {c["plug_type"]}</span><span>チップ: {c["tip_badge"].split("（")[0]}</span><span>通貨: {c["currency_code"]}</span>'
             f'</div>'
             f'</a>'
         )
 
-    lead_city = selected[0] if selected else all_cities[0]
+    comparison_table_html = ""
+    if season_key and selected:
+        comparison_table_html = f"""
+ <section class="space-y-2.5 reveal-section">
+ <div class="flex items-baseline justify-between flex-wrap gap-1 pb-2" style="border-bottom: 1px solid var(--divider);">
+ <h2 class="text-sm sm:text-base font-bold" style="color: var(--text-primary);">{season_label}の気温目安・服装＆対策 比較表（全{len(selected)}都市）</h2>
+ <span class="text-[11px]" style="color: var(--text-muted);">北半球・南半球の季節差に注意</span>
+ </div>
+ <div class="ed-surface overflow-x-auto">
+ <table class="w-full text-left border-collapse text-xs">
+ <thead>
+ <tr style="background: var(--bg-tint); color: var(--text-muted);">
+ <th class="p-2.5 font-semibold">都市</th>
+ <th class="p-2.5 font-semibold">{season_label}の気温目安</th>
+ <th class="p-2.5 font-semibold">服装・冷房/日差し対策</th>
+ <th class="p-2.5 font-semibold">プラグ / 通貨</th>
+ </tr>
+ </thead>
+ <tbody>{"".join(table_rows)}</tbody>
+ </table>
+ </div>
+ </section>"""
 
     return f"""<!DOCTYPE html>
 <html lang="ja" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {render_common_head(page_title, feat['desc'], page_url)}
-  {render_editorial_styles()}
-  <title>{page_title}</title>
-  <meta name="description" content="{feat['desc']}">
-  <link rel="canonical" href="{page_url}">
-  <script src="https://cdn.tailwindcss.com"></script>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ {render_common_head(page_title, feat['desc'], page_url)}
+ {render_editorial_styles()}
+ <title>{page_title}</title>
+ <meta name="description" content="{feat['desc']}">
+ <link rel="canonical" href="{page_url}">
+ <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="pb-14">
-  {render_pr_banner()}
-  <header class="ed-header">
-    <div class="max-w-[780px] mx-auto px-4 py-3 flex items-center justify-between gap-2">
-      <a href="../../" class="font-bold text-xs flex items-center gap-1.5" style="color: var(--text-primary);">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-        <span>{SITE_NAME}（全{len(all_cities)}都市一覧へ）</span>
-      </a>
-      <button id="theme-toggle" type="button" class="text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary);">
-        <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
-        <span id="theme-name">Light</span>
-      </button>
-    </div>
-  </header>
+ {render_pr_banner()}
+ <header class="ed-header">
+ <div class="max-w-[780px] mx-auto px-4 py-3 flex items-center justify-between gap-2">
+ <a href="../../" class="font-bold text-xs flex items-center gap-1.5" style="color: var(--text-primary);">
+ <i data-lucide="arrow-left" class="w-4 h-4"></i>
+ <span>{SITE_NAME}（全{len(all_cities)}都市一覧へ）</span>
+ </a>
+ <button id="theme-toggle" type="button" class="text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary);">
+ <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
+ <span id="theme-name">Light</span>
+ </button>
+ </div>
+ </header>
 
-  <main class="max-w-[780px] mx-auto px-4 pt-5 space-y-6">
-    <div class="ed-surface p-5 space-y-2 anim-enter">
-      <span class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--accent-text);">{feat['badge']}</span>
-      <h1 class="text-xl sm:text-2xl font-bold">{feat['title']}</h1>
-      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">{feat['desc']}</p>
-    </div>
+ <main class="max-w-[780px] mx-auto px-4 pt-5 space-y-6">
+ <div class="ed-surface p-5 space-y-2 anim-enter">
+ <span class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--accent-text);">{feat['badge']}</span>
+ <h1 class="text-xl sm:text-2xl font-bold">{feat['title']}</h1>
+ <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">{feat['desc']}</p>
+ </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">{cards}</div>
+ {comparison_table_html}
 
-    {render_agoda_and_oooh_box(lead_city)}
-    {render_telecom_box(lead_city)}
-    {render_share_buttons(page_url, feat['title'])}
-  </main>
+ <section class="space-y-2.5">
+ <div class="flex items-baseline justify-between pb-1.5" style="border-bottom: 1px solid var(--divider);">
+ <h2 class="text-sm sm:text-base font-bold" style="color: var(--text-primary);">対象{len(selected)}都市の個別ポイント</h2>
+ <span class="text-[11px]" style="color: var(--text-muted);">タップで詳細へ</span>
+ </div>
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">{"".join(cards)}</div>
+ </section>
 
-  <div id="toast" class="toast-msg" role="status" aria-live="polite">
-    <i data-lucide="check" class="w-3.5 h-3.5"></i>
-    <span id="toast-text">コピーしました</span>
-  </div>
+ {render_agoda_and_oooh_box(context_label=f"特集対象{len(selected)}都市")}
+ {render_telecom_box(custom_note=f"特集の{len(selected)}都市へ渡航する際は、現地での地図・配車アプリ利用に向けて出発前にeSIMやローミングなどの通信手段を確認しておくとスムーズです。")}
+ {render_share_buttons(page_url, feat['title'])}
+ </main>
 
-  {render_pixels()}
-  <script>
-    lucide.createIcons();
-    {render_theme_and_toast_script()}
-    {render_share_script()}
-  </script>
+ <div id="toast" class="toast-msg" role="status" aria-live="polite">
+ <i data-lucide="check" class="w-3.5 h-3.5"></i>
+ <span id="toast-text">コピーしました</span>
+ </div>
+
+ {render_pixels()}
+ <script>
+ lucide.createIcons();
+ {render_theme_and_toast_script()}
+ {render_share_script()}
+ </script>
 </body>
 </html>"""
 
