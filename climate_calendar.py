@@ -2,28 +2,27 @@
 # -*- coding: utf-8 -*-
 """
 都市別カレンダー データ・判定エンジン (climate_calendar.py)
-- 月別の気候平年値（最高/最低気温・降水量・降水日数・湿度・日照・UVI・例外フラグ）から
-  快適スコア(0-100)、ラベル、理由タグ、服装、月別アドバイスを自動生成
-- 特集ページ（GW・夏休み等）の比較表・選定整合チェックにも再利用
+- 相対基準（月平均比）＋絶対基準を併用し、熱帯の乾季・雨季や季節タグを自然に表示
+- 全月に同じタグが張り付くのを防ぎ、「この街のベスト3か月（★）」と月別詳細を算出
+- 特集ページ（秋休み・GW・夏休み等）の季節スナップショット＆整合性チェックを提供
 """
 
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
-THRESHOLD_VERSION = "v1.0 (2026-11)"
+THRESHOLD_VERSION = "v1.2 (2026-11)"
 DATA_SOURCE_NOTE = "WMO平年値(1991-2020)およびOpen-Meteo過去気象集計をもとに算出"
 
-# 各タグに対応する対策文
 TAG_ADVICE = {
     "猛暑": "観光は早朝と夕方に寄せ、日中は屋内で休憩。こまめな水分補給と帽子が必須です。",
     "暑い": "通気性の良い半袖が基本。日差し対策のサングラスや帽子があると快適です。",
-    "蒸し暑い": "速乾素材の服が快適。屋内や電車は冷房が強いので薄手の羽織りを携帯してください。",
+    "蒸し暑い": "速乾素材の服が快適。冷房の効いた屋内や移動車両向けに薄手の羽織りを携帯してください。",
     "寒い": "コートやジャケット、ニットなどしっかりした防寒着が必要です。",
     "厳寒": "ダウンコート・手袋・マフラー・防寒靴など真冬装備が必須です。",
     "雨が多い": "防水の上着や折りたたみ傘を常備。滑りにくい靴だと安心です。",
-    "乾燥・雨が少ない": "リップクリームや保湿ケア、日中の日差し対策を準備してください。",
+    "乾季・雨少なめ": "比較的雨が少なく外歩きしやすい時期。日焼け止めや保湿ケアを準備してください。",
     "寒暖差大": "朝晩と日中の気温差が大きいため、脱ぎ着しやすい重ね着が基本です。",
     "日照短い": "日照時間が非常に短いため、屋外観光は日中の明るい時間帯に集中させましょう。",
-    "紫外線強い": "紫外線が非常に強いため、日焼け止め・サングラス・帽子が必須です。",
+    "紫外線強い": "紫外線が強くなる時期のため、日焼け止め・サングラス・帽子が役立ちます。",
     "台風": "台風接近時はフライト遅延・欠航のリスクあり。運航状況と海外旅行保険を確認してください。",
     "ハリケーン": "ハリケーンシーズンにあたるため、気象警報と変更可能な予約条件の確認が安心です。",
     "サイクロン": "サイクロン発生時期のため、離島移動やマリンアクティビティは天候判断を優先してください。",
@@ -37,8 +36,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "marrakech": {
         "zone": "steppe_desert",
         "south": False,
-        "hazards": {6: ["猛暑・砂塵"], 7: ["猛暑・砂塵"], 8: ["猛暑・砂塵"], 9: ["猛暑・砂塵"]},
-        "highlight": "ラマダン期間中は飲食店の日中休業や営業時間変更、さらにモロッコ標準時が一時的に1時間戻る（UTC+0）運用があるため事前確認が必要です。",
+        "has_rail": False,
+        "hazards": {6: ["猛暑"], 7: ["猛暑"], 8: ["猛暑"], 9: ["猛暑"]},
+        "highlight": "通常UTC+1（日本との時差-8時間）ですが、ラマダン期間中は1時間戻す運用（UTC+0 / 時差-9時間）があります。7〜8月は猛暑・乾燥、冬は雨や朝晩の冷え込みに注意。",
         "months": [
             (18, 6, 32, 6, 65, 7.1, 4), (20, 8, 38, 6, 63, 7.6, 5), (23, 10, 38, 6, 59, 8.2, 7),
             (25, 12, 34, 5, 56, 8.7, 8), (28, 15, 22, 4, 52, 9.5, 9), (33, 18, 5, 1, 46, 10.6, 10),
@@ -49,6 +49,7 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "lisbon": {
         "zone": "mediterranean",
         "south": False,
+        "has_rail": True,
         "hazards": {},
         "highlight": "夏はほとんど雨が降らず乾燥して日差しが強い一方、11〜2月は雨季にあたり石畳が滑りやすくなります。",
         "months": [
@@ -61,8 +62,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "bangkok": {
         "zone": "tropical_savanna",
         "south": False,
-        "hazards": {6: ["モンスーン"], 7: ["モンスーン"], 8: ["モンスーン"], 9: ["モンスーン"], 10: ["モンスーン"]},
-        "highlight": "11〜2月が比較的過ごしやすい乾季。4〜5月は年間で最も暑い暑季（4月中旬は水かけ祭りソンクラーン）、6〜10月はスコールが多い雨季です。",
+        "has_rail": True,
+        "hazards": {7: ["台風"], 8: ["台風"], 9: ["台風"]},
+        "highlight": "11〜2月が比較的過ごしやすい乾季。4〜5月は暑さのピーク、6〜10月はスコールが多い雨季です。",
         "months": [
             (32, 22, 13, 2, 68, 8.8, 9), (33, 24, 20, 3, 72, 8.5, 10), (34, 25, 42, 4, 74, 8.4, 11),
             (35, 26, 90, 7, 75, 8.5, 11), (34, 26, 220, 15, 78, 7.5, 11), (33, 26, 155, 15, 78, 6.5, 10),
@@ -73,8 +75,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "bali": {
         "zone": "tropical_monsoon_south",
         "south": True,
+        "has_rail": False,
         "hazards": {},
-        "highlight": "4〜10月が晴れが多く過ごしやすい乾季、11〜3月がスコールが増える雨季です（南半球ですが通年常夏です）。",
+        "highlight": "4〜10月が晴れが多く過ごしやすい乾季、11〜3月がスコールが増える雨季です（南半球ですが通年常夏です。鉄道はなく車・バイク移動が中心）。",
         "months": [
             (31, 25, 340, 21, 84, 5.5, 11), (31, 25, 280, 18, 84, 6.0, 11), (31, 25, 210, 15, 82, 6.8, 11),
             (31, 25, 100, 9, 78, 8.0, 10), (31, 24, 80, 7, 77, 8.3, 9), (30, 24, 70, 6, 76, 8.1, 8),
@@ -85,6 +88,7 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "singapore": {
         "zone": "equatorial",
         "south": False,
+        "has_rail": True,
         "hazards": {},
         "highlight": "赤道直下で1年を通して高温多湿。月ごとの気温差は小さいですが、11〜1月は北東モンスーンで降水量が増えます。",
         "months": [
@@ -97,8 +101,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "sydney": {
         "zone": "temperate_south",
         "south": True,
+        "has_rail": True,
         "hazards": {},
-        "highlight": "日本と季節が逆になります。12〜2月が夏（強い紫外線に注意）、6〜8月が冬（東京ほど厳寒ではなく晴天が多い）です。",
+        "highlight": "日本と季節が逆になります。12〜2月が夏、6〜8月が冬（東京ほど厳寒ではなく晴天が多い）です。",
         "months": [
             (26, 19, 100, 11, 65, 7.4, 11), (26, 19, 120, 11, 67, 6.9, 10), (25, 18, 130, 12, 66, 6.4, 8),
             (23, 15, 125, 11, 65, 6.4, 5), (20, 12, 120, 10, 64, 6.1, 3), (17, 9, 130, 11, 63, 5.8, 2),
@@ -109,6 +114,7 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "honolulu": {
         "zone": "tropical_tradewind",
         "south": False,
+        "has_rail": False,
         "hazards": {},
         "highlight": "年間を通して貿易風が吹き快適。5〜10月が乾季で晴天率が高く、11〜4月はシャワー（通り雨）がやや増えます。",
         "months": [
@@ -121,6 +127,7 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "london": {
         "zone": "oceanic",
         "south": False,
+        "has_rail": True,
         "hazards": {},
         "highlight": "1年を通じて小雨がぱらつきやすく、1日の中で天気が変わりやすいのが特徴。5〜9月は日が長く観光に最適です。",
         "months": [
@@ -133,8 +140,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "seoul": {
         "zone": "continental_monsoon",
         "south": False,
-        "hazards": {7: ["モンスーン"], 8: ["台風"]},
-        "highlight": "4〜5月と9〜10月が爽やかなベストシーズン。7〜8月は梅雨・豪雨と蒸し暑さ、12〜2月は氷点下の厳しい寒さになります。",
+        "has_rail": True,
+        "hazards": {8: ["台風"]},
+        "highlight": "4〜6月と9〜10月が爽やかなベストシーズン。7〜8月は雨と蒸し暑さ、12〜2月は氷点下の厳しい寒さになります。",
         "months": [
             (2, -6, 21, 6, 58, 5.5, 2), (5, -3, 25, 6, 57, 6.0, 3), (11, 2, 46, 7, 58, 6.5, 5),
             (18, 8, 77, 8, 58, 7.0, 7), (23, 13, 102, 9, 63, 7.3, 8), (27, 18, 133, 10, 69, 6.3, 9),
@@ -145,6 +153,7 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "new-york": {
         "zone": "humid_subtropical",
         "south": False,
+        "has_rail": True,
         "hazards": {},
         "highlight": "4〜6月と9〜10月が街歩きに最適。7〜8月は蒸し暑く、12〜2月は氷点下まで冷え込みます。",
         "months": [
@@ -157,8 +166,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "reykjavik": {
         "zone": "subpolar",
         "south": False,
+        "has_rail": False,
         "hazards": {},
-        "highlight": "12〜1月は日照時間が1日3〜4時間程度と極端に短く防寒必須。オーロラ観測は9〜4月、白夜と観光は6〜8月が中心です。",
+        "highlight": "12〜1月は日照時間が極端に短く防寒必須。オーロラ観測は9〜4月、白夜と観光は6〜8月が中心です。",
         "months": [
             (2, -3, 76, 13, 78, 0.8, 0), (3, -2, 72, 13, 76, 1.9, 1), (4, -2, 82, 14, 75, 3.6, 1),
             (6, 1, 58, 12, 74, 4.9, 2), (9, 4, 44, 10, 74, 6.2, 3), (12, 7, 50, 10, 77, 5.4, 3),
@@ -169,8 +179,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "taipei": {
         "zone": "subtropical_typhoon",
         "south": False,
-        "hazards": {7: ["台風"], 8: ["台風"], 9: ["台風"], 10: ["台風"]},
-        "highlight": "10〜11月と3〜4月が過ごしやすい時期。5月後半〜6月は梅雨、7〜9月は猛暑・高湿度に加えて台風接近に注意が必要です。",
+        "has_rail": True,
+        "hazards": {7: ["台風"], 8: ["台風"], 9: ["台風"]},
+        "highlight": "10〜11月と3〜4月が過ごしやすい時期。5月後半〜6月は梅雨、7〜9月は暑さと台風接近に注意が必要です。",
         "months": [
             (19, 14, 83, 14, 79, 2.6, 4), (20, 14, 170, 14, 80, 2.7, 5), (22, 16, 180, 15, 79, 3.0, 7),
             (26, 19, 178, 15, 78, 3.3, 9), (29, 22, 235, 16, 79, 3.7, 10), (32, 25, 326, 16, 78, 4.5, 11),
@@ -181,8 +192,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "hong-kong": {
         "zone": "subtropical_typhoon",
         "south": False,
-        "hazards": {7: ["台風"], 8: ["台風"], 9: ["台風"], 10: ["台風"]},
-        "highlight": "10〜12月が晴天率が高く爽やかなベストシーズン。5〜9月は高温多湿で雨が非常に多く、台風シーズンとも重なります。",
+        "has_rail": True,
+        "hazards": {7: ["台風"], 8: ["台風"], 9: ["台風"]},
+        "highlight": "10〜12月が晴天率が高く爽やかなベストシーズン。5〜9月は高温多湿で雨が多く、台風シーズンとも重なります。",
         "months": [
             (19, 15, 25, 5, 74, 4.6, 5), (19, 15, 54, 9, 80, 3.5, 6), (21, 17, 82, 11, 82, 3.0, 8),
             (25, 21, 175, 12, 83, 3.5, 9), (28, 24, 305, 16, 83, 4.5, 10), (30, 26, 456, 20, 82, 4.9, 11),
@@ -193,8 +205,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "paris": {
         "zone": "oceanic",
         "south": False,
+        "has_rail": True,
         "hazards": {},
-        "highlight": "5〜6月と9月が日照も長く快適。7〜8月は熱波で35℃超えの日もあり、冷房がない宿もあるため注意が必要です。",
+        "highlight": "5〜6月と9〜10月が街歩きしやすい時期。7〜8月は暑くなる日もあり、10月最終日曜に冬時間へ切り替わります。",
         "months": [
             (7, 3, 51, 10, 83, 2.0, 1), (8, 3, 41, 9, 78, 2.8, 2), (12, 6, 48, 10, 73, 4.1, 3),
             (16, 8, 52, 9, 69, 5.5, 5), (20, 11, 63, 10, 70, 6.5, 6), (23, 14, 50, 8, 69, 6.8, 7),
@@ -205,8 +218,9 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "rome": {
         "zone": "mediterranean",
         "south": False,
+        "has_rail": True,
         "hazards": {},
-        "highlight": "4〜6月と9〜10月が観光のベストシーズン。7〜8月は雨が少なく日差しが強烈な猛暑になります。",
+        "highlight": "4〜6月と9〜10月が観光のベストシーズン。7〜8月は雨が少なく日差しが強くなります。",
         "months": [
             (12, 3, 67, 8, 75, 3.9, 2), (13, 4, 73, 8, 74, 4.7, 3), (16, 6, 58, 7, 73, 5.4, 4),
             (19, 9, 81, 8, 74, 6.7, 6), (24, 13, 53, 6, 73, 8.5, 8), (28, 17, 34, 4, 71, 9.5, 9),
@@ -217,6 +231,7 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
     "istanbul": {
         "zone": "mediterranean_cool",
         "south": False,
+        "has_rail": True,
         "hazards": {},
         "highlight": "4〜6月と9〜10月がベストシーズン。冬はボスポラス海峡からの冷たい風と雨・雪で体感温度が下がります。",
         "months": [
@@ -226,36 +241,96 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
             (20, 13, 101, 10, 76, 5.1, 4), (15, 9, 109, 12, 77, 3.4, 2), (11, 5, 124, 15, 78, 2.2, 1),
         ],
     },
+    "hanoi": {
+        "zone": "subtropical_monsoon",
+        "south": False,
+        "has_rail": True,
+        "hazards": {7: ["台風"], 8: ["台風"], 9: ["台風"]},
+        "highlight": "10〜11月は暑さと雨が落ち着き街歩きしやすい秋シーズン。夏は蒸し暑く、冬は肌寒い日もあります。",
+        "months": [
+            (20, 14, 19, 8, 80, 2.3, 4), (21, 15, 26, 10, 83, 2.2, 5), (24, 18, 43, 14, 84, 2.5, 7),
+            (28, 22, 90, 13, 84, 3.6, 9), (32, 25, 195, 14, 81, 5.8, 10), (34, 27, 240, 15, 80, 6.0, 11),
+            (34, 27, 288, 15, 80, 6.3, 11), (33, 27, 343, 16, 82, 5.7, 10), (32, 25, 265, 13, 80, 5.5, 9),
+            (29, 22, 131, 9, 77, 5.2, 7), (25, 19, 43, 7, 75, 4.7, 5), (22, 15, 23, 6, 75, 3.9, 4),
+        ],
+    },
+    "kuala-lumpur": {
+        "zone": "equatorial_wet",
+        "south": False,
+        "has_rail": True,
+        "hazards": {},
+        "highlight": "通年高温多湿。10〜11月や3〜4月はスコールが増える時期なので、雨具と冷房対策があると安心です。",
+        "months": [
+            (32, 23, 160, 14, 79, 6.5, 10), (33, 23, 148, 12, 78, 6.9, 11), (33, 24, 235, 15, 79, 6.7, 11),
+            (33, 24, 260, 16, 80, 6.4, 11), (33, 24, 195, 14, 80, 6.3, 10), (33, 24, 130, 11, 79, 6.2, 10),
+            (32, 23, 135, 12, 78, 6.4, 10), (32, 23, 150, 12, 78, 6.2, 10), (32, 23, 185, 14, 79, 5.8, 10),
+            (32, 23, 265, 17, 81, 5.6, 9), (32, 23, 290, 18, 82, 5.4, 9), (32, 23, 225, 16, 81, 5.7, 9),
+        ],
+    },
+    "shanghai": {
+        "zone": "subtropical_east",
+        "south": False,
+        "has_rail": True,
+        "hazards": {8: ["台風"]},
+        "highlight": "9〜11月は暑さが和らぎ散策しやすい秋シーズン（10月初旬の国慶節連休は混雑に注意）。",
+        "months": [
+            (8, 1, 52, 8, 74, 4.1, 3), (10, 3, 59, 9, 73, 4.3, 4), (14, 6, 94, 11, 73, 4.5, 5),
+            (20, 11, 98, 11, 73, 5.4, 7), (25, 16, 112, 11, 75, 6.0, 8), (28, 20, 179, 13, 80, 5.1, 9),
+            (32, 24, 165, 12, 81, 6.7, 10), (32, 24, 158, 11, 81, 6.6, 9), (28, 20, 132, 10, 77, 5.5, 7),
+            (23, 15, 61, 8, 74, 5.1, 5), (17, 9, 50, 8, 74, 4.5, 3), (11, 3, 41, 7, 74, 4.2, 2),
+        ],
+    },
+    "boston": {
+        "zone": "new_england_cool",
+        "south": False,
+        "has_rail": True,
+        "hazards": {},
+        "highlight": "秋は紅葉と涼しい空気が心地よく、11月は肌寒くなります。11月第1日曜に冬時間へ切り替わります。",
+        "months": [
+            (2, -6, 89, 11, 63, 5.3, 2), (4, -4, 86, 10, 62, 6.1, 3), (8, 0, 104, 11, 63, 6.7, 4),
+            (14, 5, 95, 11, 63, 7.2, 6), (20, 10, 82, 11, 66, 8.0, 7), (25, 15, 92, 11, 68, 8.6, 8),
+            (28, 18, 84, 10, 69, 8.8, 8), (27, 18, 88, 10, 71, 8.3, 7), (23, 14, 87, 9, 72, 7.3, 5),
+            (16, 8, 97, 9, 70, 6.2, 3), (11, 3, 98, 10, 70, 4.6, 2), (5, -3, 99, 11, 66, 4.3, 1),
+        ],
+    },
+    "prague": {
+        "zone": "central_euro_cool",
+        "south": False,
+        "has_rail": True,
+        "hazards": {},
+        "highlight": "9〜10月は穏やかな秋、11月はコートが活躍する肌寒さ。10月最終日曜に冬時間へ切り替わります。",
+        "months": [
+            (1, -4, 24, 9, 82, 2.0, 1), (3, -3, 22, 8, 79, 2.9, 2), (8, 0, 29, 9, 74, 4.2, 3),
+            (14, 4, 38, 9, 67, 5.8, 5), (19, 8, 67, 10, 68, 7.0, 6), (22, 11, 72, 11, 69, 7.3, 7),
+            (24, 13, 74, 11, 68, 7.4, 7), (24, 13, 69, 10, 69, 6.9, 6), (19, 9, 45, 9, 74, 5.3, 4),
+            (13, 5, 31, 8, 79, 3.7, 2), (6, 0, 32, 9, 84, 1.9, 1), (2, -3, 26, 10, 85, 1.5, 1),
+        ],
+    },
 }
 
 
 def _fallback_profile_for_city(city: dict) -> dict:
-    """未登録都市でも全都市共通テンプレにならないよう、地域・国・緯度傾向から気候プロファイルを割り当てる"""
     slug = city.get("slug", "")
     country = city.get("country_ja", "")
     region = city.get("region", "")
 
     if country in ("オーストラリア", "ニュージーランド", "チリ", "アルゼンチン", "南アフリカ"):
-        return {**CITY_MONTHLY_CLIMATE["sydney"], "zone": f"south_{region}"}
+        return {**CITY_MONTHLY_CLIMATE["sydney"], "zone": f"south_{region}", "has_rail": True}
     if country in ("インドネシア", "フィジー", "タヒチ（フランス領ポリネシア）"):
-        return {**CITY_MONTHLY_CLIMATE["bali"], "zone": f"trop_south_{region}"}
+        return {**CITY_MONTHLY_CLIMATE["bali"], "zone": f"trop_south_{region}", "has_rail": slug != "bali"}
     if country in ("タイ", "ベトナム", "カンボジア", "フィリピン", "インド", "スリランカ", "マレーシア", "シンガポール"):
-        return {**CITY_MONTHLY_CLIMATE["bangkok"], "zone": f"trop_asia_{region}"}
+        return {**CITY_MONTHLY_CLIMATE["bangkok"], "zone": f"trop_asia_{region}", "has_rail": True}
     if country in ("アラブ首長国連邦（UAE）", "カタール", "エジプト", "モロッコ", "ヨルダン", "サウジアラビア"):
-        return {**CITY_MONTHLY_CLIMATE["marrakech"], "zone": f"arid_{region}"}
+        return {**CITY_MONTHLY_CLIMATE["marrakech"], "zone": f"arid_{region}", "has_rail": False}
     if country in ("ポルトガル", "スペイン", "イタリア", "ギリシャ", "マルタ", "クロアチア", "トルコ"):
-        return {**CITY_MONTHLY_CLIMATE["rome"], "zone": f"med_{region}"}
-    if country in ("アイスランド", "ノルウェー", "スウェーデン", "フィンランド"):
-        return {**CITY_MONTHLY_CLIMATE["reykjavik"], "zone": f"nordic_{region}"}
-    if country in ("台湾", "香港", "マカオ"):
-        return {**CITY_MONTHLY_CLIMATE["taipei"], "zone": f"subtrop_ea_{region}"}
+        return {**CITY_MONTHLY_CLIMATE["lisbon"], "zone": f"med_{region}", "has_rail": True}
     if region == "ヨーロッパ":
-        return {**CITY_MONTHLY_CLIMATE["paris"], "zone": f"euro_{region}"}
+        return {**CITY_MONTHLY_CLIMATE["paris"], "zone": f"euro_{region}", "has_rail": True}
     if region == "北米":
         if slug in ("honolulu", "maui", "guam", "saipan"):
-            return {**CITY_MONTHLY_CLIMATE["honolulu"], "zone": "pacific_island"}
-        return {**CITY_MONTHLY_CLIMATE["new-york"], "zone": f"na_{region}"}
-    return {**CITY_MONTHLY_CLIMATE["seoul"], "zone": f"east_asia_{region}"}
+            return {**CITY_MONTHLY_CLIMATE["honolulu"], "zone": "pacific_island", "has_rail": False}
+        return {**CITY_MONTHLY_CLIMATE["new-york"], "zone": f"na_{region}", "has_rail": True}
+    return {**CITY_MONTHLY_CLIMATE["seoul"], "zone": f"east_asia_{region}", "has_rail": True}
 
 
 def evaluate_city_calendar(city: dict) -> dict:
@@ -263,40 +338,42 @@ def evaluate_city_calendar(city: dict) -> dict:
     slug = city.get("slug", "")
     profile = CITY_MONTHLY_CLIMATE.get(slug) or _fallback_profile_for_city(city)
     months_raw = profile["months"]
-    avg_monthly_rain = sum(m[2] for m in months_raw) / 12.0
+    avg_monthly_rain = max(1.0, sum(m[2] for m in months_raw) / 12.0)
     is_altitude = slug in ("cusco", "uyuni", "la-paz", "quito", "bogota")
-    is_south = profile.get("south", False)
+    is_south = bool(profile.get("south", False))
+    has_rail = bool(profile.get("has_rail", True))
     hazards = profile.get("hazards", {})
 
     records = []
     for idx, (tmax, tmin, rain_mm, rain_days, hum, sun_h, uvi) in enumerate(months_raw, start=1):
         tags: List[str] = []
-        # 1. 気温タグ（強い方を優先）
-        if tmax >= 38:
+
+        # 1. 気温タグ（全月に一律で付かないよう閾値を調整）
+        if tmax >= 37:
             tags.append("猛暑")
-        elif tmax >= 30 and hum >= 75:
+        elif tmax >= 33 and hum >= 78:
             tags.append("蒸し暑い")
-        elif tmax >= 32:
+        elif tmax >= 33:
             tags.append("暑い")
         elif tmin < -10:
             tags.append("厳寒")
-        elif tmax < 10:
+        elif tmax < 9:
             tags.append("寒い")
 
-        # 2. 雨・乾燥タグ
-        is_rainy = (rain_mm >= avg_monthly_rain * 1.5 and rain_days >= 10) or rain_days >= 16
-        is_dry = rain_mm < 40
+        # 2. 雨・乾季タグ（月平均比の相対基準＋絶対基準を併用）
+        is_rainy = (rain_mm >= avg_monthly_rain * 1.35 and rain_days >= 10) or (rain_days >= 16)
+        is_dry = (rain_mm < avg_monthly_rain * 0.5) or (rain_mm < 35)
         if is_rainy:
             tags.append("雨が多い")
         elif is_dry:
-            tags.append("乾燥・雨が少ない")
+            tags.append("乾季・雨少なめ")
 
         # 3. 寒暖差・日照・UVI・災害・標高
         if (tmax - tmin) >= 15:
             tags.append("寒暖差大")
-        if sun_h < 3.0:
+        if sun_h < 2.2:
             tags.append("日照短い")
-        if uvi >= 8:
+        if uvi >= 10 and tmax >= 26:
             tags.append("紫外線強い")
         for hz in hazards.get(idx, []):
             tags.append(hz)
@@ -306,13 +383,13 @@ def evaluate_city_calendar(city: dict) -> dict:
         # 快適スコア計算（100点減点方式）
         score = 100.0
         if tmax > 27:
-            score -= (tmax - 27) * 6.0
-        elif tmax < 18:
-            score -= (18 - tmax) * 4.0
-        score -= min(30.0, rain_days * 2.0)
-        if hum > 75:
-            score -= min(20.0, (hum - 75) * 1.5)
-        if sun_h < 3.0:
+            score -= (tmax - 27) * 5.5
+        elif tmax < 17:
+            score -= (17 - tmax) * 3.5
+        score -= min(28.0, rain_days * 1.8)
+        if hum > 78:
+            score -= min(18.0, (hum - 78) * 1.4)
+        if sun_h < 2.2:
             score -= 5.0
         if any(h in ("台風", "ハリケーン", "サイクロン") for h in hazards.get(idx, [])):
             score -= 15.0
@@ -327,11 +404,11 @@ def evaluate_city_calendar(city: dict) -> dict:
         else:
             label = "注意"
 
-        # 服装の自動生成（月ごとの実データベース）
+        cool_note = "屋内や移動中の冷房" if has_rail else "冷房の効いた屋内や移動車両"
         if tmax >= 32:
-            outfit = "通気性の良い半袖・帽子・日焼け止め（冷房対策に薄手の羽織り）"
+            outfit = f"通気性の良い半袖・帽子・日焼け止め（{cool_note}対策に薄手の羽織り）"
         elif tmax >= 25:
-            outfit = "半袖・薄手のシャツ中心（屋内冷房や朝晩用にカーディガン）"
+            outfit = f"半袖・薄手のシャツ中心（{cool_note}や朝晩用にカーディガン）"
         elif tmax >= 18:
             outfit = "長袖シャツや薄手ニット＋軽めのジャケットで重ね着"
         elif tmax >= 10:
@@ -355,7 +432,7 @@ def evaluate_city_calendar(city: dict) -> dict:
             "uvi": uvi,
             "score": score,
             "label": label,
-            "tags": tags[:3],  # 表示は重要度上位3つ
+            "tags": tags[:2],
             "all_tags": tags,
             "outfit": outfit,
             "is_rainy": is_rainy,
@@ -363,12 +440,10 @@ def evaluate_city_calendar(city: dict) -> dict:
             "city_best": False,
         })
 
-    # 熱帯など全体スコアが低めになりやすい都市向けに「この街のベスト上位3か月」フラグ付与
     top3 = sorted(records, key=lambda r: r["score"], reverse=True)[:3]
     for r in top3:
         r["city_best"] = True
 
-    # 連続する月の自動要約生成
     best_months = [r["month"] for r in records if r["label"] in ("ベスト", "快適") or r["city_best"]]
     caution_months = [r["month"] for r in records if r["label"] == "注意"]
 
@@ -387,7 +462,6 @@ def evaluate_city_calendar(city: dict) -> dict:
         ranges.append(f"{start}月" if start == prev else f"{start}〜{prev}月")
         return "・".join(ranges)
 
-    # 季節別アドバイス（自動生成）
     auto_notes = []
     if is_south:
         auto_notes.append("日本と季節が逆になります。")
@@ -416,25 +490,30 @@ def evaluate_city_calendar(city: dict) -> dict:
 
 
 def get_season_snapshot(city: dict, target_months: List[int]) -> dict:
-    """特集ページ（GW=4〜5月、夏休み=7〜8月など）用に該当月の平均気温・降水日数・服装・評価を返す"""
+    """特集ページ用に該当月の平均気温・降水日数・服装・ベスト月・評価を返す"""
     cal = evaluate_city_calendar(city)
     subset = [cal["months"][m - 1] for m in target_months]
     avg_max = round(sum(r["tmax"] for r in subset) / len(subset))
     avg_min = round(sum(r["tmin"] for r in subset) / len(subset))
     avg_rain_days = round(sum(r["rain_days"] for r in subset) / len(subset))
     avg_score = round(sum(r["score"] for r in subset) / len(subset))
-    rep = subset[0]
+
+    best_in_season = max(subset, key=lambda r: r["score"])
+    rep = best_in_season if avg_score < 65 else subset[0]
+
     tags = []
     for r in subset:
         for t in r["tags"]:
             if t not in tags:
                 tags.append(t)
+
     return {
         "temp_str": f"{avg_min}〜{avg_max}℃",
         "rain_days_str": f"月{avg_rain_days}日",
         "outfit": rep["outfit"],
         "score": avg_score,
         "label": "ベスト" if avg_score >= 80 else ("快適" if avg_score >= 65 else ("標準" if avg_score >= 45 else "注意")),
+        "best_month_str": f"{best_in_season['month']}月が狙い目",
         "tags": tags[:2],
     }
 
@@ -454,12 +533,13 @@ def run_calendar_qa(cities: List[dict], feature_pages: List[dict]) -> List[str]:
 
     city_map = {c["slug"]: c for c in cities}
     for feat in feature_pages:
-        if "ベストシーズン" in feat.get("title", "") and feat.get("target_months"):
+        title = feat.get("title", "")
+        if ("快適" in title or "ベストシーズン" in title) and feat.get("target_months"):
             for slug in feat.get("cities", []):
                 if slug in city_map:
                     snap = get_season_snapshot(city_map[slug], feat["target_months"])
                     if snap["label"] == "注意":
                         warnings.append(
-                            f"[矛盾警告] 特集『{feat['slug']}』で「ベストシーズン」表記ですが、{slug} の該当月は「注意（{'・'.join(snap['tags'])}）」です"
+                            f"[矛盾警告] 特集『{feat['slug']}』で「{title}」とありますが、{slug} の該当月は「注意（{'・'.join(snap['tags'])}）」です"
                         )
     return warnings
