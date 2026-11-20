@@ -7,15 +7,16 @@ HTML・UIデザイン・テンプレート管理ファイル (templates.py)
 - 5段階評価バーの意味色分け（低彩度パレット）
 - 気候実態に合わせた1年カレンダー見出し（雪目安 / 乾季・雨季目安）
 - 出発日カウントダウン連動 3ステップ準備ガイド
-- 視認性と誠実さを両立したPR・アフィリエイト導線
+- Wise ＆ エポスカードを含む視認性と誠実さを両立したPR・アフィリエイト導線
 - スマホ表示バグ修正済み（reveal-section 最適化）
+- OGP画像 (ogp.png) & ファビコン (youka.png) 全ページ完全対応
 """
 
 import json
 from config import (
     SITE_URL, SITE_NAME, GA4_ID, OGP_IMAGE_URL, FAVICON_URL,
     SISTER_SITE_URL, SISTER_SITE_NAME,
-    AFFILIATE_ESIM_URL, AFFILIATE_VPN_URL, AFFILIATE_CARD_URL,
+    AFFILIATE_ESIM_URL, AFFILIATE_VPN_URL, AFFILIATE_CARD_URL, AFFILIATE_WISE_URL,
     AFFILIATE_OOOH_URL, AFFILIATE_AGODA_URL,
     A8_PIXEL_URLS, FEATURE_PAGES
 )
@@ -250,7 +251,6 @@ def render_editorial_styles() -> str:
       transition: background-color 0.25s ease;
     }
 
-    /* Refined PR / Affiliate Highlight Cards */
     .pr-card {
       border-radius: var(--radius-lg);
       padding: 16px;
@@ -730,7 +730,6 @@ def render_city_rating_box(city: dict) -> str:
 
 
 def render_annual_calendar_box(city: dict) -> str:
-    """1年カレンダー（1月〜12月）：気候実態に合わせて見出しとタグを自動最適化"""
     region = city["region"]
     climate = city["climate"]
     slug = city["slug"]
@@ -1094,26 +1093,6 @@ def render_telecom_box(city: dict) -> str:
     </section>"""
 
 
-def render_epos_affiliate(city: dict) -> str:
-    return f"""
-      <div class="pr-card pr-card--amber mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="space-y-1">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full" style="background: var(--amber-text); color: #ffffff;">年会費永年無料 · 海外旅行保険</span>
-            <span class="text-[10px] font-bold" style="color: var(--text-muted);">PR</span>
-          </div>
-          <p class="text-sm font-extrabold" style="color: var(--text-primary);">{city['name_ja']}渡航の保険・タッチ決済に【エポスカード】</p>
-          <p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">
-            カード番号裏面記載＆Visaタッチ決済対応で海外の会計も安心。<strong>※海外旅行傷害保険は「利用付帯」のため、空港までの電車・バス代やツアー代金など対象費用を同カードで支払うこと</strong>が適用条件になります。
-          </p>
-        </div>
-        <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="pr-cta shrink-0" style="background: var(--amber-text); color: #ffffff;">
-          <span>エポスカード詳細</span>
-          <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-        </a>
-      </div>"""
-
-
 def render_city_comparison_section(city: dict, all_cities: list, city_compare_links: list) -> str:
     same_region = [c for c in all_cities if c["region"] == city["region"] and c["slug"] != city["slug"]][:3]
     if not same_region:
@@ -1227,7 +1206,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
     <div class="max-w-[780px] mx-auto px-4 pt-2.5">
       <div class="flex items-center justify-between gap-2 pb-2">
         <a href="../" class="font-bold text-xs flex items-center gap-1.5 transition" style="color: var(--text-primary);">
-          <i data-lucide="compass" class="w-4 h-4"></i>
+          <img src="{FAVICON_URL}" alt="" width="18" height="18" class="w-4.5 h-4.5 rounded object-cover shrink-0" onerror="this.style.display='none'">
           <span>{SITE_NAME}</span>
           <span class="font-normal" style="color: var(--text-muted);">/ {city['region']}・{city['country_ja']}</span>
         </a>
