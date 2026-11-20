@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 ビルド実行エンジン (setup_and_build.py)
+- 全都市共通ルールによるデータ自動補正（スポット統合・季節整合・表記クリーンアップ）
+- 地理的距離を考慮した自然な2都市比較ペアの自動生成
 - OGPサムネイル画像 (ogp.png) とファビコン (youka.png) を dist/ に自動コピー
-- 全都市が比較ページを持つように自動ペアリング生成
-- レビュー指摘（リスボン・夏休み特集・比較ペア要約など）の補正を適用
 """
 
 import json
+import math
+import re
 import shutil
 import urllib.request
 from datetime import datetime, timezone, timedelta
@@ -19,79 +21,6 @@ from templates import (
     build_city_html, build_index_html, build_policy_html,
     build_compare_html, build_feature_html
 )
-
-LISBON_SPOTS = [
-    {
-        "name": "ジェロニモス修道院",
-        "area": "ベレン地区",
-        "desc": "マヌエル様式の壮麗な修道院と回廊。ベレンの塔やエッグタルトの老舗と合わせて回りやすい定番です。",
-        "best_time": "開館直後の午前中",
-        "caution": "人気のため行列ができやすく、時間帯別の事前予約や早めの到着が安心です。",
-    },
-    {
-        "name": "サン・ジョルジェ城",
-        "area": "アルファマ周辺（丘の上）",
-        "desc": "リスボン旧市街とテージョ川を見渡せる歴史ある城跡。夕暮れ時の眺望も人気です。",
-        "best_time": "午前〜夕方（日没前は混雑）",
-        "caution": "坂道や石畳が多いため歩きやすい靴が必須。入場待ち時間に余裕を持ちましょう。",
-    },
-    {
-        "name": "アルファマ地区＆トラム28番線",
-        "area": "アルファマ地区",
-        "desc": "迷路のような路地と坂道、ファドが響く旧市街エリア。レトロな路面電車は景色が魅力です。",
-        "best_time": "午前中",
-        "caution": "トラム28番線や坂道の混雑箇所はスリが多発しやすいため、バッグは前で持ちましょう。",
-    },
-]
-
-
-def apply_review_fixes_to_cities(cities: list) -> list:
-    """レビュー指摘に基づく都市データの補正"""
-    for c in cities:
-        slug = c.get("slug")
-        if slug == "lisbon":
-            c["climate"] = (
-                "地中海性気候で、夏（6〜8月）は乾燥して晴れの日が多く日差しが強め、冬（11〜2月）は雨や曇りが増えやすい傾向です。"
-                "朝晩や海風による体感温度差があるため羽織りものがあると安心です。"
-            )
-            c["airport_access"] = {
-                "airport_name": "ウンベルト・デルガード空港（リスボン空港 / LIS）",
-                "fastest": "空港からタクシー・配車アプリ（Uber / Bolt）で約15〜25分（市内中心部まで目安10〜20€前後・渋滞により変動）。",
-                "cheapest": "地下鉄レッドライン（Aeroporto駅）で市内中心部へ約20〜30分（片道目安1.80€・IC/タッチ決済対応）。",
-            }
-            if not c.get("spots"):
-                c["spots"] = LISBON_SPOTS
-    return cities
-
-
-def apply_review_fixes_to_features(features: list) -> list:
-    """特集ページの説明文を時期・実態に合わせて調整"""
-    adjusted = []
-    for feat in features:
-        item = dict(feat)
-        if item.get("slug") == "summer-vacation":
-            item["desc"] = (
-                "7〜8月の夏休みシーズンに向けた12都市の気候・服装・電源・治安まとめ。"
-                "夏の乾季リゾートや涼しい高地・北欧のほか、南半球の冬にあたるオセアニアの気温差も含めて確認できます。"
-            )
-        adjusted.append(item)
-    return adjusted
-
-
-def customize_compare_summary(c1: dict, c2: dict, default_desc: str) -> str:
-    """比較ペアごとの違い・選び方が伝わる要約文"""
-    pair = {c1.get("slug"), c2.get("slug")}
-    if pair == {"sydney", "melbourne"}:
-        return (
-            "ハーバーとビーチ・開放感のシドニーと、路地裏のカフェ文化・アートとコンパクトな街歩きのメルボルン。"
-            "同じオーストラリアでも街の個性や7〜8月の冬の体感、向いている旅のスタイルが異なります。"
-        )
-    if pair == {"los-angeles", "new-york"}:
-        return (
-            "車・配車移動と海・テーマパークの開放感があるロサンゼルスと、地下鉄・徒歩で美術館や舞台を巡るニューヨーク。"
-            "3時間の時差や冬の寒さ、街の回り方が大きく異なります。"
-        )
-    return default_desc
 
 
 def fetch_exchange_rates() -> dict:
@@ -124,6 +53,98 @@ def fetch_exchange_rates() -> dict:
     }
 
 
+def _clean_text(text: str) -> str:
+    """括弧の入れ子や余分な空白を全都市共通で整形"""
+    if not isinstance(text, str):
+        return text
+    text = re.sub(r"\(([^()]*)\(([^()]*)\)([^()]*)\)", r"（\1・\2\3）", text)
+    return re.sub(r"\s{2,}", " ", text).strip()
+
+
+def _haversine_km(c1: dict, c2: dict) -> float:
+    lat1, lon1 = c1.get("lat"), c1.get("lon")
+    lat2, lon2 = c2.get("lat"), c2.get("lon")
+    if None in (lat1, lon1, lat2, lon2):
+        return 99999.0
+    r = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def enhance_all_cities(cities: list) -> list:
+    """全都市に共通ルールでスポット統合・季節注記・表記整形を適用"""
+    draft_path = Path("spots_draft.json")
+    spots_map = {}
+    if draft_path.exists():
+        try:
+            spots_map = json.loads(draft_path.read_text(encoding="utf-8"))
+        except Exception:
+            spots_map = {}
+
+    for c in cities:
+        slug = c.get("slug")
+
+        # 1. spots_draft.json から実名スポットを自動統合
+        if not c.get("spots"):
+            draft_spots = spots_map.get(slug, {}).get("spots", [])
+            if draft_spots:
+                c["spots"] = draft_spots
+
+        # 2. 南半球の季節注記を自動補完（7〜8月が冬・12〜2月が夏）
+        lat = c.get("lat")
+        if isinstance(lat, (int, float)) and lat < -10:
+            climate = c.get("climate", "")
+            if isinstance(climate, str) and "南半球" not in climate:
+                c["climate"] = (
+                    f"{climate}（南半球のため日本とは季節が逆になり、7〜8月は冬・12〜2月は夏にあたります）"
+                    if climate else
+                    "南半球に位置するため日本とは季節が逆になり、7〜8月は冬・12〜2月は夏にあたります。"
+                )
+
+        # 3. 文字列フィールドの表記ゆれを一括クリーンアップ
+        for key in ("climate", "summary", "desc", "transport", "safety_note"):
+            if key in c and isinstance(c[key], str):
+                c[key] = _clean_text(c[key])
+
+    return cities
+
+
+def enhance_features(features: list) -> list:
+    """特集ページの説明文を季節・実態に合わせて調整"""
+    result = []
+    for feat in features:
+        item = dict(feat)
+        if item.get("slug") == "summer-vacation":
+            item["desc"] = (
+                "7〜8月の夏休みシーズンに向けた12都市の気候・服装・電源・治安まとめ。"
+                "夏の乾季リゾートや涼しい高地・北欧のほか、南半球の冬にあたるオセアニアの気温差も含めて比較できます。"
+            )
+        result.append(item)
+    return result
+
+
+def build_dynamic_compare_desc(c1: dict, c2: dict, fallback: str) -> str:
+    """2都市の実際のデータ差から比較要約を自動生成"""
+    diffs = []
+    if c1.get("currency") and c2.get("currency") and c1["currency"] != c2["currency"]:
+        diffs.append(f"通貨（{c1['currency']} vs {c2['currency']}）")
+    if c1.get("plug") and c2.get("plug") and c1["plug"] != c2["plug"]:
+        diffs.append("コンセント形状")
+    if c1.get("tz_offset") is not None and c2.get("tz_offset") is not None and c1["tz_offset"] != c2["tz_offset"]:
+        diffs.append("時差")
+    lat1, lat2 = c1.get("lat"), c2.get("lat")
+    if isinstance(lat1, (int, float)) and isinstance(lat2, (int, float)) and (lat1 * lat2 < 0):
+        diffs.append("北半球と南半球の季節差")
+
+    if diffs:
+        diff_str = "・".join(diffs[:3])
+        return f"{c1['name_ja']}と{c2['name_ja']}の比較。{diff_str}や気候・移動・治安の違いを1画面で確認できます。"
+    return fallback
+
+
 def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
     city_map = {c["slug"]: c for c in cities}
     all_pairs = []
@@ -135,8 +156,7 @@ def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
             pair_slug = f"{s1}-vs-{s2}"
             if pair_slug not in seen_slugs:
                 seen_slugs.add(pair_slug)
-                final_desc = customize_compare_summary(city_map[s1], city_map[s2], desc)
-                all_pairs.append((s1, s2, final_desc))
+                all_pairs.append((s1, s2, desc))
                 label = f"{city_map[s1]['name_ja']} vs {city_map[s2]['name_ja']}"
                 city_to_links[s1].append((pair_slug, label))
                 city_to_links[s2].append((pair_slug, label))
@@ -145,18 +165,23 @@ def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
     for c in cities:
         by_region.setdefault(c["region"], []).append(c)
 
+    # 未ペアの都市は「同地域内で地理的に最も近い都市」と優先的にペアリング
     for reg, reg_cities in by_region.items():
-        for i, c in enumerate(reg_cities):
+        for c in reg_cities:
             if not city_to_links[c["slug"]]:
-                partner = reg_cities[(i + 1) % len(reg_cities)]
-                if partner["slug"] == c["slug"] and len(cities) > 1:
-                    partner = cities[0]
+                candidates = [x for x in reg_cities if x["slug"] != c["slug"]]
+                if not candidates:
+                    candidates = [x for x in cities if x["slug"] != c["slug"]]
+                if not candidates:
+                    continue
+                partner = min(candidates, key=lambda x: _haversine_km(c, x))
                 s1, s2 = c["slug"], partner["slug"]
                 pair_slug = f"{s1}-vs-{s2}"
                 rev_slug = f"{s2}-vs-{s1}"
                 if pair_slug not in seen_slugs and rev_slug not in seen_slugs:
                     seen_slugs.add(pair_slug)
-                    desc = f"{c['region']}の人気渡航先である{c['name_ja']}と{partner['name_ja']}のコンセント・チップ・物価・気候・治安の違いを1画面で比較。"
+                    fallback = f"{c['region']}の人気渡航先である{c['name_ja']}と{partner['name_ja']}の物価・気候・移動・治安の違いを1画面で比較。"
+                    desc = build_dynamic_compare_desc(c, partner, fallback)
                     all_pairs.append((s1, s2, desc))
                     label = f"{c['name_ja']} vs {partner['name_ja']}"
                     city_to_links[s1].append((pair_slug, label))
@@ -207,9 +232,8 @@ def main():
     data_dir.mkdir(exist_ok=True)
     dist_dir.mkdir(exist_ok=True)
 
-    raw_cities = generate_cities_data()
-    cities = apply_review_fixes_to_cities(raw_cities)
-    features = apply_review_fixes_to_features(FEATURE_PAGES)
+    cities = enhance_all_cities(generate_cities_data())
+    features = enhance_features(FEATURE_PAGES)
 
     city_map = {c["slug"]: c for c in cities}
     (data_dir / "cities.json").write_text(json.dumps(cities, ensure_ascii=False, indent=2), encoding="utf-8")
