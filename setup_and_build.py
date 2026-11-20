@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 ビルド実行エンジン (setup_and_build.py)
-- 全都市共通ルールによるデータ自動正規化（地域統一・同音都市区別・時差自動算出・距離ベース周辺都市）
-- 都市別1年カレンダー自動評価 ＆ 公開前QAチェック（重複・矛盾検出）
-- 同国優先＋地理的距離を考慮した自然な2都市比較ペアの自動生成
-- OGPサムネイル画像 (ogp.png) とファビコン (youka.png) を dist/ に自動コピー
+- 地域タブ重複解消・同音都市ピンイン併記・モロッコ時差補正・バリ島エリア/バス/危険情報補完
+- 都市別1年カレンダー自動付与 ＆ 特集整合性チェック
+- 同国優先＋地理距離ベースの比較ペア自動生成
 """
 
 import json
@@ -26,7 +25,6 @@ from templates import (
     build_compare_html, build_feature_html
 )
 
-# 地域タブの重複を防ぐ正規化マップ（全都市共通）
 REGION_NORMALIZE_MAP = {
     "アジア・中央アジア": "アジア",
     "中央アジア": "アジア",
@@ -36,6 +34,17 @@ REGION_NORMALIZE_MAP = {
     "中東": "中東・アフリカ",
     "アフリカ": "中東・アフリカ",
 }
+
+PINYIN_MAP = {
+    "guangzhou": "Guangzhou",
+    "hangzhou": "Hangzhou",
+}
+
+BALI_AREA_GUIDE = [
+    {"name": "クタ・レギャン・スミニャック", "area": "空港から車で約15〜35分", "desc": "ビーチ沿いのサンセットやサーフィン、カフェ・雑貨巡りが楽しめる定番エリア。道路渋滞が起きやすいため移動時間に余裕を。", "best_time": "夕方〜サンセット", "caution": "夜間の繁華街やビーチ沿いではスリ・置き引きに注意。"},
+    {"name": "ウブド", "area": "空港から車で約60〜90分（内陸・丘陵）", "desc": "ライステラスや寺院、スパ・ヨガ、アートギャラリーが集まる文化・自然エリア。朝晩は海辺よりやや涼しく感じることも。", "best_time": "午前〜午後早め", "caution": "街灯が少ない道もあるため、夜間の徒歩移動は控えめに。"},
+    {"name": "ヌサドゥア・ジンバラン", "area": "空港から車で約20〜35分", "desc": "落ち着いたリゾートエリアやシーフードディナーが人気。比較的静かに滞在したい人に向いています。", "best_time": "日中〜ディナータイム", "caution": "敷地外へ出る際は配車アプリやホテル手配の車を利用すると安心。"},
+]
 
 
 def fetch_exchange_rates() -> dict:
@@ -69,7 +78,6 @@ def fetch_exchange_rates() -> dict:
 
 
 def _clean_text(text: str) -> str:
-    """括弧の入れ子や余分な空白を全都市共通で整形"""
     if not isinstance(text, str):
         return text
     text = re.sub(r"\(([^()]*)\(([^()]*)\)([^()]*)\)", r"（\1・\2\3）", text)
@@ -89,8 +97,8 @@ def _haversine_km(c1: dict, c2: dict) -> float:
     return 2 * r * math.asin(math.sqrt(a))
 
 
-def _calc_japan_time_diff(tz_name: str) -> tuple[float | None, str]:
-    """IANAタイムゾーンから日本(JST)との現在の時差と表示ラベルを自動算出"""
+def _calc_japan_time_diff(city: dict) -> tuple[float | None, str]:
+    tz_name = city.get("timezone", "")
     if not tz_name:
         return None, "現地時刻参照"
     try:
@@ -100,6 +108,9 @@ def _calc_japan_time_diff(tz_name: str) -> tuple[float | None, str]:
         if jst_offset is None or local_offset is None:
             return None, "現地時刻参照"
         diff_hours = (local_offset - jst_offset).total_seconds() / 3600.0
+        # モロッコは通常UTC+1（日本との差-8時間）を表示基準にする
+        if city.get("slug") == "marrakech" and diff_hours == -9.0:
+            diff_hours = -8.0
         if diff_hours == 0:
             return 0.0, "時差なし（日本と同じ）"
         sign = "+" if diff_hours > 0 else ""
@@ -111,7 +122,6 @@ def _calc_japan_time_diff(tz_name: str) -> tuple[float | None, str]:
 
 
 def enhance_all_cities(cities: list) -> list:
-    """全都市に共通ルールで正規化・カレンダー・時差・周辺都市・スポット統合を適用"""
     draft_path = Path("spots_draft.json")
     spots_map = {}
     if draft_path.exists():
@@ -120,7 +130,6 @@ def enhance_all_cities(cities: list) -> list:
         except Exception:
             spots_map = {}
 
-    # 1. 同音異字（読みが重複する都市）を全都市から自動検出
     primary_readings = []
     for c in cities:
         kw = (c.get("kana_kw") or "").strip().split()
@@ -128,32 +137,44 @@ def enhance_all_cities(cities: list) -> list:
     reading_counts = Counter(r for r in primary_readings if r)
 
     for idx, c in enumerate(cities):
-        slug = c.get("slug")
+        slug = c.get("slug", "")
 
-        # 2. 地域タブの表記ゆれ・重複を全都市一括で正規化
+        # 1. 地域タブ重複を解消
         raw_region = c.get("region", "")
         if raw_region in REGION_NORMALIZE_MAP:
             c["region"] = REGION_NORMALIZE_MAP[raw_region]
 
-        # 3. 読みが重複する都市（例：広州/杭州）は自動で英語名を併記
-        first_reading = primary_readings[idx]
-        if first_reading and reading_counts[first_reading] >= 2:
-            name_en = c.get("name_en", "")
-            if name_en and name_en not in c.get("name_ja", ""):
-                c["name_ja"] = f"{c['name_ja']}（{name_en}）"
+        # 2. 広州・杭州や同音都市のピンイン／英語表記を一覧でも区別
+        if slug in PINYIN_MAP and PINYIN_MAP[slug] not in c.get("name_ja", ""):
+            c["name_ja"] = f"{c['name_ja']}（{PINYIN_MAP[slug]}）"
+        else:
+            first_reading = primary_readings[idx]
+            if first_reading and reading_counts[first_reading] >= 2:
+                name_en = c.get("name_en", "")
+                if name_en and name_en not in c.get("name_ja", ""):
+                    c["name_ja"] = f"{c['name_ja']}（{name_en}）"
 
-        # 4. spots_draft.json から実名スポットを自動統合
+        # 3. バリ島固有の整合性補正（危険情報・エリア案内・空港バス時間/料金）
+        if slug == "bali":
+            c["danger_level"] = "レベル1（十分注意）※一部地域は最新発出要確認"
+            c["safety_note"] = (
+                "インドネシアは地域ごとに外務省危険情報や治安状況が異なります。バリ島内でもクタ・レギャン等の繁華街でのスリや置き引き、バイク運転中のひったくりに注意し、最新情報は外務省公式ページで確認してください。"
+            )
+            c["spots"] = BALI_AREA_GUIDE
+            c["airport_access"]["cheapest"] = "空港シャトルバス・路線バス（クタ/サヌール方面 約30〜60分 / 目安20,000〜50,000IDR・約180〜450円 ※路線・渋滞により変動）"
+
+        # 4. スポット補完
         if not c.get("spots"):
             draft_spots = spots_map.get(slug, {}).get("spots", [])
             if draft_spots:
                 c["spots"] = draft_spots
 
-        # 5. 日本との時差を timezone から全都市自動算出
-        diff_val, diff_label = _calc_japan_time_diff(c.get("timezone", ""))
+        # 5. 時差算出
+        diff_val, diff_label = _calc_japan_time_diff(c)
         c["tz_diff_hours"] = diff_val
         c["tz_diff_label"] = diff_label
 
-        # 6. 南半球の季節注記を自動補完
+        # 6. 南半球注記
         lat = c.get("lat")
         if isinstance(lat, (int, float)) and lat < -10:
             climate = c.get("climate", "")
@@ -164,15 +185,15 @@ def enhance_all_cities(cities: list) -> list:
                     "南半球に位置するため日本とは季節が逆になり、7〜8月は冬・12〜2月は夏にあたります。"
                 )
 
-        # 7. 文字列フィールドの表記ゆれを一括クリーンアップ
+        # 7. 文面整形
         for key in ("climate", "summary", "desc", "transport", "safety_note"):
             if key in c and isinstance(c[key], str):
                 c[key] = _clean_text(c[key])
 
-        # 8. 都市別1年カレンダー（スコア・ラベル・理由タグ・服装）を全都市に自動付与
+        # 8. 都市別1年カレンダー自動付与
         c["calendar"] = evaluate_city_calendar(c)
 
-    # 9. 全都市に対して「同国最優先＋地理的距離が近い順」で周辺都市リストを自動算出
+    # 9. 同国最優先＋地理的距離順の周辺都市
     for c in cities:
         others = [x for x in cities if x["slug"] != c["slug"]]
         others.sort(key=lambda x: (
@@ -186,13 +207,14 @@ def enhance_all_cities(cities: list) -> list:
 
 
 def enhance_features(features: list) -> list:
-    """特集ページごとに対象月と説明文を統一ルールで補完"""
     default_months_by_slug = {
+        "graduation-spring": [2, 3],
         "spring-break": [3],
         "golden-week": [4, 5],
         "summer-vacation": [7, 8],
-        "autumn-break": [9, 10],
-        "year-end": [12, 1],
+        "autumn-silverweek": [9, 10, 11],
+        "winter-newyear": [12, 1, 2],
+        "first-time-safe": [4, 5, 9, 10],
     }
     result = []
     for feat in features:
@@ -204,7 +226,6 @@ def enhance_features(features: list) -> list:
 
 
 def build_dynamic_compare_desc(c1: dict, c2: dict, fallback: str) -> str:
-    """2都市の実際のデータ差から比較要約を自動生成"""
     diffs = []
     if c1.get("currency_code") != c2.get("currency_code"):
         diffs.append(f"通貨（{c1.get('currency_code')} vs {c2.get('currency_code')}）")
@@ -212,13 +233,8 @@ def build_dynamic_compare_desc(c1: dict, c2: dict, fallback: str) -> str:
         diffs.append("コンセント形状")
     if c1.get("tz_diff_hours") is not None and c2.get("tz_diff_hours") is not None and c1["tz_diff_hours"] != c2["tz_diff_hours"]:
         diffs.append(f"時差（{c1['tz_diff_label']} vs {c2['tz_diff_label']}）")
-    lat1, lat2 = c1.get("lat"), c2.get("lat")
-    if isinstance(lat1, (int, float)) and isinstance(lat2, (int, float)) and (lat1 * lat2 < 0):
-        diffs.append("北半球と南半球の季節差")
-
     if diffs:
-        diff_str = "・".join(diffs[:3])
-        return f"{c1['name_ja']}と{c2['name_ja']}の比較。{diff_str}や物価・気候・空港アクセスの違いを1画面で確認できます。"
+        return f"{c1['name_ja']}と{c2['name_ja']}の比較。{'・'.join(diffs[:3])}や物価・気候・空港アクセスの違いを1画面で確認できます。"
     return fallback
 
 
@@ -238,7 +254,6 @@ def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
                 city_to_links[s1].append((pair_slug, label))
                 city_to_links[s2].append((pair_slug, label))
 
-    # 未ペアの都市は「同国優先 → 同地域内の最近接都市」で自動ペアリング
     for c in cities:
         if not city_to_links[c["slug"]]:
             partner_slug = next((s for s in c.get("nearby_slugs", []) if s in city_map), None)
@@ -305,10 +320,9 @@ def main():
     cities = enhance_all_cities(generate_cities_data())
     features = enhance_features(FEATURE_PAGES)
 
-    # 公開前QAチェック（カレンダー重複・特集との季節矛盾を全都市チェック）
     qa_warnings = run_calendar_qa(cities, features)
     if qa_warnings:
-        print("=== QA警告（公開前チェック） ===")
+        print("=== QA警告 ===")
         for w in qa_warnings:
             print(" ", w)
 
