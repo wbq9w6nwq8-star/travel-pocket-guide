@@ -1,125 +1,135 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-OpenStreetMap (Overpass API) を使って観光スポット候補を取得し、
-渡航ポケット辞典用の下書き JSON (spots_draft.json) を生成するスクリプト。
+日本語Wikipedia API を使って全都市の観光スポット候補を自動取得し、
+spots_draft.json に保存するスクリプト（全都市対応・差分更新）
 """
 
 import json
 import time
-import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
-OVERPASS_ENDPOINTS = [
-    "https://overpass-api.de/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter",
-]
+from cities_data import generate_cities_data
 
-TARGET_CITIES = {
-    "lisbon": {"name_ja": "リスボン", "lat": 38.7223, "lon": -9.1393, "radius": 5000},
-    "seoul": {"name_ja": "ソウル", "lat": 37.5665, "lon": 126.9780, "radius": 6000},
-    "sydney": {"name_ja": "シドニー", "lat": -33.8688, "lon": 151.2093, "radius": 5000},
-    "melbourne": {"name_ja": "メルボルン", "lat": -37.8136, "lon": 144.9631, "radius": 5000},
-    "los-angeles": {"name_ja": "ロサンゼルス", "lat": 34.0522, "lon": -118.2437, "radius": 7000},
-    "new-york": {"name_ja": "ニューヨーク", "lat": 40.7128, "lon": -74.0060, "radius": 6000},
-}
+WIKI_API = "https://ja.wikipedia.org/w/api.php"
+OUTPUT_PATH = Path("spots_draft.json")
 
 
-def post_overpass(query: str) -> dict:
-    last_err = None
-    data = urllib.parse.urlencode({"data": query}).encode("utf-8")
+def wiki_request(params: dict) -> dict:
+    params = {**params, "format": "json"}
+    url = f"{WIKI_API}?{urllib.parse.urlencode(params)}"
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "TokouPocketBot/2.0 (https://tokou-pocket.com)"},
+    )
+    with urllib.request.urlopen(req, timeout=15) as res:
+        return json.loads(res.read().decode("utf-8"))
 
-    for endpoint in OVERPASS_ENDPOINTS:
-        req = urllib.request.Request(
-            endpoint,
-            data=data,
-            headers={
-                "User-Agent": "TokouPocketSpotDraft/1.1 (https://tokou-pocket.com)",
-                "Accept": "application/json",
-            },
-        )
+
+def fetch_city_spots(city: dict, limit: int = 5) -> list[dict]:
+    name_ja = city.get("name_ja", "")
+    lat = city.get("lat")
+    lon = city.get("lon")
+    titles = []
+
+    # 1. 緯度経度があれば周辺記事（geosearch）を優先取得
+    if lat is not None and lon is not None:
         try:
-            with urllib.request.urlopen(req, timeout=25) as res:
-                raw = res.read().decode("utf-8")
-                return json.loads(raw)
-        except urllib.error.HTTPError as e:
-            last_err = f"HTTP {e.code} ({endpoint})"
-            print(f"    -> {last_err}")
-        except Exception as e:
-            last_err = f"{type(e).__name__}: {e} ({endpoint})"
-            print(f"    -> {last_err}")
-        time.sleep(1.5)
+            geo = wiki_request({
+                "action": "query",
+                "list": "geosearch",
+                "gscoord": f"{lat}|{lon}",
+                "gsradius": 8000,
+                "gslimit": 15,
+            })
+            for item in geo.get("query", {}).get("geosearch", []):
+                t = item.get("title", "")
+                if t and t != name_ja and "駅" not in t and "空港" not in t:
+                    titles.append(t)
+        except Exception:
+            pass
 
-    raise RuntimeError(last_err or "All Overpass endpoints failed")
+    # 2. 足りない場合は検索APIで補完
+    if len(titles) < limit:
+        try:
+            sr = wiki_request({
+                "action": "query",
+                "list": "search",
+                "srsearch": f"{name_ja} 観光 名所",
+                "srlimit": 10,
+            })
+            for item in sr.get("query", {}).get("search", []):
+                t = item.get("title", "")
+                if t and t != name_ja and t not in titles and "の一覧" not in t:
+                    titles.append(t)
+        except Exception:
+            pass
 
+    titles = titles[:limit]
+    if not titles:
+        return []
 
-def query_overpass_spots(lat: float, lon: float, radius: int, limit: int = 8) -> list[dict]:
-    query = f"""[out:json][timeout:20];
-(
-  node["tourism"~"attraction|museum|viewpoint"]["name"](around:{radius},{lat},{lon});
-  way["tourism"~"attraction|museum|viewpoint"]["name"](around:{radius},{lat},{lon});
-);
-out center 80;"""
-
-    payload = post_overpass(query)
-    seen = set()
-    candidates = []
-
-    for el in payload.get("elements", []):
-        tags = el.get("tags", {})
-        name = tags.get("name:ja") or tags.get("name") or tags.get("name:en")
-        if not name or name in seen:
-            continue
-        seen.add(name)
-
-        tourism_type = tags.get("tourism", "attraction")
-        area = (
-            tags.get("addr:suburb")
-            or tags.get("addr:district")
-            or tags.get("addr:city")
-            or "市内中心部"
-        )
-
-        candidates.append({
-            "name": name,
-            "area": area,
-            "category": tourism_type,
-            "desc": "【要編集】現地の特徴や回り方のポイントを追記してください。",
-            "best_time": "【要編集】午前／夕方など",
-            "caution": "【要編集】混雑・スリ・営業時間などの注意点",
-            "source": "OpenStreetMap (Overpass API)",
+    # 3. 概要文（extract）を一括取得
+    spots = []
+    try:
+        ext = wiki_request({
+            "action": "query",
+            "prop": "extracts",
+            "exintro": 1,
+            "explaintext": 1,
+            "exsentences": 2,
+            "titles": "|".join(titles),
         })
+        pages = ext.get("query", {}).get("pages", {})
+        by_title = {p.get("title"): p.get("extract", "") for p in pages.values()}
+        for t in titles:
+            desc = (by_title.get(t) or "").replace("\n", " ").strip()
+            if len(desc) > 110:
+                desc = desc[:107].rstrip("、。") + "…"
+            spots.append({
+                "name": t,
+                "area": f"{name_ja}エリア",
+                "desc": desc or f"{name_ja}を代表する見どころのひとつです。",
+                "best_time": "午前〜日中の明るい時間帯",
+                "caution": "営業時間・休館日・混雑状況は訪問前に公式情報をご確認ください。",
+                "source": "Wikipedia (ja)",
+            })
+    except Exception:
+        pass
 
-        if len(candidates) >= limit:
-            break
-
-    return candidates
+    return spots
 
 
 def main() -> None:
-    result = {}
-    for slug, info in TARGET_CITIES.items():
-        print(f"取得中: {info['name_ja']} ({slug}) ...")
+    existing = {}
+    if OUTPUT_PATH.exists():
         try:
-            spots = query_overpass_spots(info["lat"], info["lon"], info["radius"], limit=8)
-            result[slug] = {
-                "city_name_ja": info["name_ja"],
-                "spots": spots,
-            }
-            print(f"  -> {len(spots)}件の候補を取得")
-        except Exception as exc:
-            print(f"  -> 取得失敗: {exc}")
-            result[slug] = {
-                "city_name_ja": info["name_ja"],
-                "spots": [],
-            }
-        time.sleep(2.5)
+            existing = json.loads(OUTPUT_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            existing = {}
 
-    with open("spots_draft.json", "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
+    cities = generate_cities_data()
+    updated = 0
 
-    print("\n完了: spots_draft.json に下書きを保存しました。")
+    for city in cities:
+        slug = city["slug"]
+        # すでにスポットが入っている都市はスキップ（差分更新）
+        if existing.get(slug, {}).get("spots"):
+            continue
+
+        spots = fetch_city_spots(city, limit=5)
+        existing[slug] = {
+            "city_name_ja": city.get("name_ja", slug),
+            "spots": spots,
+        }
+        updated += 1
+        print(f"[{updated}] {city.get('name_ja', slug)} ({slug}): {len(spots)}件取得")
+        time.sleep(0.2)
+
+    OUTPUT_PATH.write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"完了: spots_draft.json を更新しました（新規取得 {updated} 都市 / 合計 {len(existing)} 都市）。")
 
 
 if __name__ == "__main__":
