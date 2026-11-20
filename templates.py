@@ -866,6 +866,45 @@ def render_sightseeing_and_agency_box(city: dict) -> str:
     </section>"""
 
 
+def render_wise_and_epos_affiliate(city: dict) -> str:
+    return f"""
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+        <div class="pr-card pr-card--accent flex flex-col justify-between gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full" style="background: var(--accent); color: #ffffff;">リアルレート両替 · {city['currency_code']}</span>
+              <span class="text-[10px] font-bold" style="color: var(--text-muted);">PR</span>
+            </div>
+            <p class="text-sm font-extrabold pt-1" style="color: var(--text-primary);">{city['name_ja']}の決済・ATM引き出しに【Wise】</p>
+            <p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">
+              マルチカレンシー口座＆デビットカードで外貨決済や現地ATM引き出しの手数料を抑えやすいのが魅力。<strong>両替コストや為替手数料をシビアに抑えたい人向け</strong>です（利用上限や手数料体系は申込前に公式をご確認ください）。
+            </p>
+          </div>
+          <a href="{AFFILIATE_WISE_URL}" target="_blank" rel="nofollow noopener" class="pr-cta w-full" style="background: var(--accent); color: #ffffff;">
+            <span>Wise公式サイトを見る</span>
+            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+
+        <div class="pr-card pr-card--amber flex flex-col justify-between gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full" style="background: var(--amber-text); color: #ffffff;">年会費永年無料 · 海外旅行保険</span>
+              <span class="text-[10px] font-bold" style="color: var(--text-muted);">PR</span>
+            </div>
+            <p class="text-sm font-extrabold pt-1" style="color: var(--text-primary);">{city['name_ja']}渡航の保険・防犯に【エポスカード】</p>
+            <p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">
+              カード番号裏面記載＆タッチ決済対応で安心。<strong>※海外旅行傷害保険は「利用付帯」のため、空港までの交通費やツアー代金など対象費用を同カードで支払うこと</strong>が適用条件になります。
+            </p>
+          </div>
+          <a href="{AFFILIATE_CARD_URL}" target="_blank" rel="nofollow noopener" class="pr-cta w-full" style="background: var(--amber-text); color: #ffffff;">
+            <span>エポスカード詳細</span>
+            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+      </div>"""
+
+
 def render_detailed_rules_and_manners(city: dict) -> str:
     cc = city["country_ja"]
     curr = city["currency_code"]
@@ -957,7 +996,7 @@ def render_detailed_rules_and_manners(city: dict) -> str:
         </div>
       </div>
 
-      {render_epos_affiliate(city)}
+      {render_wise_and_epos_affiliate(city)}
     </section>"""
 
 
