@@ -3,7 +3,8 @@
 """
 ビルド実行エンジン (setup_and_build.py)
 - OGPサムネイル画像 (ogp.png) とファビコン (youka.png) を dist/ に自動コピー
-- 全150都市すべてが比較ページを持つように自動ペアリング生成
+- 全都市が比較ページを持つように自動ペアリング生成
+- レビュー指摘（リスボン・夏休み特集・比較ペア要約など）の補正を適用
 """
 
 import json
@@ -18,6 +19,79 @@ from templates import (
     build_city_html, build_index_html, build_policy_html,
     build_compare_html, build_feature_html
 )
+
+LISBON_SPOTS = [
+    {
+        "name": "ジェロニモス修道院",
+        "area": "ベレン地区",
+        "desc": "マヌエル様式の壮麗な修道院と回廊。ベレンの塔やエッグタルトの老舗と合わせて回りやすい定番です。",
+        "best_time": "開館直後の午前中",
+        "caution": "人気のため行列ができやすく、時間帯別の事前予約や早めの到着が安心です。",
+    },
+    {
+        "name": "サン・ジョルジェ城",
+        "area": "アルファマ周辺（丘の上）",
+        "desc": "リスボン旧市街とテージョ川を見渡せる歴史ある城跡。夕暮れ時の眺望も人気です。",
+        "best_time": "午前〜夕方（日没前は混雑）",
+        "caution": "坂道や石畳が多いため歩きやすい靴が必須。入場待ち時間に余裕を持ちましょう。",
+    },
+    {
+        "name": "アルファマ地区＆トラム28番線",
+        "area": "アルファマ地区",
+        "desc": "迷路のような路地と坂道、ファドが響く旧市街エリア。レトロな路面電車は景色が魅力です。",
+        "best_time": "午前中",
+        "caution": "トラム28番線や坂道の混雑箇所はスリが多発しやすいため、バッグは前で持ちましょう。",
+    },
+]
+
+
+def apply_review_fixes_to_cities(cities: list) -> list:
+    """レビュー指摘に基づく都市データの補正"""
+    for c in cities:
+        slug = c.get("slug")
+        if slug == "lisbon":
+            c["climate"] = (
+                "地中海性気候で、夏（6〜8月）は乾燥して晴れの日が多く日差しが強め、冬（11〜2月）は雨や曇りが増えやすい傾向です。"
+                "朝晩や海風による体感温度差があるため羽織りものがあると安心です。"
+            )
+            c["airport_access"] = {
+                "airport_name": "ウンベルト・デルガード空港（リスボン空港 / LIS）",
+                "fastest": "空港からタクシー・配車アプリ（Uber / Bolt）で約15〜25分（市内中心部まで目安10〜20€前後・渋滞により変動）。",
+                "cheapest": "地下鉄レッドライン（Aeroporto駅）で市内中心部へ約20〜30分（片道目安1.80€・IC/タッチ決済対応）。",
+            }
+            if not c.get("spots"):
+                c["spots"] = LISBON_SPOTS
+    return cities
+
+
+def apply_review_fixes_to_features(features: list) -> list:
+    """特集ページの説明文を時期・実態に合わせて調整"""
+    adjusted = []
+    for feat in features:
+        item = dict(feat)
+        if item.get("slug") == "summer-vacation":
+            item["desc"] = (
+                "7〜8月の夏休みシーズンに向けた12都市の気候・服装・電源・治安まとめ。"
+                "夏の乾季リゾートや涼しい高地・北欧のほか、南半球の冬にあたるオセアニアの気温差も含めて確認できます。"
+            )
+        adjusted.append(item)
+    return adjusted
+
+
+def customize_compare_summary(c1: dict, c2: dict, default_desc: str) -> str:
+    """比較ペアごとの違い・選び方が伝わる要約文"""
+    pair = {c1.get("slug"), c2.get("slug")}
+    if pair == {"sydney", "melbourne"}:
+        return (
+            "ハーバーとビーチ・開放感のシドニーと、路地裏のカフェ文化・アートとコンパクトな街歩きのメルボルン。"
+            "同じオーストラリアでも街の個性や7〜8月の冬の体感、向いている旅のスタイルが異なります。"
+        )
+    if pair == {"los-angeles", "new-york"}:
+        return (
+            "車・配車移動と海・テーマパークの開放感があるロサンゼルスと、地下鉄・徒歩で美術館や舞台を巡るニューヨーク。"
+            "3時間の時差や冬の寒さ、街の回り方が大きく異なります。"
+        )
+    return default_desc
 
 
 def fetch_exchange_rates() -> dict:
@@ -61,7 +135,8 @@ def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
             pair_slug = f"{s1}-vs-{s2}"
             if pair_slug not in seen_slugs:
                 seen_slugs.add(pair_slug)
-                all_pairs.append((s1, s2, desc))
+                final_desc = customize_compare_summary(city_map[s1], city_map[s2], desc)
+                all_pairs.append((s1, s2, final_desc))
                 label = f"{city_map[s1]['name_ja']} vs {city_map[s2]['name_ja']}"
                 city_to_links[s1].append((pair_slug, label))
                 city_to_links[s2].append((pair_slug, label))
@@ -132,7 +207,10 @@ def main():
     data_dir.mkdir(exist_ok=True)
     dist_dir.mkdir(exist_ok=True)
 
-    cities = generate_cities_data()
+    raw_cities = generate_cities_data()
+    cities = apply_review_fixes_to_cities(raw_cities)
+    features = apply_review_fixes_to_features(FEATURE_PAGES)
+
     city_map = {c["slug"]: c for c in cities}
     (data_dir / "cities.json").write_text(json.dumps(cities, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -158,7 +236,7 @@ def main():
         (comp_dir / "index.html").write_text(comp_html, encoding="utf-8")
         urls.append(f"{SITE_URL}/compare/{pair_slug}/")
 
-    for feat in FEATURE_PAGES:
+    for feat in features:
         feat_dir = dist_dir / "features" / feat["slug"]
         feat_dir.mkdir(parents=True, exist_ok=True)
         feat_html = build_feature_html(feat, cities)
@@ -178,7 +256,7 @@ def main():
     (dist_dir / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
 
     write_auxiliary_files(dist_dir)
-    print(f"ビルド完了: 全 {len(urls)} ページ（{len(cities)}都市＋比較{len(all_compare_pairs)}ペア＋特集{len(FEATURE_PAGES)}本）を生成しました。")
+    print(f"ビルド完了: 全 {len(urls)} ページ（{len(cities)}都市＋比較{len(all_compare_pairs)}ペア＋特集{len(features)}本）を生成しました。")
 
 
 if __name__ == "__main__":
