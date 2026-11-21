@@ -11,6 +11,7 @@ import json
 import math
 import re
 import shutil
+import sys
 import urllib.request
 from collections import Counter
 from datetime import datetime, timezone, timedelta
@@ -60,8 +61,21 @@ def fetch_exchange_rates() -> dict:
     except Exception:
         pass
 
+    # 取得失敗時: 前回の正常値があればそれを使い、更新時刻に「前回値」と明記する
+    try:
+        prev = json.loads((Path("data") / "rates.json").read_text(encoding="utf-8"))
+        if prev.get("rates") and not prev.get("is_fallback"):
+            base_label = str(prev.get("updated_at", "不明")).replace("（取得失敗のため前回値）", "")
+            prev["updated_at"] = f"{base_label}（取得失敗のため前回値）"
+            prev["is_stale"] = True
+            return prev
+    except Exception:
+        pass
+
+    # 前回値もない場合の固定値。最新の更新時刻を名乗らず、参考値であることを明記する
     return {
-        "updated_at": now_jst,
+        "updated_at": "取得失敗（参考値）",
+        "is_fallback": True,
         "base": "JPY",
         "rates": {
             "USD": 0.0065, "EUR": 0.0061, "GBP": 0.0051, "KRW": 9.1, "TWD": 0.21,
@@ -108,9 +122,7 @@ def _calc_japan_time_diff(city: dict) -> tuple[float | None, str]:
         if jst_offset is None or local_offset is None:
             return None, "現地時刻参照"
         diff_hours = (local_offset - jst_offset).total_seconds() / 3600.0
-        # モロッコは通常UTC+1（日本との差-8時間）を表示基準にする
-        if city.get("slug") == "marrakech" and diff_hours == -9.0:
-            diff_hours = -8.0
+        # 注: モロッコは2026-09-20からUTC+0固定（-9時間）。tzdata 2026c以降が必要。個別補正は入れない
         if diff_hours == 0:
             return 0.0, "時差なし（日本と同じ）"
         sign = "+" if diff_hours > 0 else ""
@@ -320,11 +332,15 @@ def main():
     cities = enhance_all_cities(generate_cities_data())
     features = enhance_features(FEATURE_PAGES)
 
-    qa_warnings = run_calendar_qa(cities, features)
-    if qa_warnings:
-        print("=== QA警告 ===")
-        for w in qa_warnings:
+    qa_messages = run_calendar_qa(cities, features)
+    if qa_messages:
+        print("=== QA結果 ===")
+        for w in qa_messages:
             print(" ", w)
+    qa_errors = [w for w in qa_messages if w.startswith("[ERROR]")]
+    if qa_errors:
+        print(f"QAエラー {len(qa_errors)} 件のためビルドを中止します（data/ と dist/ は更新されません）。")
+        sys.exit(1)
 
     city_map = {c["slug"]: c for c in cities}
     (data_dir / "cities.json").write_text(json.dumps(cities, ensure_ascii=False, indent=2), encoding="utf-8")
