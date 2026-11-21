@@ -5,11 +5,12 @@
 - 相対基準（月平均比）＋絶対基準を併用し、熱帯の乾季・雨季や季節タグを自然に表示
 - 全月に同じタグが張り付くのを防ぎ、「この街のベスト3か月（★）」と月別詳細を算出
 - 特集ページ（秋休み・GW・夏休み等）の季節スナップショット＆整合性チェックを提供
+- 【v1.3】他都市データの流用（フォールバック）を廃止。データ未整備の都市はカレンダーを出さない
 """
 
 from typing import Dict, List
 
-THRESHOLD_VERSION = "v1.2 (2026-11)"
+THRESHOLD_VERSION = "v1.3 (2026-11)"
 DATA_SOURCE_NOTE = "WMO平年値(1991-2020)およびOpen-Meteo過去気象集計をもとに算出"
 
 TAG_ADVICE = {
@@ -38,7 +39,7 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
         "south": False,
         "has_rail": False,
         "hazards": {6: ["猛暑"], 7: ["猛暑"], 8: ["猛暑"], 9: ["猛暑"]},
-        "highlight": "通常UTC+1（日本との時差-8時間）ですが、ラマダン期間中は1時間戻す運用（UTC+0 / 時差-9時間）があります。7〜8月は猛暑・乾燥、冬は雨や朝晩の冷え込みに注意。",
+        "highlight": "2026年9月20日からUTC+0（GMT）の通年固定になり、日本との時差は-9時間で一年中変わりません（それ以前はUTC+1・ラマダン中のみUTC+0）。7〜8月は猛暑・乾燥、冬は雨や朝晩の冷え込みに注意。",
         "months": [
             (18, 6, 32, 6, 65, 7.1, 4), (20, 8, 38, 6, 63, 7.6, 5), (23, 10, 38, 6, 59, 8.2, 7),
             (25, 12, 34, 5, 56, 8.7, 8), (28, 15, 22, 4, 52, 9.5, 9), (33, 18, 5, 1, 46, 10.6, 10),
@@ -309,37 +310,24 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
 }
 
 
-def _fallback_profile_for_city(city: dict) -> dict:
-    slug = city.get("slug", "")
-    country = city.get("country_ja", "")
-    region = city.get("region", "")
+ALTITUDE_SLUGS = ("cusco", "uyuni", "la-paz", "quito", "bogota")
 
-    if country in ("オーストラリア", "ニュージーランド", "チリ", "アルゼンチン", "南アフリカ"):
-        return {**CITY_MONTHLY_CLIMATE["sydney"], "zone": f"south_{region}", "has_rail": True}
-    if country in ("インドネシア", "フィジー", "タヒチ（フランス領ポリネシア）"):
-        return {**CITY_MONTHLY_CLIMATE["bali"], "zone": f"trop_south_{region}", "has_rail": slug != "bali"}
-    if country in ("タイ", "ベトナム", "カンボジア", "フィリピン", "インド", "スリランカ", "マレーシア", "シンガポール"):
-        return {**CITY_MONTHLY_CLIMATE["bangkok"], "zone": f"trop_asia_{region}", "has_rail": True}
-    if country in ("アラブ首長国連邦（UAE）", "カタール", "エジプト", "モロッコ", "ヨルダン", "サウジアラビア"):
-        return {**CITY_MONTHLY_CLIMATE["marrakech"], "zone": f"arid_{region}", "has_rail": False}
-    if country in ("ポルトガル", "スペイン", "イタリア", "ギリシャ", "マルタ", "クロアチア", "トルコ"):
-        return {**CITY_MONTHLY_CLIMATE["lisbon"], "zone": f"med_{region}", "has_rail": True}
-    if region == "ヨーロッパ":
-        return {**CITY_MONTHLY_CLIMATE["paris"], "zone": f"euro_{region}", "has_rail": True}
-    if region == "北米":
-        if slug in ("honolulu", "maui", "guam", "saipan"):
-            return {**CITY_MONTHLY_CLIMATE["honolulu"], "zone": "pacific_island", "has_rail": False}
-        return {**CITY_MONTHLY_CLIMATE["new-york"], "zone": f"na_{region}", "has_rail": True}
-    return {**CITY_MONTHLY_CLIMATE["seoul"], "zone": f"east_asia_{region}", "has_rail": True}
+
+def has_exact_data(city: dict) -> bool:
+    """この都市に専用の月別気候データがあるか（他都市の流用は行わない）"""
+    return city.get("slug", "") in CITY_MONTHLY_CLIMATE
 
 
 def evaluate_city_calendar(city: dict) -> dict:
     """都市の12か月カレンダーデータ（スコア・ラベル・理由タグ・服装・自動要約）を生成"""
     slug = city.get("slug", "")
-    profile = CITY_MONTHLY_CLIMATE.get(slug) or _fallback_profile_for_city(city)
+    profile = CITY_MONTHLY_CLIMATE.get(slug)
+    if profile is None:
+        # 他都市のデータを流用しない。データ未整備の都市はカレンダーを出さない（呼び出し側で非表示/「データ準備中」）
+        return None
     months_raw = profile["months"]
     avg_monthly_rain = max(1.0, sum(m[2] for m in months_raw) / 12.0)
-    is_altitude = slug in ("cusco", "uyuni", "la-paz", "quito", "bogota")
+    is_altitude = slug in ALTITUDE_SLUGS
     is_south = bool(profile.get("south", False))
     has_rail = bool(profile.get("has_rail", True))
     hazards = profile.get("hazards", {})
@@ -444,7 +432,12 @@ def evaluate_city_calendar(city: dict) -> dict:
     for r in top3:
         r["city_best"] = True
 
-    best_months = [r["month"] for r in records if r["label"] in ("ベスト", "快適") or r["city_best"]]
+    # ベスト月は「スコア上位」から選ぶ（旧版は1月から順に4か月を切り出していたため、1〜4月になりやすかった）
+    ranked = sorted(records, key=lambda r: r["score"], reverse=True)
+    best_candidates = [r for r in ranked if r["label"] in ("ベスト", "快適") or r["city_best"]]
+    if len(best_candidates) > 5:
+        best_candidates = best_candidates[:4]
+    best_months = sorted(r["month"] for r in best_candidates)
     caution_months = [r["month"] for r in records if r["label"] == "注意"]
 
     def _fmt_ranges(ms: List[int]) -> str:
@@ -481,7 +474,7 @@ def evaluate_city_calendar(city: dict) -> dict:
         "zone": profile["zone"],
         "is_exact_data": slug in CITY_MONTHLY_CLIMATE,
         "months": records,
-        "best_months_str": _fmt_ranges(best_months[:4] if len(best_months) > 5 else best_months),
+        "best_months_str": _fmt_ranges(best_months),
         "caution_months_str": _fmt_ranges(caution_months),
         "summary_note": " ".join(auto_notes),
         "source": DATA_SOURCE_NOTE,
@@ -492,6 +485,8 @@ def evaluate_city_calendar(city: dict) -> dict:
 def get_season_snapshot(city: dict, target_months: List[int]) -> dict:
     """特集ページ用に該当月の平均気温・降水日数・服装・ベスト月・評価を返す"""
     cal = evaluate_city_calendar(city)
+    if cal is None:
+        return None
     subset = [cal["months"][m - 1] for m in target_months]
     avg_max = round(sum(r["tmax"] for r in subset) / len(subset))
     avg_min = round(sum(r["tmin"] for r in subset) / len(subset))
@@ -518,28 +513,110 @@ def get_season_snapshot(city: dict, target_months: List[int]) -> dict:
     }
 
 
-def run_calendar_qa(cities: List[dict], feature_pages: List[dict]) -> List[str]:
-    """公開前チェック：異気候帯のラベル重複・特集ページとの矛盾を検出"""
-    warnings = []
-    exact_patterns = {}
-    for c in cities:
-        cal = evaluate_city_calendar(c)
-        if not cal["is_exact_data"]:
-            continue
-        sig = tuple((m["label"], tuple(m["tags"])) for m in cal["months"])
-        if sig in exact_patterns and exact_patterns[sig][1] != cal["zone"]:
-            warnings.append(f"[重複警告] {c['slug']} と {exact_patterns[sig][0]} の12か月ラベルが完全一致しています")
-        exact_patterns[sig] = (c["slug"], cal["zone"])
+def _fmt_hours(h: float) -> str:
+    sign = "+" if h > 0 else ""
+    return f"{sign}{int(h)}" if float(h).is_integer() else f"{sign}{h:.1f}"
 
+
+def season_tz_label(city: dict, months: List[int], ref_year: int = None) -> str:
+    """特集の対象月に合わせた日本との時差ラベル。
+
+    ビルド日の時差ではなく、対象月（1日・15日・28日）の時差を tzdata から計算する。
+    期間中に夏時間・ラマダン等で時差が変わる場合は範囲で表示する。
+    """
+    from datetime import datetime, timezone
+    from zoneinfo import ZoneInfo
+
+    tz_name = city.get("timezone", "")
+    if not tz_name:
+        return "現地時刻参照"
+    today = datetime.now(timezone.utc)
+    diffs = set()
+    try:
+        jst, local = ZoneInfo("Asia/Tokyo"), ZoneInfo(tz_name)
+        for m in months:
+            year = ref_year or (today.year if m >= today.month else today.year + 1)
+            for day in (1, 15, 28):
+                dt = datetime(year, m, day, 12, tzinfo=timezone.utc)
+                d = (dt.astimezone(local).utcoffset() - dt.astimezone(jst).utcoffset()).total_seconds() / 3600.0
+                diffs.add(d)
+    except Exception:
+        return "現地時刻参照"
+    if len(diffs) == 1:
+        d = next(iter(diffs))
+        return "時差なし（日本と同じ）" if d == 0 else f"{_fmt_hours(d)}時間"
+    lo, hi = min(diffs), max(diffs)
+    return f"{_fmt_hours(lo)}〜{_fmt_hours(hi)}時間（期間中に時刻切替あり）"
+
+
+def run_calendar_qa(cities: List[dict], feature_pages: List[dict]) -> List[str]:
+    """公開前チェック。"[ERROR]" が1件でもあればビルドを止める運用を想定。
+
+    ERROR: データ構造の誤り／他都市データのコピー／緯度と矛盾する気温
+    WARN : 気候帯が異なる都市で12か月ラベルが一致／特集の都市がデータ未整備／特集の見出しと評価の矛盾
+    """
+    msgs: List[str] = []
     city_map = {c["slug"]: c for c in cities}
+
+    # tzdata が古いと時差を誤る。モロッコは2026-09-20からUTC+0固定（tzdata 2026c以降が必要）
+    try:
+        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
+        for slug in ("marrakech", "casablanca", "fes"):
+            tz_name = city_map.get(slug, {}).get("timezone")
+            if not tz_name:
+                continue
+            dt = datetime(2026, 11, 15, 12, tzinfo=timezone.utc)
+            diff = (dt.astimezone(ZoneInfo(tz_name)).utcoffset() - dt.astimezone(ZoneInfo("Asia/Tokyo")).utcoffset()).total_seconds() / 3600.0
+            if diff != -9.0:
+                msgs.append(f"[ERROR] {slug}: 2026年11月の日本との時差が{diff:+.0f}時間になっています。tzdata が古い可能性があります（2026c以降に更新してください）")
+    except Exception as e:
+        msgs.append(f"[WARN] タイムゾーンDBの検証をスキップしました: {e}")
+
+    seen_numeric = {}
+    seen_labels = {}
+    for slug, prof in CITY_MONTHLY_CLIMATE.items():
+        months = prof["months"]
+        if len(months) != 12:
+            msgs.append(f"[ERROR] {slug}: 月別データが12か月分ありません（{len(months)}件）")
+            continue
+        for i, (tmax, tmin, rain_mm, rain_days, hum, sun_h, uvi) in enumerate(months, start=1):
+            if tmin > tmax:
+                msgs.append(f"[ERROR] {slug} {i}月: 最低気温({tmin})が最高気温({tmax})を上回っています")
+            if not (0 <= hum <= 100):
+                msgs.append(f"[ERROR] {slug} {i}月: 湿度の値が不正です({hum})")
+            if not (0 <= rain_days <= 31) or rain_mm < 0:
+                msgs.append(f"[ERROR] {slug} {i}月: 降水量/降水日数の値が不正です")
+
+        key = tuple(months)
+        if key in seen_numeric:
+            msgs.append(f"[ERROR] {slug} と {seen_numeric[key]} の月別データが完全に同一です（コピーの疑い）")
+        seen_numeric[key] = slug
+
+        city = city_map.get(slug)
+        if city and slug not in ALTITUDE_SLUGS:
+            lat = city.get("lat")
+            if isinstance(lat, (int, float)) and abs(lat) < 20 and min(m[1] for m in months) < 10:
+                msgs.append(f"[ERROR] {slug}（緯度{lat}）: 熱帯の都市なのに最低気温10℃未満の月があります。データを確認してください")
+
+        cal = evaluate_city_calendar({"slug": slug})
+        sig = tuple((m["label"], tuple(m["tags"])) for m in cal["months"])
+        if sig in seen_labels and seen_labels[sig][1] != prof["zone"]:
+            msgs.append(f"[WARN] {slug} と {seen_labels[sig][0]} の12か月ラベルが完全一致しています（気候帯が異なります）")
+        seen_labels[sig] = (slug, prof["zone"])
+
     for feat in feature_pages:
+        months = feat.get("target_months")
+        slugs = [s for s in feat.get("cities", []) if s in city_map]
+        missing = [s for s in slugs if s not in CITY_MONTHLY_CLIMATE]
+        if missing:
+            msgs.append(f"[WARN] 特集『{feat.get('slug')}』: {len(missing)}都市が気候データ未整備です（表示は「データ準備中」）: {', '.join(missing)}")
         title = feat.get("title", "")
-        if ("快適" in title or "ベストシーズン" in title) and feat.get("target_months"):
-            for slug in feat.get("cities", []):
-                if slug in city_map:
-                    snap = get_season_snapshot(city_map[slug], feat["target_months"])
-                    if snap["label"] == "注意":
-                        warnings.append(
-                            f"[矛盾警告] 特集『{feat['slug']}』で「{title}」とありますが、{slug} の該当月は「注意（{'・'.join(snap['tags'])}）」です"
-                        )
-    return warnings
+        if ("快適" in title or "ベストシーズン" in title) and months:
+            for slug in slugs:
+                if slug in missing:
+                    continue
+                snap = get_season_snapshot(city_map[slug], months)
+                if snap and snap["label"] == "注意":
+                    msgs.append(f"[WARN] 特集『{feat.get('slug')}』の見出しは「{title}」ですが、{slug} の該当月は「注意（{'・'.join(snap['tags'])}）」です")
+    return msgs
