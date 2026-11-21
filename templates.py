@@ -19,9 +19,10 @@ from config import (
 )
 
 try:
-    from climate_calendar import get_season_snapshot
+    from climate_calendar import get_season_snapshot, season_tz_label
 except Exception:
     get_season_snapshot = None
+    season_tz_label = None
 
 
 def format_rate_display(code: str, jpy_to_local: float) -> str:
@@ -1241,7 +1242,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
             {
                 "@type": "Question",
                 "name": f"{city['name_ja']}の気候・季節感・おすすめの時期は？",
-                "acceptedAnswer": {"@type": "Answer", "text": city.get("calendar", {}).get("summary_note") or city['climate']}
+                "acceptedAnswer": {"@type": "Answer", "text": (city.get("calendar") or {}).get("summary_note") or city['climate']}
             },
             {
                 "@type": "Question",
@@ -1781,8 +1782,9 @@ def _city_style_verdict(c_target: dict, c_other: dict, s_t: dict, s_o: dict, b_t
     if tz_t is not None and tz_o is not None and abs(tz_t) < abs(tz_o):
         rs.append(f"時差を抑えたい人（日本との時差 {c_target.get('tz_diff_label')}）")
     if not rs:
-        rs.append(f"{c_target['country_ja']}の街歩きやグルメを軸に旅を組み立てたい人")
-    bm = c_target.get("calendar", {}).get("best_months_str")
+        # 違いを示す根拠がないときは空文字を返し、結論ボックスごと非表示にする
+        return ""
+    bm = (c_target.get("calendar") or {}).get("best_months_str")
     suffix = f"（目安：{bm}）" if bm and bm != "特になし" else ""
     return "・".join(rs[:2]) + suffix
 
@@ -1794,7 +1796,7 @@ def _build_compare_payload(c1: dict, c2: dict, rates_data: dict) -> dict:
     r2 = rates_data["rates"].get(c2["currency_code"], 0.01)
     b1 = compute_price_benchmarks(c1, r1)
     b2 = compute_price_benchmarks(c2, r2)
-    cal1, cal2 = c1.get("calendar", {}), c2.get("calendar", {})
+    cal1, cal2 = c1.get("calendar") or {}, c2.get("calendar") or {}
 
     same_country = (c1.get("country_ja") == c2.get("country_ja"))
     vibe_map = {
@@ -1811,7 +1813,7 @@ def _build_compare_payload(c1: dict, c2: dict, rates_data: dict) -> dict:
     common_items = []
     diff_rows = []
 
-    if {c1["slug"], c2["slug"]} == {"seoul", "busan"} or same_country:
+    if c1["slug"] in vibe_map and c2["slug"] in vibe_map:
         diff_rows.append((
             "街の個性・位置関係",
             vibe_map.get(c1["slug"], f"{c1['name_ja']}（{c1['country_ja']}）の中心エリア"),
@@ -1837,6 +1839,9 @@ def _build_compare_payload(c1: dict, c2: dict, rates_data: dict) -> dict:
         ("外務省危険情報", c1["danger_level"], c2["danger_level"], c1["danger_level"] == c2["danger_level"], f"危険情報：{c1['danger_level'].split('（')[0]}"),
         ("総合評価（目安）", f"{s1['avg']:.1f} / 5.0", f"{s2['avg']:.1f} / 5.0", s1["avg"] == s2["avg"], f"総合目安：{s1['avg']:.1f} / 5.0"),
     ]
+
+    if not (cal1 and cal2):
+        spec_checks = [s for s in spec_checks if s[0] != "ベスト月 / 注意月"]
 
     for label, v1, v2, is_same, common_label in spec_checks:
         if is_same and common_label:
@@ -1870,7 +1875,7 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
         sr = compute_city_star_ratings(c)
         rc = rates_data["rates"].get(c["currency_code"], 0.01)
         bc = compute_price_benchmarks(c, rc)
-        calc = c.get("calendar", {})
+        calc = c.get("calendar") or {}
         compact_cities.append({
             "slug": c["slug"],
             "name_ja": c["name_ja"],
@@ -1959,7 +1964,7 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
       <p id="comp-summary" class="text-xs leading-relaxed" style="color: var(--text-secondary);">{subtitle}</p>
     </div>
 
-    <div id="comp-conclusion-box" class="pr-card pr-card--accent space-y-2 anim-enter delay-1">
+    <div id="comp-conclusion-box" class="pr-card pr-card--accent space-y-2 anim-enter delay-1 {'hidden' if not (payload['best1'] and payload['best2'] and payload['best1'] != payload['best2']) else ''}">
       <span class="text-[10px] font-bold" style="color: var(--accent-text);">選び方の目安（結論）</span>
       <div id="comp-conclusion-text" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs leading-relaxed" style="color: var(--text-primary);">
         <div class="p-3 rounded-lg" style="background: var(--bg-surface); border: 1px solid var(--divider);">
@@ -2054,7 +2059,7 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
       if (t.tz_diff_hours !== null && o.tz_diff_hours !== null && Math.abs(t.tz_diff_hours) < Math.abs(o.tz_diff_hours)) {{
         rs.push(`時差を抑えたい人（日本との時差 ${{t.tz_diff_label}}）`);
       }}
-      if (rs.length === 0) rs.push(`${{t.country_ja}}の街歩きやグルメを軸に旅を組み立てたい人`);
+      if (rs.length === 0) return '';
       const bm = t.best_months && t.best_months !== '-' ? `（目安：${{t.best_months}}）` : '';
       return rs.slice(0, 2).join('・') + bm;
     }}
@@ -2073,7 +2078,7 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
         sydney: 'ハーバー・ビーチ・フェリー移動が映える開放的な港湾都市',
         melbourne: '路地裏のカフェ文化・アートと無料トラム中心の街歩きが楽しい都市'
       }};
-      if (sameCountry && (vibeMap[a.slug] || vibeMap[b.slug])) {{
+      if (vibeMap[a.slug] && vibeMap[b.slug]) {{
         diffs.push(['街の個性', vibeMap[a.slug] || a.name_ja, vibeMap[b.slug] || b.name_ja]);
       }}
 
@@ -2092,6 +2097,7 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
       ];
 
       specs.forEach(([lbl, v1, v2, isSame, cLbl]) => {{
+        if (lbl === 'ベスト月 / 注意月' && (a.best_months === '-' || b.best_months === '-')) return;
         if (isSame && cLbl) common.push(cLbl);
         else diffs.push([lbl, v1, v2]);
       }});
@@ -2100,14 +2106,17 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
       document.getElementById('comp-h1').textContent = `${{a.name_ja}} vs ${{b.name_ja}} 違いと選び方比較`;
       document.getElementById('comp-summary').textContent = `${{a.name_ja}}と${{b.name_ja}}の「${{topicStr}}」を中心に違いを整理しています。`;
 
+      const verdictA = buildVerdict(a, b);
+      const verdictB = buildVerdict(b, a);
+      document.getElementById('comp-conclusion-box').classList.toggle('hidden', !(verdictA && verdictB && verdictA !== verdictB));
       document.getElementById('comp-conclusion-text').innerHTML = `
         <div class="p-3 rounded-lg" style="background: var(--bg-surface); border: 1px solid var(--divider);">
           <strong class="block mb-1" style="color: var(--accent-text);">${{escHtml(a.name_ja)}}が向いている人</strong>
-          <p style="color: var(--text-secondary);">${{escHtml(buildVerdict(a, b))}}</p>
+          <p style="color: var(--text-secondary);">${{escHtml(verdictA)}}</p>
         </div>
         <div class="p-3 rounded-lg" style="background: var(--bg-surface); border: 1px solid var(--divider);">
           <strong class="block mb-1" style="color: var(--accent-text);">${{escHtml(b.name_ja)}}が向いている人</strong>
-          <p style="color: var(--text-secondary);">${{escHtml(buildVerdict(b, a))}}</p>
+          <p style="color: var(--text-secondary);">${{escHtml(verdictB)}}</p>
         </div>`;
 
       const commonWrap = document.getElementById('comp-common-wrap');
@@ -2178,7 +2187,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
         "milan": "秋は街歩きや美術館巡りに心地よい季節。朝晩の冷え込みには羽織りを。",
         "madrid": "日中は穏やかな秋の日が多く、10月最終日曜に冬時間へ切り替わります。",
         "prague": "9〜10月は落ち着いた秋の街並み、11月はコートが活躍する肌寒さ。",
-        "marrakech": "夏の猛暑が落ち着き観光しやすくなる秋。通常UTC+1（時差-8時間）が基本。",
+        "marrakech": "夏の猛暑が落ち着き観光しやすくなる秋。2026年9月20日からUTC+0固定（時差-9時間）。",
     }
 
     table_rows = []
@@ -2187,12 +2196,13 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
     for c in selected:
         r = compute_city_star_ratings(c)
         snap = get_season_snapshot(c, target_months) if get_season_snapshot else None
+        tz_label = season_tz_label(c, target_months) if season_tz_label else c.get("tz_diff_label", "-")
         if snap:
             temp_str = f"{snap['temp_str']}（雨 {snap['rain_days_str']}）"
             gear_str = snap["outfit"]
             tag_str = "・".join(snap["tags"]) if snap["tags"] else "穏やか"
             season_badge = f"{season_label}：{snap['label']} · {snap['temp_str']}（{snap['best_month_str']}）"
-            autumn_note = autumn_reason_map.get(c["slug"], "")
+            autumn_note = autumn_reason_map.get(c["slug"], "") if feat["slug"] == "autumn-silverweek" else ""
             card_desc = (
                 f"{season_label}は平均{snap['temp_str']}（降水目安 {snap['rain_days_str']}）で「{snap['label']}（{tag_str}）」。"
                 f" {autumn_note}"
@@ -2210,7 +2220,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
             f'<td class="p-2.5 font-bold whitespace-nowrap" style="border-top: 1px solid var(--divider);"><a href="../../{c["slug"]}/" class="underline" style="color: var(--accent-text);">{c["name_ja"]}</a></td>'
             f'<td class="p-2.5 tabular-nums whitespace-nowrap" style="border-top: 1px solid var(--divider); color: var(--text-primary);">{temp_str}</td>'
             f'<td class="p-2.5" style="border-top: 1px solid var(--divider); color: var(--text-secondary);">{gear_str}</td>'
-            f'<td class="p-2.5 tabular-nums whitespace-nowrap" style="border-top: 1px solid var(--divider); color: var(--text-secondary);">{c.get("tz_diff_label", "-")}</td>'
+            f'<td class="p-2.5 tabular-nums whitespace-nowrap" style="border-top: 1px solid var(--divider); color: var(--text-secondary);">{tz_label}</td>'
             f'<td class="p-2.5" style="border-top: 1px solid var(--divider); color: var(--text-muted);">{airport_short}</td>'
             f'</tr>'
         )
@@ -2229,7 +2239,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
             + (f'<div>{badge_html}</div>' if badge_html else '')
             + f'<p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">{card_desc}</p>'
             f'<div class="text-[11px] flex flex-wrap gap-2 pt-1 tabular-nums" style="color: var(--text-muted); border-top: 1px solid var(--divider);">'
-            f'<span>時差: {c.get("tz_diff_label", "-")}</span><span>プラグ: {c["plug_type"]}</span><span>通貨: {c["currency_code"]}</span>'
+            f'<span>時差: {tz_label}</span><span>プラグ: {c["plug_type"]}</span><span>通貨: {c["currency_code"]}</span>'
             f'</div>'
             f'</a>'
         )
