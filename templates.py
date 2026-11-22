@@ -1468,7 +1468,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
 
     <footer class="pt-6 pb-4 text-center text-[11px] space-y-1.5" style="color: var(--text-muted); border-top: 1px solid var(--divider);">
       <p>※当ページはプロモーション（アフィリエイト広告）を含みます。制度・料金・治安情報等は変更される場合があるため、渡航前に外務省や各公式窓口の最新情報をご確認ください。</p>
-      <p><a href="../policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a></p>
+      <p><a href="./policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="./policy/#contact" class="underline">お問い合わせ・情報修正依頼</a></p>
       <p>© {SITE_NAME} ({SITE_URL})</p>
     </footer>
   </main>
