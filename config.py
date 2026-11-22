@@ -60,52 +60,59 @@ COMPARE_PAIRS = [
     ("dubai", "istanbul", "中東・トルコの人気ハブ都市対決。通信規制・服装マナー・ベストシーズン比較"),
 ]
 
-# 季節・テーマ別まとめハブページ定義（6特集に拡充）
+# 季節・テーマ別まとめハブページ定義（6特集）
+# 任意キー: columns（比較表の列）, table_title, tip_title, card_title, card_mode("safety" で治安中心のカード）
 FEATURE_PAGES = [
     {
         "slug": "winter-newyear",
-        "title": "【年末年始・冬休み】海外旅行先おすすめ12都市｜気温・服装・電源・治安比較",
+        "title": "【年末年始・冬休み】海外旅行先おすすめ12都市｜気温・服装・時差・空港アクセス比較",
         "badge": "12月〜2月渡航",
-        "desc": "年末年始や冬休みに人気の「暖かい常夏リゾート」と「冬のイルミネーション・街並みを楽しめる都市」を厳選。気候・コンセント・チップ・外務省危険情報を一覧で比較できます。",
-        "cities": ["honolulu", "bangkok", "taipei", "singapore", "cebu", "bali", "sydney", "dubai", "london", "paris", "vienna", "new-york"]
+        "desc": "年末年始や冬休みに人気の「暖かい常夏リゾート」と「冬のイルミネーション・街並みを楽しめる都市」を厳選。12〜2月の気温、服装の目安、日本との時差、空港アクセスを一覧で比較できます。",
+        "cities": ["honolulu", "bangkok", "taipei", "singapore", "cebu", "bali", "sydney", "dubai", "london", "paris", "vienna", "new-york"],
     },
     {
         "slug": "graduation-spring",
-        "title": "【卒業旅行・春休み】学生＆初海外におすすめ12都市｜予算・治安・事前準備まとめ",
+        "title": "【卒業旅行・春休み】学生＆初海外におすすめ12都市｜気温・治安・時差・空港アクセス比較",
         "badge": "2月〜3月渡航",
-        "desc": "卒業旅行や春休みの海外渡航で選ばれている世界12都市をピックアップ。ホテル予約・通信（eSIM/VPN）・カード保険・プラグ形状を一括確認できます。",
-        "cities": ["seoul", "taipei", "bangkok", "da-nang", "guam", "honolulu", "paris", "rome", "barcelona", "london", "los-angeles", "cairo"]
+        "desc": "卒業旅行や春休みの海外渡航で選ばれている世界12都市をピックアップ。2〜3月の気温と服装、治安の目安、日本との時差、空港アクセスを一覧で確認できます。",
+        "cities": ["seoul", "taipei", "bangkok", "da-nang", "guam", "honolulu", "paris", "rome", "barcelona", "london", "los-angeles", "madrid"],
+        "columns": ["climate", "dress", "safety", "tz", "airport"],
     },
     {
         "slug": "golden-week",
-        "title": "【GW（ゴールデンウィーク）】4〜5月がベストシーズンの海外12都市｜気候・時差・移動比較",
+        "title": "【GW（ゴールデンウィーク）】4〜5月に過ごしやすい海外12都市｜気温・時差・空港アクセス比較",
         "badge": "4月〜5月渡航",
-        "desc": "ヨーロッパの春やアジアの乾季など、4月末〜5月の大型連休に気候が最も安定する12都市を厳選。休みの日数に合わせた時差・空港アクセス一覧です。",
-        "cities": ["seoul", "taipei", "hong-kong", "bangkok", "bali", "honolulu", "paris", "rome", "london", "barcelona", "istanbul", "vancouver"]
+        "desc": "ヨーロッパの春やアジアの乾季など、4月末〜5月の大型連休に気候が過ごしやすい12都市を厳選。4〜5月の気温、日本との時差、空港アクセスを一覧で比較できます。",
+        "cities": ["seoul", "taipei", "hong-kong", "lisbon", "bali", "honolulu", "paris", "rome", "london", "barcelona", "istanbul", "vancouver"],
     },
     {
         "slug": "summer-vacation",
-        "title": "【夏休み・お盆】7〜8月に爽やかな都市＆乾季リゾート12選｜紫外線・冷房・服装対策",
+        "title": "【夏休み・お盆】7〜8月に爽やかな都市＆乾季リゾート12選｜気温・服装・時差・空港アクセス比較",
         "badge": "7月〜8月渡航",
-        "desc": "日本の猛暑を避けて涼しく過ごせる北欧・カナダ・オセアニアや、夏が乾季ベストシーズンのバリ島・ハワイなど12都市の気候・電源・治安まとめ。",
-        "cities": ["bali", "honolulu", "singapore", "vancouver", "banff", "london", "helsinki", "stockholm", "zurich", "munich", "sydney", "auckland"]
+        "desc": "日本の猛暑を避けて涼しく過ごせる北欧・カナダや、夏が乾季のバリ島・ハワイなど12都市の7〜8月の気温、服装、時差、空港アクセスをまとめました。南半球は冬にあたる都市も含みます。",
+        "cities": ["bali", "honolulu", "singapore", "vancouver", "banff", "london", "helsinki", "stockholm", "zurich", "munich", "sydney", "auckland"],
     },
     {
         "slug": "autumn-silverweek",
-        "title": "【秋休み・9〜11月】気候快適＆旅費が落ち着くおすすめ海外12都市｜マナー・免税比較",
+        "title": "【秋休み・9〜11月】気候が過ごしやすいおすすめ海外12都市｜気温・服装・時差・チップ比較",
         "badge": "9月〜11月渡航",
-        "desc": "台風や猛暑が落ち着き、街歩きやグルメに最適な秋シーズンのおすすめ都市。各国の免税（Tax Free）基準額やチップ習慣もまとめてチェック。",
-        "cities": ["seoul", "taipei", "shanghai", "hanoi", "kuala-lumpur", "new-york", "boston", "paris", "milan", "madrid", "prague", "marrakech"]
+        "desc": "暑さが落ち着き、街歩きやグルメに向く秋シーズンのおすすめ都市。9〜11月の気温・服装・時差と、各国のチップ習慣をまとめてチェックできます。",
+        "cities": ["seoul", "taipei", "shanghai", "hanoi", "istanbul", "new-york", "boston", "paris", "milan", "madrid", "prague", "marrakech"],
+        "columns": ["climate", "dress", "tz", "tip", "airport"],
     },
     {
         "slug": "first-time-safe",
         "title": "【初海外・一人旅】治安が安定＆移動がわかりやすい世界の安心12都市まとめ",
         "badge": "初心者・一人旅向け",
-        "desc": "初めての海外旅行や一人旅でも安心感が高い、外務省危険情報レベル0・公共交通とキャッシュレスが発達した12都市の生活ルール・緊急連絡先一覧。",
-        "cities": ["taipei", "seoul", "singapore", "honolulu", "guam", "sydney", "melbourne", "auckland", "vancouver", "zurich", "vienna", "helsinki"]
-    }
+        "desc": "初めての海外旅行や一人旅でも安心感が高い都市を、治安評価・外務省危険情報・緊急通報番号・空港アクセス・英語の通じやすさで比較。公共交通やキャッシュレスが整った12都市です。",
+        "cities": ["taipei", "seoul", "singapore", "honolulu", "guam", "sydney", "melbourne", "auckland", "vancouver", "zurich", "vienna", "helsinki"],
+        "columns": ["safety", "danger", "emergency", "airport", "english"],
+        "table_title": "治安・危険情報・緊急通報・空港アクセス・英語の比較表",
+        "tip_title": "選び方のポイント",
+        "card_title": "対象12都市の安心ポイント",
+        "card_mode": "safety",
+    },
 ]
-
 
 # 近隣都市ロジック修正（座標追加）前に公開されていた比較ページのうち、現在は生成されないURL。
 # 旧URLにアクセスした人・検索エンジン向けに、移動案内ページ（meta refresh + canonical）を出力する。
