@@ -150,6 +150,15 @@ def enhance_all_cities(cities: list) -> list:
         except Exception:
             spots_map = {}
 
+    # 編集済みのスポット（spots_curated.json）。spots_draft.json に同じ都市があればそちらを優先
+    curated_path = Path("spots_curated.json")
+    if curated_path.exists():
+        try:
+            for _slug, _v in json.loads(curated_path.read_text(encoding="utf-8")).items():
+                spots_map.setdefault(_slug, _v)
+        except Exception:
+            pass
+
     primary_readings = []
     for c in cities:
         kw = (c.get("kana_kw") or "").strip().split()
