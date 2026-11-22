@@ -18,6 +18,31 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+def _prefer_newer_tzdata():
+    """OSのタイムゾーンDBが古いとき、pip の tzdata パッケージのほうが新しければそちらを使う。
+
+    zoneinfo は既定で OS の DB を先に探し、pip の tzdata は「見つからないときの予備」にしか使わない。
+    そのため CI（GitHub Actions 等）で `pip install -U tzdata` しただけでは、古い OS の DB が使われ続ける。
+    """
+    try:
+        import zoneinfo
+        import tzdata
+        sys_ver = ""
+        for base in zoneinfo.TZPATH:
+            zi = Path(base) / "tzdata.zi"
+            if zi.exists():
+                first = zi.read_text(encoding="utf-8", errors="ignore").splitlines()[0]
+                sys_ver = first.replace("# version", "").strip()
+                break
+        if not sys_ver or str(tzdata.IANA_VERSION) > sys_ver:
+            zoneinfo.reset_tzpath(to=[])
+            print(f"[info] タイムゾーンDBは pip の tzdata {tzdata.IANA_VERSION} を使用します（OS: {sys_ver or '不明'}）")
+    except Exception:
+        pass
+
+
+_prefer_newer_tzdata()
+
 from config import SITE_URL, SITE_NAME, OGP_IMAGE_FILENAME, FAVICON_FILENAME, COMPARE_PAIRS, FEATURE_PAGES
 try:
     from config import LEGACY_COMPARE_SLUGS
