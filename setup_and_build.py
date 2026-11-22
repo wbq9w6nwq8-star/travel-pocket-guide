@@ -19,6 +19,14 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from config import SITE_URL, SITE_NAME, OGP_IMAGE_FILENAME, FAVICON_FILENAME, COMPARE_PAIRS, FEATURE_PAGES
+try:
+    from config import LEGACY_COMPARE_SLUGS
+except ImportError:
+    LEGACY_COMPARE_SLUGS = []
+try:
+    from config import INDEX_AUTO_COMPARE_PAGES
+except ImportError:
+    INDEX_AUTO_COMPARE_PAGES = False
 from cities_data import generate_cities_data
 from climate_calendar import evaluate_city_calendar, run_calendar_qa
 from templates import (
@@ -287,6 +295,31 @@ def build_all_comparison_pairs(cities: list) -> tuple[list, dict]:
     return all_pairs, city_to_links
 
 
+def build_redirect_html(target_url: str) -> str:
+    """旧URL用の移動案内ページ（GitHub Pages等、サーバー側301が使えない環境向け）"""
+    return (
+        '<!DOCTYPE html>\n<html lang="ja"><head><meta charset="UTF-8">'
+        '<title>ページを移動しました</title><meta name="robots" content="noindex">'
+        f'<link rel="canonical" href="{target_url}">'
+        f'<meta http-equiv="refresh" content="0; url={target_url}"></head>'
+        f'<body><p>ページを移動しました。<a href="{target_url}">こちら</a>をご覧ください。</p></body></html>'
+    )
+
+
+def write_legacy_compare_redirects(dist_dir: Path, existing_pair_slugs: set, city_map: dict) -> int:
+    count = 0
+    for legacy in LEGACY_COMPARE_SLUGS:
+        if legacy in existing_pair_slugs or "-vs-" not in legacy:
+            continue
+        first = legacy.split("-vs-")[0]
+        target = f"{SITE_URL}/{first}/" if first in city_map else f"{SITE_URL}/"
+        out = dist_dir / "compare" / legacy
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "index.html").write_text(build_redirect_html(target), encoding="utf-8")
+        count += 1
+    return count
+
+
 def write_auxiliary_files(dist_dir: Path):
     (dist_dir / "CNAME").write_text("tokou-pocket.com\n", encoding="utf-8")
 
@@ -359,13 +392,24 @@ def main():
         (city_dir / "index.html").write_text(html, encoding="utf-8")
         urls.append(f"{SITE_URL}/{city['slug']}/")
 
+    curated_slugs = {f"{a}-vs-{b}" for a, b, _ in COMPARE_PAIRS}
+    noindex_count = 0
     for s1, s2, summary_text in all_compare_pairs:
         pair_slug = f"{s1}-vs-{s2}"
         comp_dir = dist_dir / "compare" / pair_slug
         comp_dir.mkdir(parents=True, exist_ok=True)
         comp_html = build_compare_html(city_map[s1], city_map[s2], summary_text, rates_data, cities)
+        # 自動生成ペアは、両都市に手書きの個性文がない限り noindex（薄いページの量産を避ける）
+        has_content = bool(city_map[s1].get("best_for") and city_map[s2].get("best_for"))
+        indexable = INDEX_AUTO_COMPARE_PAGES or pair_slug in curated_slugs or has_content
+        if not indexable:
+            comp_html = comp_html.replace("</head>", '  <meta name="robots" content="noindex,follow">\n</head>', 1)
+            noindex_count += 1
         (comp_dir / "index.html").write_text(comp_html, encoding="utf-8")
-        urls.append(f"{SITE_URL}/compare/{pair_slug}/")
+        if indexable:
+            urls.append(f"{SITE_URL}/compare/{pair_slug}/")
+
+    redirected = write_legacy_compare_redirects(dist_dir, {f"{s1}-vs-{s2}" for s1, s2, _ in all_compare_pairs}, city_map)
 
     for feat in features:
         feat_dir = dist_dir / "features" / feat["slug"]
@@ -387,7 +431,7 @@ def main():
     (dist_dir / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
 
     write_auxiliary_files(dist_dir)
-    print(f"ビルド完了: 全 {len(urls)} ページ（{len(cities)}都市＋比較{len(all_compare_pairs)}ペア＋特集{len(features)}本）を生成しました。")
+    print(f"ビルド完了: 全 {len(urls)} ページ（{len(cities)}都市＋比較{len(all_compare_pairs)}ペア＋特集{len(features)}本）を生成しました。旧URLの移動案内 {redirected} 件、noindex の比較ページ {noindex_count} 件。")
 
 
 if __name__ == "__main__":
