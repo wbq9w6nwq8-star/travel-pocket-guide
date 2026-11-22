@@ -2199,6 +2199,21 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
         "marrakech": "夏の猛暑が落ち着き観光しやすくなる秋。2026年9月20日からUTC+0固定（時差-9時間）。",
     }
 
+    columns = feat.get("columns") or ["climate", "dress", "tz", "airport"]
+    col_headers = {
+        "climate": f"{season_label}の気温・雨", "dress": "服装目安", "tz": "日本との時差", "airport": "空港アクセス目安",
+        "safety": "治安評価", "danger": "外務省危険情報", "emergency": "緊急通報", "tip": "チップ", "english": "英語の通じやすさ",
+    }
+    col_short = {
+        "climate": "気温", "dress": "服装", "tz": "時差", "airport": "空港アクセス",
+        "safety": "治安", "danger": "危険情報", "emergency": "緊急通報", "tip": "チップ", "english": "英語",
+    }
+    header_cells = "".join(f'<th class="p-2.5 font-semibold">{col_headers[k]}</th>' for k in columns)
+    table_heading = feat.get("table_title") or f"{season_label}の{'・'.join(col_short[k] for k in columns)}比較表"
+    table_source = "月別気候データから自動集計" if "climate" in columns else "都市データから自動集計"
+    tip_title = feat.get("tip_title") or f"{season_label}渡航の注意点"
+    card_title = feat.get("card_title") or f"対象{len(selected)}都市の{season_label}ポイント"
+
     table_rows = []
     cards = []
 
@@ -2224,14 +2239,30 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
 
         airport_short = c["airport_access"]["cheapest"].split("（")[0]
 
+        cell_values = {
+            "climate": (temp_str, "tabular-nums whitespace-nowrap", "var(--text-primary)"),
+            "dress": (gear_str, "", "var(--text-secondary)"),
+            "tz": (tz_label, "tabular-nums whitespace-nowrap", "var(--text-secondary)"),
+            "airport": (airport_short, "", "var(--text-muted)"),
+            "safety": (f"{r['safety']:.1f} / 5.0", "tabular-nums whitespace-nowrap", "var(--text-primary)"),
+            "danger": (c["danger_level"].split("（")[0], "whitespace-nowrap", "var(--text-secondary)"),
+            "emergency": (c.get("emergency_numbers", "-"), "", "var(--text-secondary)"),
+            "tip": (c["tip_badge"].replace("（", " ").replace("）", ""), "", "var(--text-secondary)"),
+            "english": (f"{r['english']:.1f} / 5.0", "tabular-nums whitespace-nowrap", "var(--text-secondary)"),
+        }
+        extra_cells = "".join(
+            f'<td class="p-2.5 {cell_values[k][1]}" style="border-top: 1px solid var(--divider); color: {cell_values[k][2]};">{cell_values[k][0]}</td>'
+            for k in columns
+        )
+        if feat.get("card_mode") == "safety":
+            card_desc = c.get("safety_note", c["climate"])
+            season_badge = f"治安 {r['safety']:.1f}／5.0 · {c['danger_level'].split('（')[0]}"
+
         table_rows.append(
             f'<tr>'
             f'<td class="p-2.5 font-bold whitespace-nowrap" style="border-top: 1px solid var(--divider);"><a href="../../{c["slug"]}/" class="underline" style="color: var(--accent-text);">{c["name_ja"]}</a></td>'
-            f'<td class="p-2.5 tabular-nums whitespace-nowrap" style="border-top: 1px solid var(--divider); color: var(--text-primary);">{temp_str}</td>'
-            f'<td class="p-2.5" style="border-top: 1px solid var(--divider); color: var(--text-secondary);">{gear_str}</td>'
-            f'<td class="p-2.5 tabular-nums whitespace-nowrap" style="border-top: 1px solid var(--divider); color: var(--text-secondary);">{tz_label}</td>'
-            f'<td class="p-2.5" style="border-top: 1px solid var(--divider); color: var(--text-muted);">{airport_short}</td>'
-            f'</tr>'
+            + extra_cells
+            + f'</tr>'
         )
 
         badge_html = (
@@ -2255,7 +2286,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
 
     season_tip_html = (
         f'<div class="ed-tint p-3.5 text-xs leading-relaxed" style="color: var(--text-secondary);">'
-        f'<strong style="color: var(--text-primary);">{season_label}渡航の注意点：</strong>{season_tip}'
+        f'<strong style="color: var(--text-primary);">{tip_title}：</strong>{season_tip}'
         f'</div>'
         if season_tip else ""
     )
@@ -2265,18 +2296,15 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
         comparison_table_html = f"""
     <section class="space-y-2.5 reveal-section">
       <div class="flex items-baseline justify-between flex-wrap gap-1 pb-2" style="border-bottom: 1px solid var(--divider);">
-        <h2 class="text-sm sm:text-base font-bold" style="color: var(--text-primary);">{season_label}の気温・服装・時差・空港アクセス比較表（全{len(selected)}都市）</h2>
-        <span class="text-[11px]" style="color: var(--text-muted);">月別平年値から自動集計</span>
+        <h2 class="text-sm sm:text-base font-bold" style="color: var(--text-primary);">{table_heading}（全{len(selected)}都市）</h2>
+        <span class="text-[11px]" style="color: var(--text-muted);">{table_source}</span>
       </div>
       <div class="ed-surface overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr style="background: var(--bg-tint); color: var(--text-muted);">
               <th class="p-2.5 font-semibold">都市</th>
-              <th class="p-2.5 font-semibold">{season_label}の気温・雨</th>
-              <th class="p-2.5 font-semibold">服装目安</th>
-              <th class="p-2.5 font-semibold">日本との時差</th>
-              <th class="p-2.5 font-semibold">空港アクセス目安</th>
+              {header_cells}
             </tr>
           </thead>
           <tbody>{"".join(table_rows)}</tbody>
@@ -2323,7 +2351,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
 
     <section class="space-y-2.5">
       <div class="flex items-baseline justify-between pb-1.5" style="border-bottom: 1px solid var(--divider);">
-        <h2 class="text-sm sm:text-base font-bold" style="color: var(--text-primary);">対象{len(selected)}都市の{season_label}ポイント</h2>
+        <h2 class="text-sm sm:text-base font-bold" style="color: var(--text-primary);">{card_title}</h2>
         <span class="text-[11px]" style="color: var(--text-muted);">タップで詳細へ</span>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">{"".join(cards)}</div>
