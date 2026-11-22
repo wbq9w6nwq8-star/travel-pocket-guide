@@ -226,3 +226,7 @@ LEGACY_COMPARE_SLUGS = [
     "zermatt-vs-zurich",
     "zurich-vs-geneva",
 ]
+
+# 自動生成した比較ページ（COMPARE_PAIRS以外）を検索に出すか。
+# False の間は、両都市に city_vibe/best_for（手書きの個性文）がある場合だけ index 対象にする。
+INDEX_AUTO_COMPARE_PAGES = False
