@@ -12,46 +12,46 @@ permissions:
   id-token: write
 
 jobs:
-  build_and_deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+build_and_deploy:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
-      - name: Fetch spot drafts if missing or manually triggered
-        run: |
-          if [ ! -f spots_draft.json ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            python3 fetch_spots_draft.py
-          else
-            echo "spots_draft.json already exists; skipping Overpass fetch."
+    - name: Fetch spot drafts if missing or manually triggered
+      run: |
+        if [ ! -f spots_draft.json ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          python3 fetch_spots_draft.py
+        else
+          echo "spots_draft.json already exists; skipping Overpass fetch."
+        fi
+
+    - name: Commit spots_draft.json if changed
+      run: |
+        if [ -f spots_draft.json ]; then
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add spots_draft.json
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update spots_draft.json"
+            git pull --rebase origin main
+            git push
           fi
+        fi
 
-      - name: Commit spots_draft.json if changed
-        run: |
-          if [ -f spots_draft.json ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add spots_draft.json
-            if ! git diff --staged --quiet; then
-              git commit -m "chore: update spots_draft.json"
-              git pull --rebase origin main
-              git push
-            fi
-          fi
+    - name: Generate all city pages with latest exchange rates
+      run: python3 setup_and_build.py
 
-      - name: Generate all city pages with latest exchange rates
-        run: python3 setup_and_build.py
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v4
+      with:
+        path: ./dist
 
-     - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: ./dist
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-        with:
-          artifact_name: github-pages
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+      with:
+        artifact_name: github-pages
