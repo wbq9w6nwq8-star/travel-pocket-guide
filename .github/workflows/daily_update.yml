@@ -45,11 +45,13 @@ jobs:
       - name: Generate all city pages with latest exchange rates
         run: python3 setup_and_build.py
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+     - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./dist
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
