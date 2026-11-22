@@ -12,6 +12,7 @@ from typing import Dict, List
 
 THRESHOLD_VERSION = "v1.3 (2026-11)"
 DATA_SOURCE_NOTE = "WMO平年値(1991-2020)およびOpen-Meteo過去気象集計をもとに算出"
+ESTIMATE_SOURCE_NOTE = "編集部概算（気象機関の平年値で順次検証中）"
 
 TAG_ADVICE = {
     "猛暑": "観光は早朝と夕方に寄せ、日中は屋内で休憩。こまめな水分補給と帽子が必須です。",
@@ -310,6 +311,20 @@ CITY_MONTHLY_CLIMATE: Dict[str, dict] = {
 }
 
 
+# 追加データの読み込み（無い場合はスキップ）。優先順位: measured（実測集計）> 本ファイルの既存データ > extra（概算）
+try:
+    from climate_data_extra import EXTRA_CITY_CLIMATE as _EXTRA
+    for _k, _v in _EXTRA.items():
+        CITY_MONTHLY_CLIMATE.setdefault(_k, _v)
+except ImportError:
+    pass
+try:
+    from climate_data_measured import MEASURED_CITY_CLIMATE as _MEASURED
+    for _k, _v in _MEASURED.items():
+        CITY_MONTHLY_CLIMATE[_k] = _v
+except ImportError:
+    pass
+
 ALTITUDE_SLUGS = ("cusco", "uyuni", "la-paz", "quito", "bogota")
 
 
@@ -363,8 +378,8 @@ def evaluate_city_calendar(city: dict) -> dict:
             tags.append("日照短い")
         if uvi >= 10 and tmax >= 26:
             tags.append("紫外線強い")
-        for hz in hazards.get(idx, []):
-            tags.append(hz)
+        for hz in reversed(hazards.get(idx, [])):
+            tags.insert(0, hz)  # 災害タグは表示で切り捨てられないよう先頭に置く
         if is_altitude:
             tags.append("高山病・寒暖差")
 
@@ -433,10 +448,13 @@ def evaluate_city_calendar(city: dict) -> dict:
         r["city_best"] = True
 
     # ベスト月は「スコア上位」から選ぶ（旧版は1月から順に4か月を切り出していたため、1〜4月になりやすかった）
-    ranked = sorted(records, key=lambda r: r["score"], reverse=True)
+    # 前後の月を加味して平滑化したスコアで並べる（月ごとの小さな凸凹で「3月・6月・11月」のように飛び飛びになるのを防ぐ）
+    _sc = [r["score"] for r in records]
+    _smooth = {records[i]["month"]: (_sc[(i - 1) % 12] + 2 * _sc[i] + _sc[(i + 1) % 12]) / 4.0 for i in range(12)}
+    ranked = sorted(records, key=lambda r: _smooth[r["month"]], reverse=True)
     best_candidates = [r for r in ranked if r["label"] in ("ベスト", "快適") or r["city_best"]]
     if len(best_candidates) > 5:
-        best_candidates = best_candidates[:4]
+        best_candidates = best_candidates[:5]
     best_months = sorted(r["month"] for r in best_candidates)
     caution_months = [r["month"] for r in records if r["label"] == "注意"]
 
@@ -477,7 +495,7 @@ def evaluate_city_calendar(city: dict) -> dict:
         "best_months_str": _fmt_ranges(best_months),
         "caution_months_str": _fmt_ranges(caution_months),
         "summary_note": " ".join(auto_notes),
-        "source": DATA_SOURCE_NOTE,
+        "source": ESTIMATE_SOURCE_NOTE if profile.get("basis") == "estimate" else DATA_SOURCE_NOTE,
         "version": THRESHOLD_VERSION,
     }
 
@@ -494,7 +512,11 @@ def get_season_snapshot(city: dict, target_months: List[int]) -> dict:
     avg_score = round(sum(r["score"] for r in subset) / len(subset))
 
     best_in_season = max(subset, key=lambda r: r["score"])
-    rep = best_in_season if avg_score < 65 else subset[0]
+    # 服装は「期間の最初の月」ではなく、期間の平均気温に最も近い月を基準にする。
+    # 期間内の最高気温の差が大きい場合は、重ね着で調整する旨を添える。
+    mean_tmax = sum(r["tmax"] for r in subset) / len(subset)
+    rep = min(subset, key=lambda r: abs(r["tmax"] - mean_tmax))
+    spread = max(r["tmax"] for r in subset) - min(r["tmax"] for r in subset)
 
     tags = []
     for r in subset:
@@ -505,7 +527,7 @@ def get_season_snapshot(city: dict, target_months: List[int]) -> dict:
     return {
         "temp_str": f"{avg_min}〜{avg_max}℃",
         "rain_days_str": f"月{avg_rain_days}日",
-        "outfit": rep["outfit"],
+        "outfit": rep["outfit"] + ("（期間内の気温差が大きいため重ね着で調整）" if spread >= 8 else ""),
         "score": avg_score,
         "label": "ベスト" if avg_score >= 80 else ("快適" if avg_score >= 65 else ("標準" if avg_score >= 45 else "注意")),
         "best_month_str": f"{best_in_season['month']}月が狙い目",
