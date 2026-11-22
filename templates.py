@@ -2603,7 +2603,7 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
 
     <footer class="pt-6 text-center text-xs space-y-2" style="color: var(--text-muted); border-top: 1px solid var(--divider);">
       <p>安全な渡航のために：<a href="https://www.anzen.mofa.go.jp/" target="_blank" rel="noopener noreferrer" class="underline">外務省 海外安全ホームページ</a> / <a href="https://www.ezairyu.mofa.go.jp/tabireg/index.html" target="_blank" rel="noopener noreferrer" class="underline">たびレジ</a></p>
-      <p><a href="./policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a></p>
+      <p><a href="./policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="./policy/#contact" class="underline">お問い合わせ・情報修正依頼</a></p>
       <p>© {SITE_NAME} ({SITE_URL})</p>
     </footer>
   </main>
