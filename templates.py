@@ -19,6 +19,10 @@ from config import (
 )
 
 try:
+    from price_data import CITY_PRICES
+except ImportError:
+    CITY_PRICES = {}
+try:
     from climate_calendar import get_season_snapshot, season_tz_label
 except Exception:
     get_season_snapshot = None
@@ -608,6 +612,10 @@ def compute_price_benchmarks(city: dict, jpy_to_local: float) -> dict:
         water_jpy, lunch_jpy, taxi_jpy = 140, 1200, 1800
     else:
         water_jpy, lunch_jpy, taxi_jpy = 260, 2400, 3200
+
+    # 都市別の概算（price_data.py）があればそちらを優先
+    if city.get("slug") in CITY_PRICES:
+        water_jpy, lunch_jpy, taxi_jpy = CITY_PRICES[city["slug"]]
 
     def fmt_pair(jpy_val: int) -> str:
         local_val = jpy_val * jpy_to_local
