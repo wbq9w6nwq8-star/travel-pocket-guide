@@ -672,7 +672,7 @@ def render_tip_split_calculator(city: dict, jpy_to_local: float, local_to_jpy: f
             <input id="bill-amount" type="number" value="100" class="w-full rounded-lg px-3 py-1.5 font-bold text-sm tabular-nums" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">
           </div>
           <div>
-            <label class="block text-[11px] font-semibold mb-1" style="color: var(--text-muted);">2. チップ率（目安: {city['tip_badge']}）</label>
+            <label class="block text-[11px] font-semibold mb-1" style="color: var(--text-muted);">2. チップ率（目安: {city['tip_badge'].replace('（', ' ').replace('）', '')}）</label>
             <select id="bill-tip" class="w-full rounded-lg px-2.5 py-2 font-bold text-xs tabular-nums" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">
               <option value="0" {"selected" if default_tip == 0 else ""}>0%（チップ不要・SC込）</option>
               <option value="5">5%（端数・気持ち程度）</option>
@@ -1009,7 +1009,7 @@ def render_detailed_rules_and_manners(city: dict) -> str:
 
       <div class="ed-surface p-4 ed-divider-list text-xs leading-relaxed" style="color: var(--text-secondary);">
         <div class="sm:grid sm:grid-cols-[200px_1fr] sm:gap-4 sm:items-baseline">
-          <p class="font-bold" style="color: var(--text-primary);">チップの相場と渡し方（{city['tip_badge']}）</p>
+          <p class="font-bold" style="color: var(--text-primary);">チップの相場と渡し方（{city['tip_badge'].replace('（', ' ').replace('）', '')}）</p>
           <p>{city['tip_detail']}</p>
         </div>
         <div class="sm:grid sm:grid-cols-[200px_1fr] sm:gap-4 sm:items-baseline">
@@ -1218,8 +1218,12 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
     thousand_jpy_in_local = round(1000 * jpy_to_local, 2)
     rate_display = format_rate_display(code, jpy_to_local)
     page_url = f"{SITE_URL}/{city['slug']}/"
-    page_title = f"{city['name_ja']}の現地情報まとめ｜時差・天気/1年カレンダー・コンセント({city['plug_type']})・チップ・生活ルール"
-    page_desc = f"{city['name_ja']}（{city['country_ja']}）の現在時刻・時差、現在の気温・1年カレンダー、コンセント（{city['plug_type']}）・電圧（{city['voltage']}）、チップ＆割り勘計算機、物価目安、お金・トイレ・マナー詳細を確認できます。"
+    has_cal = bool(city.get("calendar"))
+    cal_title = "/1年カレンダー" if has_cal else ""
+    cal_desc = "・1年カレンダー" if has_cal else ""
+    calendar_toc = '<a href="#sec-calendar" class="toc-link">1年カレンダー</a>' if has_cal else ""
+    page_title = f"{city['name_ja']}の現地情報まとめ｜時差・天気{cal_title}・コンセント({city['plug_type']})・チップ・生活ルール"
+    page_desc = f"{city['name_ja']}（{city['country_ja']}）の現在時刻・時差、現在の気温{cal_desc}、コンセント（{city['plug_type']}）・電圧（{city['voltage']}）、チップ＆割り勘計算機、物価目安、お金・トイレ・マナー詳細を確認できます。"
 
     city_map = {c["slug"]: c for c in all_cities}
     nearby_objs = [city_map[s] for s in (city.get("nearby_slugs") or []) if s in city_map]
@@ -1292,7 +1296,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
       </div>
       <nav id="toc-nav" class="toc-nav" aria-label="ページ内クイック移動">
         <a href="#sec-top" class="toc-link is-active">基本スペック</a>
-        <a href="#sec-calendar" class="toc-link">1年カレンダー</a>
+        {calendar_toc}
         <a href="#sec-rules" class="toc-link">お金・生活ルール</a>
         <a href="#sec-budget" class="toc-link">物価・割り勘</a>
         <a href="#sec-safety" class="toc-link">治安・大使館</a>
@@ -1770,6 +1774,8 @@ def _city_style_verdict(c_target: dict, c_other: dict, s_t: dict, s_o: dict, b_t
     }
     if c_target["slug"] in custom_verdicts:
         return custom_verdicts[c_target["slug"]]
+    if c_target.get("best_for") and c_other.get("best_for"):
+        return c_target["best_for"]
 
     rs = []
     if b_t["lunch_jpy"] < b_o["lunch_jpy"]:
@@ -1813,12 +1819,10 @@ def _build_compare_payload(c1: dict, c2: dict, rates_data: dict) -> dict:
     common_items = []
     diff_rows = []
 
-    if c1["slug"] in vibe_map and c2["slug"] in vibe_map:
-        diff_rows.append((
-            "街の個性・位置関係",
-            vibe_map.get(c1["slug"], f"{c1['name_ja']}（{c1['country_ja']}）の中心エリア"),
-            vibe_map.get(c2["slug"], f"{c2['name_ja']}（{c2['country_ja']}）の中心エリア"),
-        ))
+    vibe1 = vibe_map.get(c1["slug"]) or c1.get("city_vibe")
+    vibe2 = vibe_map.get(c2["slug"]) or c2.get("city_vibe")
+    if vibe1 and vibe2:
+        diff_rows.append(("街の個性・位置関係", vibe1, vibe2))
         if c1["slug"] in style_map or c2["slug"] in style_map:
             diff_rows.append((
                 "旅のスタイル・日数目安",
@@ -1902,6 +1906,8 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
             "avg_star": sr["avg"],
             "safety": sr["safety"],
             "cashless": sr["cashless"],
+            "vibe": c.get("city_vibe", ""),
+            "best_for": c.get("best_for", ""),
         })
 
     options_1 = "".join([
@@ -2052,6 +2058,7 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
         melbourne: '路地裏のカフェ文化・アート・無料トラム中心の街歩きを楽しみたい人（南半球の6〜8月はシドニーより冷え込みやすい傾向）。'
       }};
       if (map[t.slug]) return map[t.slug];
+      if (t.best_for && o.best_for) return t.best_for;
       const rs = [];
       if (t.lunch_jpy < o.lunch_jpy) rs.push(`現地物価のコスパ（昼食目安 ${{t.lunch_jpy.toLocaleString()}}円）を重視する人`);
       if (t.safety > o.safety) rs.push(`治安面の安心感（評価 ${{t.safety.toFixed(1)}}/5.0）を優先したい人`);
@@ -2078,8 +2085,10 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
         sydney: 'ハーバー・ビーチ・フェリー移動が映える開放的な港湾都市',
         melbourne: '路地裏のカフェ文化・アートと無料トラム中心の街歩きが楽しい都市'
       }};
-      if (vibeMap[a.slug] && vibeMap[b.slug]) {{
-        diffs.push(['街の個性', vibeMap[a.slug] || a.name_ja, vibeMap[b.slug] || b.name_ja]);
+      const vibeA = vibeMap[a.slug] || a.vibe;
+      const vibeB = vibeMap[b.slug] || b.vibe;
+      if (vibeA && vibeB) {{
+        diffs.push(['街の個性', vibeA, vibeB]);
       }}
 
       const specs = [
@@ -2168,7 +2177,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
             "欧州は10月最終日曜、米国は11月第1日曜に冬時間へ切り替わります。また中国の10月初旬（国慶節）や韓国の秋夕連休は混雑・料金上昇に注意が必要です。"
         ),
         "winter-newyear": ([12, 1, 2], "12〜2月（冬休み）", "12月25日・1月1日は欧米を中心に休業施設が多くなります。南半球は夏本番です。"),
-        "first-time-safe": ([4, 5, 9, 10], "春秋目安", "公共交通やキャッシュレスが比較的整い、初めての海外でも動きやすい都市を集めています。"),
+        "first-time-safe": ([4, 5, 9, 10], "4〜5月・9〜10月", "公共交通やキャッシュレスが比較的整い、初めての海外でも動きやすい都市を集めています。"),
     }
     target_months, season_label, season_tip = season_meta.get(
         feat["slug"],
