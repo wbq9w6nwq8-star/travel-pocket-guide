@@ -2404,36 +2404,75 @@ def build_policy_html() -> str:
 <body class="pb-16">
   {render_pr_banner()}
   <header class="ed-header">
-    <div class="max-w-[780px] mx-auto px-4 py-2.5 flex items-center justify-between">
-      <a href="../" class="inline-flex items-center gap-2 py-1 pr-2 rounded-lg" style="color: var(--text-primary);">
-        <i data-lucide="arrow-left" class="w-4 h-4" style="color: var(--accent-text);"></i>
-        <span class="font-extrabold text-sm sm:text-base">{SITE_NAME}</span>
+    <div class="max-w-[780px] mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="../" class="font-bold text-xs flex items-center gap-1.5" style="color: var(--text-primary);">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span>{SITE_NAME}（トップへ戻る）</span>
       </a>
     </div>
   </header>
 
   <main class="max-w-[780px] mx-auto px-4 pt-6 space-y-6 text-xs sm:text-sm leading-relaxed" style="color: var(--text-secondary);">
-    <h1 class="text-xl sm:text-2xl font-bold" style="color: var(--text-primary);">プライバシーポリシー・免責事項・運営者情報</h1>
+    <h1 class="text-xl sm:text-2xl font-extrabold" style="color: var(--text-primary);">プライバシーポリシー・免責事項・運営者情報</h1>
     <section class="ed-surface p-5 space-y-2">
       <h2 class="font-bold text-base" style="color: var(--text-primary);">1. 免責事項（当サイトの情報について）</h2>
-      <p>「{SITE_NAME}」（{SITE_URL}）に掲載している各国の時差、気象・気候データ、電圧・プラグ形状、チップ習慣、税金・免税制度、交通アクセス、為替レート、外務省危険情報・渡航情報等は、確認時点の調査データおよび外部APIをもとに作成しておりますが、最新性・正確性・完全性を保証するものではありません。</p>
-      <p>ご渡航の際は、必ず<strong>外務省「海外安全ホームページ」</strong>、駐日各国大使館、およびご利用の航空会社・交通機関・宿泊施設等の公式最新情報をご自身でご確認ください。</p>
+      <p>「{SITE_NAME}」（{SITE_URL}）に掲載している各国の時差、気象・気候データ、電圧・プラグ形状、チップ習慣、税金・免税制度、交通アクセス、為替レート、外務省危険情報・渡航情報等は、執筆・更新時点の調査データおよび外部APIをもとに作成しておりますが、その正確性・最新性・完全性を保証するものではありません。</p>
+      <p>ご渡航の際は、必ず<strong>外務省「海外安全ホームページ」</strong>、駐日各国大使館、およびご利用の航空会社等の公式最新情報をご自身でご確認ください。</p>
     </section>
     <section class="ed-surface p-5 space-y-2">
       <h2 class="font-bold text-base" style="color: var(--text-primary);">2. 広告の配信・アフィリエイトプログラムについて</h2>
-      <p>当サイトは、第三者配信の広告サービス（Google AdSense）およびアフィリエイトプログラム（A8.net、Partnerize 等）に参加しており、提携リンク経由の申込・利用等により報酬を得る場合があります[cite: 3]。</p>
+      <p>当サイトは、第三者配信の広告サービス（Google AdSense）およびアフィリエイトプログラム（A8.net 等）に参加しており、適格販売・申込により収入を得る場合があります。</p>
     </section>
     <section class="ed-surface p-5 space-y-2">
       <h2 class="font-bold text-base" style="color: var(--text-primary);">3. アクセス解析ツールについて</h2>
       <p>当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス（GA4）」を利用しています。データは匿名で収集されており、個人を特定するものではありません。</p>
     </section>
     <section class="ed-surface p-5 space-y-2">
-      <h2 class="font-bold text-base" style="color: var(--text-primary);">4. 運営者情報・訂正のご連絡</h2>
+      <h2 class="font-bold text-base" style="color: var(--text-primary);">4. 運営者情報</h2>
       <p><strong>サイト名：</strong>{SITE_NAME} / <strong>URL：</strong>{SITE_URL} / <strong>運営：</strong>{SITE_NAME} 編集部</p>
-      <p class="text-xs" style="color: var(--text-muted);">掲載情報の誤りや表記ゆれにお気づきの際は、運営窓口までお知らせいただけますと幸いです。</p>
+    </section>
+    <section id="contact" class="ed-surface p-5 space-y-3">
+      <h2 class="font-bold text-base" style="color: var(--text-primary);">5. お問い合わせ・情報修正のご連絡</h2>
+      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+        掲載情報の誤りや最新状況への更新依頼、ご感想などがありましたら以下のフォームからお送りください。
+      </p>
+
+      <div data-fs-success class="hidden text-xs font-bold p-3 rounded-lg" style="background: var(--sage-bg); border: 1px solid var(--sage-border); color: var(--sage-text);">
+        送信ありがとうございます。お問い合わせを受け付けました。
+      </div>
+      <div data-fs-error class="hidden text-xs font-bold p-3 rounded-lg" style="background: var(--rose-bg); border: 1px solid var(--rose-border); color: var(--rose-text);"></div>
+
+      <form id="contact-form" class="space-y-3 text-xs">
+        <div>
+          <label for="contact-email" class="block font-bold mb-1" style="color: var(--text-primary);">返信先メールアドレス（任意）</label>
+          <input type="email" id="contact-email" name="email" data-fs-field placeholder="example@example.com"
+            class="w-full rounded-lg px-3 py-2"
+            style="background: var(--bg-tint); border: 1px solid var(--border-soft); color: var(--text-primary);">
+          <span data-fs-error="email" class="block text-[11px] mt-1" style="color: var(--rose-text);"></span>
+        </div>
+
+        <div>
+          <label for="contact-message" class="block font-bold mb-1" style="color: var(--text-primary);">お問い合わせ内容（必須）</label>
+          <textarea id="contact-message" name="message" rows="4" required data-fs-field
+            placeholder="都市名や気になっている点をご記入ください"
+            class="w-full rounded-lg px-3 py-2"
+            style="background: var(--bg-tint); border: 1px solid var(--border-soft); color: var(--text-primary);"></textarea>
+          <span data-fs-error="message" class="block text-[11px] mt-1" style="color: var(--rose-text);"></span>
+        </div>
+
+        <button type="submit" data-fs-submit-btn class="pr-cta" style="background: var(--accent); color: #ffffff;">
+          <span>送信する</span>
+          <i data-lucide="send" class="w-3.5 h-3.5"></i>
+        </button>
+      </form>
     </section>
   </main>
   <script>lucide.createIcons();</script>
+  <script>
+    window.formspree = window.formspree || function () {{ (formspree.q = formspree.q || []).push(arguments); }};
+    formspree('initForm', {{ formElement: '#contact-form', formId: 'xqpqgayo' }});
+  </script>
+  <script src="https://unpkg.com/@formspree/ajax@1" defer></script>
 </body>
 </html>"""
 
