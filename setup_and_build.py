@@ -55,9 +55,14 @@ except ImportError:
 from cities_data import generate_cities_data
 from climate_calendar import evaluate_city_calendar, run_calendar_qa
 from templates import (
-    build_city_html, build_index_html, build_policy_html,
+    build_city_html, build_policy_html,
     build_compare_html, build_feature_html
 )
+from templates_pages import (
+    build_index_html, build_guides_hub_html, build_plug_guide_html, build_time_guide_html,
+    build_tipping_guide_html, build_packing_html,
+)
+from site_content import GUIDE_PAGES
 
 REGION_NORMALIZE_MAP = {
     "アジア・中央アジア": "アジア",
@@ -451,6 +456,20 @@ def main():
         feat_html = build_feature_html(feat, cities)
         (feat_dir / "index.html").write_text(feat_html, encoding="utf-8")
         urls.append(f"{SITE_URL}/features/{feat['slug']}/")
+
+    # ガイド・早見表ページ（都市データから自動生成）
+    guide_builders = {
+        "": lambda: build_guides_hub_html(),
+        "plug-types": lambda: build_plug_guide_html(cities),
+        "time-difference": lambda: build_time_guide_html(cities),
+        "tipping": lambda: build_tipping_guide_html(cities),
+        "packing-checklist": lambda: build_packing_html(),
+    }
+    for gslug, fn in guide_builders.items():
+        gdir = dist_dir / "guides" / gslug if gslug else dist_dir / "guides"
+        gdir.mkdir(parents=True, exist_ok=True)
+        (gdir / "index.html").write_text(fn(), encoding="utf-8")
+        urls.append(f"{SITE_URL}/guides/{gslug + '/' if gslug else ''}")
 
     index_html = build_index_html(cities, rates_data, COMPARE_PAIRS)
     (dist_dir / "index.html").write_text(index_html, encoding="utf-8")
