@@ -1271,6 +1271,13 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
 
     water_label = format_water_status(city)
 
+    one_liner_html = ""
+    if city.get("city_vibe"):
+        one_liner_html = (
+            f'<p class="text-xs sm:text-sm leading-relaxed mt-1.5" style="color: var(--text-secondary);">{city["city_vibe"]}</p>'
+            + (f'<p class="text-[11px] leading-relaxed mt-1" style="color: var(--text-muted);"><strong style="color: var(--accent-text);">こんな人に：</strong>{city["best_for"]}</p>' if city.get("best_for") else "")
+        )
+
     return f"""<!DOCTYPE html>
 <html lang="ja" data-theme="light">
 <head>
@@ -1324,6 +1331,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
         <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-0.5">
           {city['name_ja']}<span class="font-editorial-italic text-base font-normal ml-2.5" style="color: var(--text-muted);">{city['name_en']}</span>
         </h1>
+        {one_liner_html}
       </div>
 
       <div class="ed-tint p-3.5 space-y-1.5 anim-enter delay-1">
@@ -1468,7 +1476,8 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
 
     <footer class="pt-6 pb-4 text-center text-[11px] space-y-1.5" style="color: var(--text-muted); border-top: 1px solid var(--divider);">
       <p>※当ページはプロモーション（アフィリエイト広告）を含みます。制度・料金・治安情報等は変更される場合があるため、渡航前に外務省や各公式窓口の最新情報をご確認ください。</p>
-      <p><a href="../policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="../policy/#contact" class="underline">お問い合わせ・情報修正依頼</a></p>
+      <p>関連ガイド：<a href="../guides/packing-checklist/" class="underline">持ち物チェックリスト</a> · <a href="../guides/time-difference/" class="underline">時差早見表</a> · <a href="../guides/plug-types/" class="underline">コンセント・電圧</a> · <a href="../guides/tipping/" class="underline">チップ早見表</a></p>
+      <p><a href="../policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a></p>
       <p>© {SITE_NAME} ({SITE_URL})</p>
     </footer>
   </main>
@@ -1506,7 +1515,6 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
         const targetDate = new Date(now.toLocaleString('en-US', {{ timeZone: targetTz }}));
         const baseDate = new Date(now.toLocaleString('en-US', {{ timeZone: baseTz }}));
         let diffHours = Math.round((targetDate - baseDate) / 3600000);
-        if (!compareWithLocal && citySlug === 'marrakech' && diffHours === -9) diffHours = -8;
         const sign = diffHours >= 0 ? '+' : '';
         const label = compareWithLocal ? '現在地との時差' : '日本との時差';
         document.getElementById('time-diff').textContent = `${{label}}: ${{sign}}${{diffHours}}時間`;
@@ -2404,369 +2412,35 @@ def build_policy_html() -> str:
 <body class="pb-16">
   {render_pr_banner()}
   <header class="ed-header">
-    <div class="max-w-[780px] mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="../" class="font-bold text-xs flex items-center gap-1.5" style="color: var(--text-primary);">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-        <span>{SITE_NAME}（トップへ戻る）</span>
+    <div class="max-w-[780px] mx-auto px-4 py-2.5 flex items-center justify-between">
+      <a href="../" class="inline-flex items-center gap-2 py-1 pr-2 rounded-lg" style="color: var(--text-primary);">
+        <i data-lucide="arrow-left" class="w-4 h-4" style="color: var(--accent-text);"></i>
+        <span class="font-extrabold text-sm sm:text-base">{SITE_NAME}</span>
       </a>
     </div>
   </header>
 
   <main class="max-w-[780px] mx-auto px-4 pt-6 space-y-6 text-xs sm:text-sm leading-relaxed" style="color: var(--text-secondary);">
-    <h1 class="text-xl sm:text-2xl font-extrabold" style="color: var(--text-primary);">プライバシーポリシー・免責事項・運営者情報</h1>
+    <h1 class="text-xl sm:text-2xl font-bold" style="color: var(--text-primary);">プライバシーポリシー・免責事項・運営者情報</h1>
     <section class="ed-surface p-5 space-y-2">
       <h2 class="font-bold text-base" style="color: var(--text-primary);">1. 免責事項（当サイトの情報について）</h2>
-      <p>「{SITE_NAME}」（{SITE_URL}）に掲載している各国の時差、気象・気候データ、電圧・プラグ形状、チップ習慣、税金・免税制度、交通アクセス、為替レート、外務省危険情報・渡航情報等は、執筆・更新時点の調査データおよび外部APIをもとに作成しておりますが、その正確性・最新性・完全性を保証するものではありません。</p>
-      <p>ご渡航の際は、必ず<strong>外務省「海外安全ホームページ」</strong>、駐日各国大使館、およびご利用の航空会社等の公式最新情報をご自身でご確認ください。</p>
+      <p>「{SITE_NAME}」（{SITE_URL}）に掲載している各国の時差、気象・気候データ、電圧・プラグ形状、チップ習慣、税金・免税制度、交通アクセス、為替レート、外務省危険情報・渡航情報等は、確認時点の調査データおよび外部APIをもとに作成しておりますが、最新性・正確性・完全性を保証するものではありません。</p>
+      <p>ご渡航の際は、必ず<strong>外務省「海外安全ホームページ」</strong>、駐日各国大使館、およびご利用の航空会社・交通機関・宿泊施設等の公式最新情報をご自身でご確認ください。</p>
     </section>
     <section class="ed-surface p-5 space-y-2">
       <h2 class="font-bold text-base" style="color: var(--text-primary);">2. 広告の配信・アフィリエイトプログラムについて</h2>
-      <p>当サイトは、第三者配信の広告サービス（Google AdSense）およびアフィリエイトプログラム（A8.net 等）に参加しており、適格販売・申込により収入を得る場合があります。</p>
+      <p>当サイトは、第三者配信の広告サービス（Google AdSense）およびアフィリエイトプログラム（A8.net、Partnerize 等）に参加しており、提携リンク経由の申込・利用等により報酬を得る場合があります[cite: 3]。</p>
     </section>
     <section class="ed-surface p-5 space-y-2">
       <h2 class="font-bold text-base" style="color: var(--text-primary);">3. アクセス解析ツールについて</h2>
       <p>当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス（GA4）」を利用しています。データは匿名で収集されており、個人を特定するものではありません。</p>
     </section>
     <section class="ed-surface p-5 space-y-2">
-      <h2 class="font-bold text-base" style="color: var(--text-primary);">4. 運営者情報</h2>
+      <h2 class="font-bold text-base" style="color: var(--text-primary);">4. 運営者情報・訂正のご連絡</h2>
       <p><strong>サイト名：</strong>{SITE_NAME} / <strong>URL：</strong>{SITE_URL} / <strong>運営：</strong>{SITE_NAME} 編集部</p>
-    </section>
-    <section id="contact" class="ed-surface p-5 space-y-3">
-      <h2 class="font-bold text-base" style="color: var(--text-primary);">5. お問い合わせ・情報修正のご連絡</h2>
-      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-        掲載情報の誤りや最新状況への更新依頼、ご感想などがありましたら以下のフォームからお送りください。
-      </p>
-
-      <div data-fs-success class="hidden text-xs font-bold p-3 rounded-lg" style="background: var(--sage-bg); border: 1px solid var(--sage-border); color: var(--sage-text);">
-        送信ありがとうございます。お問い合わせを受け付けました。
-      </div>
-      <div data-fs-error class="hidden text-xs font-bold p-3 rounded-lg" style="background: var(--rose-bg); border: 1px solid var(--rose-border); color: var(--rose-text);"></div>
-
-      <form id="contact-form" class="space-y-3 text-xs">
-        <div>
-          <label for="contact-email" class="block font-bold mb-1" style="color: var(--text-primary);">返信先メールアドレス（任意）</label>
-          <input type="email" id="contact-email" name="email" data-fs-field placeholder="example@example.com"
-            class="w-full rounded-lg px-3 py-2"
-            style="background: var(--bg-tint); border: 1px solid var(--border-soft); color: var(--text-primary);">
-          <span data-fs-error="email" class="block text-[11px] mt-1" style="color: var(--rose-text);"></span>
-        </div>
-
-        <div>
-          <label for="contact-message" class="block font-bold mb-1" style="color: var(--text-primary);">お問い合わせ内容（必須）</label>
-          <textarea id="contact-message" name="message" rows="4" required data-fs-field
-            placeholder="都市名や気になっている点をご記入ください"
-            class="w-full rounded-lg px-3 py-2"
-            style="background: var(--bg-tint); border: 1px solid var(--border-soft); color: var(--text-primary);"></textarea>
-          <span data-fs-error="message" class="block text-[11px] mt-1" style="color: var(--rose-text);"></span>
-        </div>
-
-        <button type="submit" data-fs-submit-btn class="pr-cta" style="background: var(--accent); color: #ffffff;">
-          <span>送信する</span>
-          <i data-lucide="send" class="w-3.5 h-3.5"></i>
-        </button>
-      </form>
+      <p class="text-xs" style="color: var(--text-muted);">掲載情報の誤りや表記ゆれにお気づきの際は、運営窓口までお知らせいただけますと幸いです。</p>
     </section>
   </main>
   <script>lucide.createIcons();</script>
-  <script>
-    window.formspree = window.formspree || function () {{ (formspree.q = formspree.q || []).push(arguments); }};
-    formspree('initForm', {{ formElement: '#contact-form', formId: 'xqpqgayo' }});
-  </script>
-  <script src="https://unpkg.com/@formspree/ajax@1" defer></script>
-</body>
-</html>"""
-
-
-def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: list) -> str:
-    unique_regions = ["すべて"] + sorted(list({c["region"] for c in cities}))
-    page_url = f"{SITE_URL}/"
-    page_title = f"{SITE_NAME}｜世界{len(cities)}都市の時差・天気/1年カレンダー・コンセント・チップ・生活ルール"
-    page_desc = f"海外旅行や留学・出張の渡航前や空港ですぐに知りたい世界{len(cities)}都市の現在時刻・時差・リアルタイム気温・1年カレンダー・コンセント・チップ計算機・生活マナー・最新為替・外務省危険情報を1画面で即解決。"
-    city_map = {c["slug"]: c for c in cities}
-
-    region_buttons = "".join([
-        f'<button type="button" data-region="{r}" class="region-btn shrink-0 px-3 py-1 rounded-full text-xs transition" '
-        f'style="{"background: var(--accent); color: #ffffff; font-weight: 700; border: 1px solid var(--accent);" if r == "すべて" else "background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary); font-weight: 500;"}">{r}</button>'
-        for r in unique_regions
-    ])
-
-    card_list = []
-    for c in cities:
-        r = compute_city_star_ratings(c)
-        if c["special_ui"] == "china_vpn":
-            vpn_badge = '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style="background: var(--rose-bg); color: var(--rose-text);">通信確認推奨</span>'
-        elif c["special_ui"] == "vpn_recommended":
-            vpn_badge = '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold" style="background: var(--accent-soft); color: var(--accent-text);">VPN活用可</span>'
-        else:
-            vpn_badge = ""
-        danger_dot = '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style="background: var(--amber-bg); color: var(--amber-text);">注意喚起</span>' if c["danger_color"] != "emerald" else ""
-        tip_short = c["tip_badge"].split("（")[0]
-        search_str = f'{c["name_ja"]} {c["kana_kw"]} {c["name_en"].lower()} {c["country_ja"]} {c["currency_code"].lower()}'
-        card_list.append(
-            f'<a href="./{c["slug"]}/" data-region="{c["region"]}" '
-            f'data-name="{c["name_ja"]}" data-country="{c["country_ja"]}" data-slug="{c["slug"]}" '
-            f'data-search="{search_str}" '
-            f'class="city-card ed-surface block px-3.5 py-3">'
-            f'<div class="flex items-baseline justify-between gap-2">'
-            f'<span class="font-bold text-sm" style="color: var(--text-primary);">{c["name_ja"]}</span>'
-            f'<span class="text-[11px] tabular-nums shrink-0" style="color: var(--text-muted);"><strong class="font-bold" style="color: var(--accent-text);">{r["avg"]:.1f}</strong> / {c["country_ja"]}</span>'
-            f'</div>'
-            f'<div class="text-[10.5px] mt-1.5 flex items-center gap-x-2 gap-y-1 flex-wrap tabular-nums" style="color: var(--text-muted);">'
-            f'<span>プラグ:{c["plug_type"]}</span>'
-            f'<span>通貨:{c["currency_code"]}</span>'
-            f'<span>チップ:{tip_short}</span>'
-            f'{vpn_badge}'
-            f'{danger_dot}'
-            f'</div>'
-            f'</a>'
-        )
-    cards_html = "\n".join(card_list)
-
-    feature_links = "".join([
-        f'<a href="./features/{f["slug"]}/" class="ed-surface block p-3.5">'
-        f'<span class="text-[10px] font-medium tracking-wide block" style="color: var(--text-muted);">{f["badge"]}</span>'
-        f'<p class="text-xs font-semibold mt-1 leading-relaxed" style="color: var(--text-primary);">{f["title"]}</p>'
-        f'</a>'
-        for f in FEATURE_PAGES
-    ])
-
-    compare_links = "".join([
-        f'<a href="./compare/{s1}-vs-{s2}/" class="text-[11px] px-2.5 py-1 rounded-full font-medium transition" style="background: var(--bg-tint); color: var(--text-secondary);">'
-        f'{city_map[s1]["name_ja"]} vs {city_map[s2]["name_ja"]}'
-        f'</a>'
-        for s1, s2, _ in featured_compare_pairs if s1 in city_map and s2 in city_map
-    ])
-
-    return f"""<!DOCTYPE html>
-<html lang="ja" data-theme="light">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {render_common_head(page_title, page_desc, page_url, og_type="website")}
-  {render_editorial_styles()}
-  <style>
-    .region-scroll-wrap {{ position: relative; display: flex; align-items: center; }}
-    .region-scroll-wrap::after {{
-      content: ""; position: absolute; top: 0; right: 0; bottom: 4px; width: 52px;
-      background: linear-gradient(to right, transparent, var(--bg-canvas) 75%); pointer-events: none;
-    }}
-    .region-scroll-hint {{
-      position: sticky; right: 2px; z-index: 2; display: inline-flex; align-items: center; justify-content: center;
-      width: 20px; height: 20px; border-radius: 9999px; color: var(--text-muted); pointer-events: none; flex-shrink: 0;
-    }}
-    .sub-text-link {{
-      display: inline-flex; align-items: center; gap: 4px; padding: 4px 2px; border-radius: var(--radius-sm);
-      background-color: transparent; border: none; color: var(--text-muted); font-size: 11px; font-weight: 500;
-      transition: color 0.15s ease;
-    }}
-    .sub-text-link:hover {{ color: var(--text-primary); }}
-    .sub-text-link svg {{ transition: transform 0.3s var(--ease-out-expo); }}
-    .sub-text-link[aria-expanded="true"] {{ color: var(--text-primary); font-weight: 600; }}
-    .sub-text-link[aria-expanded="true"] svg {{ transform: rotate(180deg); }}
-  </style>
-  <title>{page_title}</title>
-  <meta name="description" content="{page_desc}">
-  <link rel="canonical" href="{page_url}">
-  <link rel="manifest" href="./manifest.json">
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="pb-16">
-  {render_pr_banner()}
-  <header class="ed-header">
-    <div id="scroll-progress" class="scroll-progress"></div>
-    <div class="max-w-[780px] mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
-      <a href="./" class="font-extrabold text-sm flex items-center gap-2" style="color: var(--text-primary);">
-        <img src="{FAVICON_URL}" alt="" width="22" height="22" class="w-5 h-5 rounded-md object-cover shrink-0" onerror="this.style.display='none'">
-        <span>{SITE_NAME}</span>
-      </a>
-      <button id="theme-toggle" type="button" class="text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary);">
-        <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
-        <span id="theme-name">Light</span>
-      </button>
-    </div>
-  </header>
-
-  <main class="max-w-[780px] mx-auto px-4 pt-6 space-y-6">
-    <div class="space-y-1.5 anim-enter">
-      <div class="flex items-center gap-2 text-[11px] tracking-wider" style="color: var(--text-muted);">
-        <span>WORLD TRAVEL POCKET DICTIONARY · {len(cities)} CITIES</span>
-      </div>
-      <div class="flex items-center gap-2.5">
-        <img src="{FAVICON_URL}" alt="{SITE_NAME}" width="32" height="32" class="w-8 h-8 rounded-lg object-cover shrink-0" style="border: 1px solid var(--divider);" onerror="this.style.display='none'">
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">{SITE_NAME}</h1>
-      </div>
-      <p class="text-xs sm:text-sm leading-relaxed" style="color: var(--text-secondary);">世界{len(cities)}都市の時差・気温/1年カレンダー・コンセント・チップ計算・生活マナー・為替・外務省危険情報を1画面で即答</p>
-    </div>
-
-    <div class="sticky-search-bar space-y-2.5 -mx-4 px-4">
-      <div class="relative">
-        <input id="search" type="text" autocomplete="off" placeholder="都市・国・ひらがな検索（例：ばり、ロンドン）"
-          class="w-full p-3.5 rounded-xl text-sm focus:outline-none" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">
-        <div id="suggest-box" class="suggest-dropdown hidden"></div>
-      </div>
-      <div class="region-scroll-wrap">
-        <div class="flex gap-1.5 overflow-x-auto pr-10 pb-1" style="scrollbar-width: none;">{region_buttons}</div>
-        <span class="region-scroll-hint" aria-hidden="true"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
-      </div>
-    </div>
-
-    <section class="space-y-3">
-      <div class="flex items-baseline justify-between pb-2" style="border-bottom: 1px solid var(--divider);">
-        <h2 class="text-sm font-bold" style="color: var(--text-primary);">季節・テーマ別特集</h2>
-        <span class="text-[11px] tabular-nums" style="color: var(--text-muted);">{len(cities)}×{len(cities)}比較対応</span>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{feature_links}</div>
-      <div class="pt-0.5">
-        <button id="comp-toggle-btn" type="button" class="sub-text-link" aria-expanded="false">
-          <span>2都市比較ページ一覧を開く</span>
-          <i data-lucide="chevron-down" class="w-3 h-3"></i>
-        </button>
-        <div id="comp-toggle-panel" class="accordion-content">
-          <div class="accordion-inner">
-            <div class="flex flex-wrap gap-1.5 pt-2.5">{compare_links}</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="space-y-2.5">
-      <div class="flex items-baseline justify-between pb-1.5" style="border-bottom: 1px solid var(--divider);">
-        <h2 class="text-sm font-bold" style="color: var(--text-primary);">都市一覧</h2>
-        <span id="index-city-count" class="text-[11px] tabular-nums" style="color: var(--text-muted);">{len(cities)}都市</span>
-      </div>
-      <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">{cards_html}</div>
-    </section>
-
-    {render_sister_site_banner()}
-    {render_share_buttons(page_url, page_title)}
-
-    <footer class="pt-6 text-center text-xs space-y-2" style="color: var(--text-muted); border-top: 1px solid var(--divider);">
-      <p>安全な渡航のために：<a href="https://www.anzen.mofa.go.jp/" target="_blank" rel="noopener noreferrer" class="underline">外務省 海外安全ホームページ</a> / <a href="https://www.ezairyu.mofa.go.jp/tabireg/index.html" target="_blank" rel="noopener noreferrer" class="underline">たびレジ</a></p>
-      <p><a href="./policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="./policy/#contact" class="underline">お問い合わせ・情報修正依頼</a></p>
-      <p>© {SITE_NAME} ({SITE_URL})</p>
-    </footer>
-  </main>
-
-  <div id="toast" class="toast-msg" role="status" aria-live="polite">
-    <i data-lucide="check" class="w-3.5 h-3.5"></i>
-    <span id="toast-text">コピーしました</span>
-  </div>
-
-  {render_pixels()}
-
-  <script>
-    lucide.createIcons();
-    {render_theme_and_toast_script()}
-    {render_share_script()}
-
-    const compBtn = document.getElementById('comp-toggle-btn');
-    const compPanel = document.getElementById('comp-toggle-panel');
-    if (compBtn && compPanel) {{
-      compBtn.addEventListener('click', () => {{
-        const expanded = compBtn.getAttribute('aria-expanded') === 'true';
-        compBtn.setAttribute('aria-expanded', String(!expanded));
-        compPanel.classList.toggle('is-open', !expanded);
-      }});
-    }}
-
-    function syncSearchPlaceholder() {{
-      const inputEl = document.getElementById('search');
-      if (!inputEl) return;
-      inputEl.placeholder = window.innerWidth >= 640
-        ? 'ひらがな・都市名・国名で予測検索（例：ばり、ぷさん、ロンドン、たいわん）'
-        : '都市・国・ひらがな検索（例：ばり、ロンドン）';
-    }}
-    syncSearchPlaceholder();
-    window.addEventListener('resize', syncSearchPlaceholder, {{ passive: true }});
-
-    const progressBar = document.getElementById('scroll-progress');
-    window.addEventListener('scroll', () => {{
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (progressBar && docHeight > 0) {{
-        progressBar.style.width = `${{Math.min((window.scrollY / docHeight) * 100, 100)}}%`;
-      }}
-    }}, {{ passive: true }});
-
-    let currentRegion = 'すべて';
-    const searchInput = document.getElementById('search');
-    const suggestBox = document.getElementById('suggest-box');
-    const cards = Array.from(document.querySelectorAll('.city-card'));
-    const regionBtns = document.querySelectorAll('.region-btn');
-    const countEl = document.getElementById('index-city-count');
-
-    function toHiragana(str) {{
-      return str.replace(/[\\u30a1-\\u30f6]/g, function(match) {{
-        const chr = match.charCodeAt(0) - 0x60;
-        return String.fromCharCode(chr);
-      }});
-    }}
-
-    function normalizeText(str) {{
-      return toHiragana(str.toLowerCase().trim());
-    }}
-
-    function filterCards() {{
-      const q = normalizeText(searchInput.value);
-      const matchedCards = [];
-      let visibleCount = 0;
-
-      cards.forEach(card => {{
-        const haystack = normalizeText(card.dataset.search);
-        const matchSearch = !q || haystack.includes(q);
-        const matchRegion = (currentRegion === 'すべて' || card.dataset.region === currentRegion);
-        const visible = matchSearch && matchRegion;
-        card.style.display = visible ? 'block' : 'none';
-        if (visible) visibleCount += 1;
-        if (q && matchSearch) matchedCards.push(card);
-      }});
-
-      if (countEl) countEl.textContent = `${{visibleCount}}都市`;
-
-      if (q.length > 0 && matchedCards.length > 0) {{
-        suggestBox.innerHTML = matchedCards.slice(0, 8).map(c => `
-          <button type="button" class="suggest-item" data-href="./${{c.dataset.slug}}/">
-            <span class="font-bold">${{c.dataset.name}}</span>
-            <span style="color: var(--text-muted);">${{c.dataset.country}} →</span>
-          </button>
-        `).join('');
-        suggestBox.classList.remove('hidden');
-      }} else {{
-        suggestBox.classList.add('hidden');
-      }}
-    }}
-
-    suggestBox.addEventListener('pointerdown', (e) => {{
-      const item = e.target.closest('.suggest-item');
-      if (item && item.dataset.href) {{
-        e.preventDefault();
-        window.location.href = item.dataset.href;
-      }}
-    }});
-
-    searchInput.addEventListener('input', filterCards);
-    document.addEventListener('click', (e) => {{
-      if (!searchInput.contains(e.target) && !suggestBox.contains(e.target)) suggestBox.classList.add('hidden');
-    }});
-    searchInput.addEventListener('focus', () => {{
-      if (searchInput.value.trim().length > 0) filterCards();
-    }});
-
-    regionBtns.forEach(btn => {{
-      btn.addEventListener('click', () => {{
-        currentRegion = btn.dataset.region;
-        regionBtns.forEach(b => {{
-          b.style.background = 'var(--bg-surface)';
-          b.style.border = '1px solid var(--border-soft)';
-          b.style.color = 'var(--text-secondary)';
-          b.style.fontWeight = '500';
-        }});
-        btn.style.background = 'var(--accent)';
-        btn.style.border = '1px solid var(--accent)';
-        btn.style.color = '#ffffff';
-        btn.style.fontWeight = '700';
-        filterCards();
-      }});
-    }});
-  </script>
 </body>
 </html>"""
