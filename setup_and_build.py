@@ -60,7 +60,7 @@ from templates import (
 )
 from templates_pages import (
     build_index_html, build_guides_hub_html, build_plug_guide_html, build_time_guide_html,
-    build_tipping_guide_html, build_packing_html,
+    build_tipping_guide_html, build_packing_html, build_contact_html,
 )
 from site_content import GUIDE_PAGES
 
@@ -473,6 +473,10 @@ def main():
 
     index_html = build_index_html(cities, rates_data, COMPARE_PAIRS)
     (dist_dir / "index.html").write_text(index_html, encoding="utf-8")
+
+    contact_dir = dist_dir / "contact"
+    contact_dir.mkdir(parents=True, exist_ok=True)
+    (contact_dir / "index.html").write_text(build_contact_html(), encoding="utf-8")
 
     policy_dir = dist_dir / "policy"
     policy_dir.mkdir(parents=True, exist_ok=True)
