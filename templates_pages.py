@@ -18,7 +18,7 @@ from templates import (
     render_sister_site_banner, render_agoda_and_oooh_box, render_telecom_box,
     compute_city_star_ratings, compute_price_benchmarks, render_plug_svg,
 )
-from site_content import POPULAR, THEMES, GUIDE_PAGES
+from site_content import POPULAR, THEMES, GUIDE_PAGES, CONTACT_FORM_ENDPOINT
 
 _esc = _html.escape
 
@@ -64,7 +64,7 @@ def _guide_shell(title: str, desc: str, url: str, body: str, script: str = "", h
     {render_sister_site_banner()}
     <footer class="pt-6 pb-4 text-center text-[11px] space-y-1.5" style="color: var(--text-muted); border-top: 1px solid var(--divider);">
       <p>※当ページはプロモーション（アフィリエイト広告）を含みます。制度・規則は変更されるため、渡航前に公式情報をご確認ください。</p>
-      <p><a href="../" class="underline">ガイド・早見表一覧</a> · <a href="../../policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a></p>
+      <p><a href="../" class="underline">ガイド・早見表一覧</a> · <a href="../../policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="../../contact/" class="underline">お問い合わせ</a></p>
       <p>© {SITE_NAME} ({SITE_URL})</p>
     </footer>
   </main>
@@ -674,7 +674,7 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
 
     <footer class="pt-6 text-center text-xs space-y-2" style="color: var(--text-muted); border-top: 1px solid var(--divider);">
       <p>安全な渡航のために：<a href="https://www.anzen.mofa.go.jp/" target="_blank" rel="noopener noreferrer" class="underline">外務省 海外安全ホームページ</a> / <a href="https://www.ezairyu.mofa.go.jp/tabireg/index.html" target="_blank" rel="noopener noreferrer" class="underline">たびレジ</a></p>
-      <p><a href="./guides/" class="underline">ガイド・早見表</a> · <a href="./policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="./policy/#contact" class="underline">お問い合わせ・情報修正依頼</a></p>
+      <p><a href="./guides/" class="underline">ガイド・早見表</a> · <a href="./policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="./contact/" class="underline">お問い合わせ・情報修正依頼</a></p>
       <p>© %%SITE_NAME%% (%%SITE_URL%%)</p>
     </footer>
   </main>
@@ -966,4 +966,118 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
     }
     for k, v in repl.items():
         out = out.replace(k, v)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# お問い合わせページ（Formspree）
+# ---------------------------------------------------------------------------
+_CONTACT_TOPICS = ["情報の誤り・修正依頼", "掲載・取材・提携のご相談", "広告・PRのご相談", "サイトの不具合", "その他"]
+
+_CONTACT_SCRIPT = r"""<script>
+    (function () {
+      var form = document.getElementById('contact-form');
+      var okBox = document.getElementById('cf-success');
+      var errBox = document.getElementById('cf-error');
+      var btn = document.getElementById('cf-submit');
+      var btnLabel = document.getElementById('cf-submit-label');
+      var counter = document.getElementById('cf-count');
+      var msg = document.getElementById('cf-message');
+      var topicMap = { correction: '情報の誤り・修正依頼', partner: '掲載・取材・提携のご相談', ad: '広告・PRのご相談', bug: 'サイトの不具合', other: 'その他' };
+
+      // 都市ページなどからのリンク（?topic=correction&page=ソウル）で内容を事前入力
+      var params = new URLSearchParams(location.search);
+      var t = params.get('topic');
+      if (t && topicMap[t]) form.elements['topic'].value = topicMap[t];
+      var pg = params.get('page');
+      if (pg) form.elements['page'].value = pg.slice(0, 120);
+
+      function updateCount() { counter.textContent = msg.value.length + ' / 3000'; }
+      msg.addEventListener('input', updateCount); updateCount();
+
+      function showError(text) { errBox.textContent = text; errBox.classList.remove('hidden'); okBox.classList.add('hidden'); }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        errBox.classList.add('hidden');
+        form.elements['_subject'].value = '【%%SITE_NAME%%】' + form.elements['topic'].value;
+        btn.disabled = true; btnLabel.textContent = '送信中…';
+        fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json' } })
+          .then(function (res) { return res.json().catch(function () { return {}; }).then(function (data) { return { ok: res.ok, data: data }; }); })
+          .then(function (r) {
+            if (r.ok) {
+              form.reset(); updateCount();
+              form.classList.add('hidden'); okBox.classList.remove('hidden');
+              okBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+              var detail = (r.data && r.data.errors && r.data.errors.map(function (x) { return x.message; }).join(' / ')) || '';
+              showError('送信できませんでした。' + (detail ? '（' + detail + '）' : '') + ' 時間をおいて、もう一度お試しください。');
+            }
+          })
+          .catch(function () { showError('通信に失敗しました。ネットワーク環境をご確認のうえ、もう一度お試しください。'); })
+          .then(function () { btn.disabled = false; btnLabel.textContent = '送信する'; });
+      });
+    })();
+  </script>""".replace("%%SITE_NAME%%", SITE_NAME)
+
+
+def build_contact_html() -> str:
+    url = f"{SITE_URL}/contact/"
+    title = f"お問い合わせ・情報修正のご連絡｜{SITE_NAME}"
+    desc = f"{SITE_NAME}へのお問い合わせ、掲載情報の誤りのご指摘、提携・取材のご相談はこちらのフォームから。"
+    topics = "".join(f'<option value="{_esc(t)}">{_esc(t)}</option>' for t in _CONTACT_TOPICS)
+    input_style = 'style="background: var(--bg-tint); border: 1px solid var(--border-soft); color: var(--text-primary);"'
+    body = f"""
+    <div class="ed-surface p-5 space-y-2 anim-enter">
+      <span class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--accent-text);">CONTACT</span>
+      <h1 class="text-xl sm:text-2xl font-bold">お問い合わせ・情報修正のご連絡</h1>
+      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">掲載情報の誤り、最新状況への更新依頼、ご感想・ご提案などをお送りください。情報の修正は、公式情報を確認のうえ順次反映します。個別のご質問すべてに返信をお約束するものではありません。</p>
+    </div>
+
+    <div id="cf-success" class="hidden pr-card text-xs font-bold leading-relaxed" role="status" style="background: var(--sage-bg); border: 1px solid var(--sage-border); color: var(--sage-text);">
+      送信ありがとうございます。お問い合わせを受け付けました。内容を確認のうえ、必要に応じてご連絡します。
+    </div>
+    <div id="cf-error" class="hidden pr-card text-xs font-bold leading-relaxed" role="alert" style="background: var(--rose-bg); border: 1px solid var(--rose-border); color: var(--rose-text);"></div>
+
+    <form id="contact-form" action="{_esc(CONTACT_FORM_ENDPOINT)}" method="POST" class="ed-surface p-5 space-y-4 text-xs">
+      <div>
+        <label for="cf-topic" class="block font-bold mb-1" style="color: var(--text-primary);">お問い合わせの種類</label>
+        <select id="cf-topic" name="topic" class="w-full rounded-lg px-3 py-2.5" {input_style}>{topics}</select>
+      </div>
+      <div>
+        <label for="cf-page" class="block font-bold mb-1" style="color: var(--text-primary);">対象の都市・ページ <span class="font-normal" style="color: var(--text-muted);">（任意）</span></label>
+        <input id="cf-page" name="page" type="text" maxlength="120" placeholder="例：ソウル、持ち物チェックリスト" class="w-full rounded-lg px-3 py-2.5" {input_style}>
+      </div>
+      <div>
+        <label for="cf-message" class="block font-bold mb-1" style="color: var(--text-primary);">お問い合わせ内容 <span style="color: var(--rose-text);">（必須）</span></label>
+        <textarea id="cf-message" name="message" rows="6" required minlength="10" maxlength="3000" placeholder="誤りのご指摘の場合は、該当箇所と、正しい内容・参考にした公式情報のURLがあると助かります。" class="w-full rounded-lg px-3 py-2.5 leading-relaxed" {input_style}></textarea>
+        <p id="cf-count" class="text-[11px] text-right mt-0.5 tabular-nums" style="color: var(--text-muted);">0 / 3000</p>
+      </div>
+      <div>
+        <label for="cf-email" class="block font-bold mb-1" style="color: var(--text-primary);">返信先メールアドレス <span class="font-normal" style="color: var(--text-muted);">（返信を希望する場合のみ）</span></label>
+        <input id="cf-email" name="email" type="email" autocomplete="email" placeholder="example@example.com" class="w-full rounded-lg px-3 py-2.5" {input_style}>
+      </div>
+
+      <div style="display:none" aria-hidden="true">
+        <label>このフィールドは空のままにしてください<input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label>
+      </div>
+      <input type="hidden" name="_subject" value="【{_esc(SITE_NAME)}】お問い合わせ">
+
+      <label class="flex items-start gap-2 cursor-pointer">
+        <input type="checkbox" name="consent" value="同意する" required class="mt-0.5">
+        <span class="leading-relaxed" style="color: var(--text-secondary);"><a href="../policy/" target="_blank" rel="noopener" class="underline" style="color: var(--accent-text);">プライバシーポリシー</a>の内容（送信内容がフォーム送信サービスを通じて運営者に届くこと）に同意します。</span>
+      </label>
+
+      <button id="cf-submit" type="submit" class="pr-cta w-full sm:w-auto" style="background: var(--accent); color: #ffffff;">
+        <span id="cf-submit-label">送信する</span>
+        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+      </button>
+      <p class="text-[11px] leading-relaxed" style="color: var(--text-muted);">※パスワードやカード番号など、機密性の高い情報は入力しないでください。</p>
+    </form>"""
+    out = _guide_shell(title, desc, url, body, script=_CONTACT_SCRIPT, head_extra='<meta name="robots" content="noindex,follow">')
+    # このページは /contact/ 直下（1階層）なので、相対リンクと見出しを調整
+    out = out.replace('<nav class="text-[11px]" style="color: var(--text-muted);"><a href="../../" class="underline">トップ</a> › <a href="../" class="underline">ガイド・早見表</a></nav>',
+                      '<nav class="text-[11px]" style="color: var(--text-muted);"><a href="../" class="underline">トップ</a> › お問い合わせ</nav>')
+    out = out.replace('href="../../', 'href="../')
+    out = out.replace('<p><a href="../" class="underline">ガイド・早見表一覧</a> · ', '<p><a href="../guides/" class="underline">ガイド・早見表</a> · ')
     return out
