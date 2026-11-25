@@ -60,3 +60,7 @@ GUIDE_PAGES = [
     ("plug-types", "世界のコンセント・電圧早見表", "プラグ形状別の対応都市と、変換プラグ・変圧器の考え方をまとめました。", "plug"),
     ("tipping", "世界のチップ早見表", "国・都市別のチップ相場と渡し方。必要・任意・不要で分類し、簡易計算つき。", "coins"),
 ]
+
+
+# お問い合わせフォームの送信先（Formspree）。変更する場合はここだけ書き換えてください
+CONTACT_FORM_ENDPOINT = "https://formspree.io/f/xqpqgayo"
