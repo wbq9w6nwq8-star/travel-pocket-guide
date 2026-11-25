@@ -10,6 +10,7 @@ HTML・UIデザイン・テンプレート管理ファイル (templates.py)
 """
 
 import json
+from urllib.parse import quote
 from config import (
     SITE_URL, SITE_NAME, GA4_ID, OGP_IMAGE_URL, FAVICON_URL,
     SISTER_SITE_URL, SISTER_SITE_NAME,
@@ -236,6 +237,7 @@ def render_editorial_styles() -> str:
       transition: background-color 0.35s var(--ease-smooth), color 0.35s var(--ease-smooth);
     }
     .tabular-nums { font-variant-numeric: tabular-nums; }
+    .hidden { display: none; } /* Tailwind CDN の読み込み前・失敗時でも、非表示にする要素が見えないようにする */
     .font-editorial-italic { font-family: var(--font-editorial); font-style: italic; }
 
     @keyframes enterUp {
@@ -1477,7 +1479,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
     <footer class="pt-6 pb-4 text-center text-[11px] space-y-1.5" style="color: var(--text-muted); border-top: 1px solid var(--divider);">
       <p>※当ページはプロモーション（アフィリエイト広告）を含みます。制度・料金・治安情報等は変更される場合があるため、渡航前に外務省や各公式窓口の最新情報をご確認ください。</p>
       <p>関連ガイド：<a href="../guides/packing-checklist/" class="underline">持ち物チェックリスト</a> · <a href="../guides/time-difference/" class="underline">時差早見表</a> · <a href="../guides/plug-types/" class="underline">コンセント・電圧</a> · <a href="../guides/tipping/" class="underline">チップ早見表</a></p>
-      <p><a href="../policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a></p>
+      <p><a href="../policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="../contact/" class="underline">お問い合わせ</a> · <a href="../contact/?topic=correction&amp;page={quote(city['name_ja'])}" class="underline">この都市の情報の誤りを報告</a></p>
       <p>© {SITE_NAME} ({SITE_URL})</p>
     </footer>
   </main>
@@ -2436,9 +2438,14 @@ def build_policy_html() -> str:
       <p>当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス（GA4）」を利用しています。データは匿名で収集されており、個人を特定するものではありません。</p>
     </section>
     <section class="ed-surface p-5 space-y-2">
-      <h2 class="font-bold text-base" style="color: var(--text-primary);">4. 運営者情報・訂正のご連絡</h2>
+      <h2 class="font-bold text-base" style="color: var(--text-primary);">4. 運営者情報</h2>
       <p><strong>サイト名：</strong>{SITE_NAME} / <strong>URL：</strong>{SITE_URL} / <strong>運営：</strong>{SITE_NAME} 編集部</p>
-      <p class="text-xs" style="color: var(--text-muted);">掲載情報の誤りや表記ゆれにお気づきの際は、運営窓口までお知らせいただけますと幸いです。</p>
+    </section>
+    <section id="contact" class="ed-surface p-5 space-y-3">
+      <h2 class="font-bold text-base" style="color: var(--text-primary);">5. お問い合わせ・情報修正のご連絡</h2>
+      <p>掲載情報の誤りや最新状況への更新依頼、ご感想などは、専用のお問い合わせフォームからお送りください。</p>
+      <a href="../contact/" class="pr-cta" style="background: var(--accent); color: #ffffff;"><span>お問い合わせフォームを開く</span><i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></a>
+      <p class="text-xs" style="color: var(--text-muted);"><strong>お問い合わせフォームの利用について：</strong>フォームの内容（お問い合わせの種類、対象ページ、本文、任意で入力されたメールアドレス）は、フォーム送信サービス「Formspree」を通じて運営者に届きます。受け取った内容は、内容の確認・返信・情報の修正のためにのみ利用し、法令に基づく場合を除き第三者に提供しません。メールアドレスの入力は任意です。送信内容は、サービス提供事業者のサーバーで処理・保管される場合があります。</p>
     </section>
   </main>
   <script>lucide.createIcons();</script>
