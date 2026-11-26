@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 from config import SITE_URL, SITE_NAME, FAVICON_URL, FEATURE_PAGES
 from templates import (
-    render_common_head, render_editorial_styles, render_pr_banner, render_pixels,
+    render_site_nav, render_common_head, render_editorial_styles, render_pr_banner, render_pixels,
     render_share_buttons, render_share_script, render_theme_and_toast_script,
     render_sister_site_banner, render_agoda_and_oooh_box, render_telecom_box,
     compute_city_star_ratings, compute_price_benchmarks, render_plug_svg,
@@ -27,8 +27,11 @@ _esc = _html.escape
 # 共通：ガイドページの外枠
 # ---------------------------------------------------------------------------
 def _guide_shell(title: str, desc: str, url: str, body: str, script: str = "", head_extra: str = "",
-                 crumb: str = "") -> str:
-    crumb_html = f'<nav class="text-[11px]" style="color: var(--text-muted);"><a href="../../" class="underline">トップ</a> › <a href="../" class="underline">ガイド・早見表</a>{crumb}</nav>'
+                 crumb: str = "", depth: int = 2, active: str = "guides", crumb_html: str = "") -> str:
+    up = "../" * depth
+    guides_link = "../" if depth == 2 else "../guides/"
+    if not crumb_html:
+        crumb_html = f'<nav class="text-[11px]" style="color: var(--text-muted);"><a href="{up}" class="underline">トップ</a> › <a href="{guides_link}" class="underline">ガイド・早見表</a>{crumb}</nav>'
     return f"""<!DOCTYPE html>
 <html lang="ja" data-theme="light">
 <head>
@@ -46,7 +49,7 @@ def _guide_shell(title: str, desc: str, url: str, body: str, script: str = "", h
   {render_pr_banner()}
   <header class="ed-header">
     <div class="max-w-[780px] mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
-      <a href="../../" class="inline-flex items-center gap-2 py-1 pr-2 rounded-lg" style="color: var(--text-primary);">
+      <a href="{up}" class="inline-flex items-center gap-2 py-1 pr-2 rounded-lg" style="color: var(--text-primary);">
         <i data-lucide="arrow-left" class="w-4 h-4" style="color: var(--accent-text);"></i>
         <span class="font-extrabold text-sm sm:text-base">{SITE_NAME}</span>
       </a>
@@ -56,6 +59,7 @@ def _guide_shell(title: str, desc: str, url: str, body: str, script: str = "", h
       </button>
     </div>
   </header>
+  {render_site_nav(up, active)}
 
   <main class="max-w-[780px] mx-auto px-4 pt-5 space-y-6">
     {crumb_html}
@@ -64,7 +68,7 @@ def _guide_shell(title: str, desc: str, url: str, body: str, script: str = "", h
     {render_sister_site_banner()}
     <footer class="pt-6 pb-4 text-center text-[11px] space-y-1.5" style="color: var(--text-muted); border-top: 1px solid var(--divider);">
       <p>※当ページはプロモーション（アフィリエイト広告）を含みます。制度・規則は変更されるため、渡航前に公式情報をご確認ください。</p>
-      <p><a href="../" class="underline">ガイド・早見表一覧</a> · <a href="../../policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="../../contact/" class="underline">お問い合わせ</a></p>
+      <p><a href="{guides_link}" class="underline">ガイド・早見表一覧</a> · <a href="{up}policy/" class="underline">プライバシーポリシー・免責事項・運営者情報</a> · <a href="{up}contact/" class="underline">お問い合わせ</a></p>
       <p>© {SITE_NAME} ({SITE_URL})</p>
     </footer>
   </main>
@@ -131,11 +135,9 @@ def build_guides_hub_html() -> str:
       <h2 class="text-sm font-bold pb-1.5" style="color: var(--text-primary); border-bottom: 1px solid var(--divider);">季節・テーマ別の特集</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">{feats}</div>
     </section>"""
-    out = _guide_shell(title, desc, url, body)
-    # 一覧ページは1階層浅いので、相対リンクを調整する
-    out = out.replace('<a href="../../" class="underline">トップ</a> › <a href="../" class="underline">ガイド・早見表</a>', '<a href="../" class="underline">トップ</a>')
-    out = out.replace('href="../../', 'href="../').replace('<a href="../" class="underline">ガイド・早見表一覧</a>', '<a href="./" class="underline">ガイド・早見表一覧</a>')
-    return out
+    crumb = '<nav class="text-[11px]" style="color: var(--text-muted);"><a href="../" class="underline">トップ</a> › ガイド・早見表</nav>'
+    out = _guide_shell(title, desc, url, body, depth=1, active="guides", crumb_html=crumb)
+    return out.replace('<a href="../guides/" class="underline">ガイド・早見表一覧</a>', '<a href="./" class="underline">ガイド・早見表一覧</a>')
 
 
 # ---------------------------------------------------------------------------
@@ -539,6 +541,11 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
     .lab-chip { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 9999px; }
     .lab-0 { background: var(--sage-bg); color: var(--sage-text); }
     .lab-1 { background: var(--accent-soft); color: var(--accent-text); }
+    .quick-nav { position: sticky; top: var(--hdr-h, 46px); z-index: 44; background: color-mix(in srgb, var(--bg-canvas) 94%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--divider); }
+    .hsnap { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; scrollbar-width: none; }
+    .hsnap::-webkit-scrollbar { display: none; }
+    .hsnap > a { flex: 0 0 76%; scroll-snap-align: start; }
+    @media (min-width: 640px) { .hsnap { display: grid; grid-template-columns: repeat(3, 1fr); overflow: visible; } .hsnap > a { flex: none; } }
     .suggest-wrap { position: relative; }
     .suggest-wrap .search-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
     .sub-text-link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 2px; background: transparent; border: none; color: var(--text-muted); font-size: 11px; font-weight: 500; }
@@ -571,6 +578,16 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
     </div>
   </header>
 
+  <nav id="quick-nav" class="quick-nav" aria-label="ページ内ナビゲーション">
+    <div class="max-w-[780px] mx-auto px-4"><div class="snav-row">
+      <a href="#sec-season" class="snav-link" data-target="sec-season">今が行き時</a>
+      <a href="#sec-features" class="snav-link" data-target="sec-features">季節・テーマ特集</a>
+      <a href="#sec-compare" class="snav-link" data-target="sec-compare">都市を比べる</a>
+      <a href="#sec-guides" class="snav-link" data-target="sec-guides">ガイド・早見表</a>
+      <a href="#sec-cities" class="snav-link" data-target="sec-cities">全都市から探す</a>
+    </div></div>
+  </nav>
+
   <main class="max-w-[780px] mx-auto px-4 pt-5 space-y-7">
 
     <section class="hero space-y-3 anim-enter">
@@ -593,38 +610,75 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
       </div>
 
       <div class="grid grid-cols-2 gap-2 pt-1">
-        <a href="#sec-season" class="intent-tile">
-          <i data-lucide="sun" class="w-5 h-5 shrink-0" style="color: var(--amber-text);"></i>
-          <span><strong class="block text-xs" style="color: var(--text-primary);">いつ行く？</strong><span class="text-[11px]" style="color: var(--text-muted);">今月の行き時</span></span>
+        <a href="#sec-features" class="intent-tile">
+          <i data-lucide="calendar-days" class="w-5 h-5 shrink-0" style="color: var(--amber-text);"></i>
+          <span><strong class="block text-xs" style="color: var(--text-primary);">季節・テーマ特集</strong><span class="text-[11px]" style="color: var(--text-muted);">時期や目的から選ぶ</span></span>
+        </a>
+        <a href="#sec-compare" class="intent-tile">
+          <i data-lucide="scale" class="w-5 h-5 shrink-0" style="color: var(--accent-text);"></i>
+          <span><strong class="block text-xs" style="color: var(--text-primary);">都市を比べる</strong><span class="text-[11px]" style="color: var(--text-muted);">迷う2都市を並べて確認</span></span>
+        </a>
+        <a href="#sec-guides" class="intent-tile">
+          <i data-lucide="list-checks" class="w-5 h-5 shrink-0" style="color: var(--brand-esim-btn);"></i>
+          <span><strong class="block text-xs" style="color: var(--text-primary);">ガイド・早見表</strong><span class="text-[11px]" style="color: var(--text-muted);">持ち物・時差・緊急時</span></span>
         </a>
         <a href="./features/first-time-safe/" class="intent-tile">
           <i data-lucide="shield-check" class="w-5 h-5 shrink-0" style="color: var(--sage-text);"></i>
           <span><strong class="block text-xs" style="color: var(--text-primary);">初めての海外</strong><span class="text-[11px]" style="color: var(--text-muted);">安心の12都市</span></span>
-        </a>
-        <a href="#sec-cities" class="intent-tile">
-          <i data-lucide="compass" class="w-5 h-5 shrink-0" style="color: var(--accent-text);"></i>
-          <span><strong class="block text-xs" style="color: var(--text-primary);">行き先を探す</strong><span class="text-[11px]" style="color: var(--text-muted);">テーマ・予算で絞り込み</span></span>
-        </a>
-        <a href="./guides/" class="intent-tile">
-          <i data-lucide="list-checks" class="w-5 h-5 shrink-0" style="color: var(--brand-esim-btn);"></i>
-          <span><strong class="block text-xs" style="color: var(--text-primary);">準備を進める</strong><span class="text-[11px]" style="color: var(--text-muted);">持ち物・時差・チップ</span></span>
         </a>
       </div>
 
       <p class="text-[10.5px] leading-relaxed" style="color: var(--text-muted);">外務省の海外安全情報へのリンク付き ・ 為替の更新: %%RATES_UPDATED%% ・ 月別の気候カレンダー: %%CAL_COUNT%%都市</p>
     </section>
 
-    <section id="sec-season" class="space-y-2.5 hidden">
+    <section id="sec-season" class="space-y-2.5 hidden scroll-mt">
       <div class="flex items-baseline justify-between flex-wrap gap-1 pb-2" style="border-bottom: 1px solid var(--divider);">
         <h2 class="text-sm font-bold flex items-center gap-1.5" style="color: var(--text-primary);"><i data-lucide="sun" class="w-4 h-4"></i><span>今が行き時の都市</span></h2>
         <span class="text-[11px]" style="color: var(--text-muted);">気温・雨量から自動で選定</span>
       </div>
       <div id="season-tabs" class="hscroll"></div>
-      <div id="season-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5"></div>
+      <div id="season-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
       <p class="text-[10.5px] leading-relaxed" style="color: var(--text-muted);">月別の気温・降水量・湿度から算出した目安です（一部は編集部概算）。実際の天候は年によって異なります。各都市ページで1年のカレンダーを確認できます。</p>
     </section>
 
-    <section id="sec-cities" class="space-y-3">
+    <section id="sec-features" class="space-y-3 scroll-mt">
+      <div class="flex items-baseline justify-between pb-2" style="border-bottom: 1px solid var(--divider);">
+        <h2 class="text-sm font-bold flex items-center gap-1.5" style="color: var(--text-primary);"><i data-lucide="calendar-days" class="w-4 h-4"></i><span>季節・テーマ別の特集</span></h2>
+        <a href="./features/" class="text-[11px] underline" style="color: var(--accent-text);">一覧を見る</a>
+      </div>
+      <p class="text-[11px]" style="color: var(--text-muted);">「いつ行くか」「どんな旅にしたいか」から選べます。気温・服装・時差・空港アクセスなどを表で比較できます。</p>
+      <div class="hsnap">%%FEATURE_LINKS%%</div>
+    </section>
+
+    <section id="sec-compare" class="space-y-3 scroll-mt">
+      <div class="flex items-baseline justify-between pb-2" style="border-bottom: 1px solid var(--divider);">
+        <h2 class="text-sm font-bold flex items-center gap-1.5" style="color: var(--text-primary);"><i data-lucide="scale" class="w-4 h-4"></i><span>都市を比べる</span></h2>
+        <a href="./compare/" class="text-[11px] underline" style="color: var(--accent-text);">一覧を見る</a>
+      </div>
+      <div class="pr-card pr-card--accent space-y-2.5">
+        <p class="text-xs font-bold" style="color: var(--text-primary);">迷っている2都市を選ぶだけ</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <select id="cmp-a" aria-label="都市A" class="w-full rounded-lg px-3 py-2.5 font-bold" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);"></select>
+          <select id="cmp-b" aria-label="都市B" class="w-full rounded-lg px-3 py-2.5 font-bold" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);"></select>
+        </div>
+        <p id="cmp-warn" class="hidden text-[11px] font-bold" style="color: var(--rose-text);">異なる2都市を選んでください</p>
+        <a id="cmp-go" href="./compare/%%BASE_PAIR%%/" class="pr-cta" style="background: var(--accent); color: #ffffff;"><span>この2都市を比較する</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+      </div>
+      <div class="space-y-1.5">
+        <p class="text-[11px] font-semibold" style="color: var(--text-muted);">人気の比較</p>
+        <div class="flex flex-wrap gap-1.5">%%COMPARE_LINKS%%</div>
+      </div>
+    </section>
+
+    <section id="sec-guides" class="space-y-3 scroll-mt">
+      <div class="flex items-baseline justify-between pb-2" style="border-bottom: 1px solid var(--divider);">
+        <h2 class="text-sm font-bold flex items-center gap-1.5" style="color: var(--text-primary);"><i data-lucide="list-checks" class="w-4 h-4"></i><span>ガイド・早見表</span></h2>
+        <a href="./guides/" class="text-[11px] underline" style="color: var(--accent-text);">一覧を見る</a>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">%%GUIDE_LINKS%%</div>
+    </section>
+
+    <section id="sec-cities" class="space-y-3 scroll-mt">
       <div class="flex items-baseline justify-between pb-2" style="border-bottom: 1px solid var(--divider);">
         <h2 class="text-sm font-bold" style="color: var(--text-primary);">条件から行き先を探す</h2>
         <span id="index-city-count" class="text-[11px] tabular-nums" style="color: var(--text-muted);">%%N_CITIES%%都市</span>
@@ -647,26 +701,6 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
       <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">%%CARDS%%</div>
       <div id="grid-empty" class="hidden ed-tint p-4 text-xs text-center" style="color: var(--text-secondary);">条件に合う都市が見つかりませんでした。条件を減らすか、リセットしてお試しください。</div>
       <div class="text-center"><button id="more-btn" type="button" class="pr-cta" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);"></button></div>
-    </section>
-
-    <section class="space-y-3">
-      <div class="flex items-baseline justify-between pb-2" style="border-bottom: 1px solid var(--divider);">
-        <h2 class="text-sm font-bold" style="color: var(--text-primary);">季節・テーマ別特集</h2>
-        <span class="text-[11px]" style="color: var(--text-muted);">時期や目的から選ぶ</span>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">%%FEATURE_LINKS%%</div>
-      <div class="pt-0.5">
-        <button id="comp-toggle-btn" type="button" class="sub-text-link" aria-expanded="false"><span>2都市比較ページ一覧を開く</span><i data-lucide="chevron-down" class="w-3 h-3"></i></button>
-        <div id="comp-toggle-panel" class="accordion-content"><div class="accordion-inner"><div class="flex flex-wrap gap-1.5 pt-2.5">%%COMPARE_LINKS%%</div></div></div>
-      </div>
-    </section>
-
-    <section class="space-y-3">
-      <div class="flex items-baseline justify-between pb-2" style="border-bottom: 1px solid var(--divider);">
-        <h2 class="text-sm font-bold" style="color: var(--text-primary);">ガイド・早見表</h2>
-        <a href="./guides/" class="text-[11px] underline" style="color: var(--accent-text);">一覧を見る</a>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">%%GUIDE_LINKS%%</div>
     </section>
 
     %%SISTER%%
@@ -696,16 +730,41 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
     const TOTAL_CITIES = %%N_CITIES%%;
     const LAB_NAME = ['ベスト', '快適', '標準', '注意'];
 
-    // ---------- 比較ページ一覧の開閉 ----------
-    const compBtn = document.getElementById('comp-toggle-btn');
-    const compPanel = document.getElementById('comp-toggle-panel');
-    if (compBtn && compPanel) {
-      compBtn.addEventListener('click', () => {
-        const expanded = compBtn.getAttribute('aria-expanded') === 'true';
-        compBtn.setAttribute('aria-expanded', String(!expanded));
-        compPanel.classList.toggle('is-open', !expanded);
-      });
+    // ---------- ヘッダー高さ（追従ナビの位置合わせ）----------
+    const hdrEl = document.querySelector('.ed-header');
+    function setHdrH() { if (hdrEl) document.documentElement.style.setProperty('--hdr-h', hdrEl.offsetHeight + 'px'); }
+    setHdrH(); window.addEventListener('resize', setHdrH, { passive: true });
+
+    // ---------- クイックナビ（現在位置の強調）----------
+    const qLinks = Array.from(document.querySelectorAll('#quick-nav .snav-link'));
+    const qTargets = qLinks.map((l) => document.getElementById(l.dataset.target)).filter(Boolean);
+    function updateQuickNav() {
+      // 画面上端から一定の位置（画面の約3割）を過ぎた最後のセクションを「現在地」とする
+      const th = Math.max(220, window.innerHeight * 0.3);
+      let cur = null;
+      qTargets.forEach((sec) => { if (sec.offsetParent !== null && sec.getBoundingClientRect().top <= th) cur = sec.id; });
+      qLinks.forEach((l) => l.classList.toggle('is-active', l.dataset.target === cur));
     }
+    window.addEventListener('scroll', updateQuickNav, { passive: true });
+    updateQuickNav();
+
+    // ---------- 2都市比較ツール ----------
+    const cmpA = document.getElementById('cmp-a');
+    const cmpB = document.getElementById('cmp-b');
+    const cmpGo = document.getElementById('cmp-go');
+    const cmpWarn = document.getElementById('cmp-warn');
+    const sortedSlugs = Object.keys(CITY_BRIEF).sort((x, y) => CITY_BRIEF[x].n.localeCompare(CITY_BRIEF[y].n, 'ja'));
+    const optHtml = sortedSlugs.map((s) => `<option value="${s}">${CITY_BRIEF[s].n}（${CITY_BRIEF[s].c}）</option>`).join('');
+    cmpA.innerHTML = optHtml; cmpB.innerHTML = optHtml;
+    cmpA.value = '%%DEF_A%%'; cmpB.value = '%%DEF_B%%';
+    function updateCmp() {
+      const same = cmpA.value === cmpB.value;
+      cmpWarn.classList.toggle('hidden', !same);
+      cmpGo.href = same ? '#sec-compare' : `./compare/%%BASE_PAIR%%/?a=${encodeURIComponent(cmpA.value)}&b=${encodeURIComponent(cmpB.value)}`;
+      cmpGo.style.opacity = same ? '.5' : '1';
+    }
+    cmpGo.addEventListener('click', (e) => { if (cmpA.value === cmpB.value) e.preventDefault(); });
+    cmpA.addEventListener('change', updateCmp); cmpB.addEventListener('change', updateCmp); updateCmp();
 
     const progressBar = document.getElementById('scroll-progress');
     window.addEventListener('scroll', () => {
@@ -744,10 +803,10 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
       const rows = recommendFor(mi);
       seasonList.innerHTML = rows.map((r) => {
         const b = CITY_BRIEF[r.slug];
-        return `<a href="./${r.slug}/" class="ed-surface block p-3 space-y-1">
-          <div class="flex items-baseline justify-between gap-2"><span class="font-bold text-sm" style="color: var(--text-primary);">${b.n}</span><span class="lab-chip lab-${r.lab}">${LAB_NAME[r.lab]}</span></div>
+        return `<a href="./${r.slug}/" class="ed-surface block p-2.5 space-y-0.5">
+          <div class="flex items-baseline justify-between gap-1"><span class="font-bold text-[13px]" style="color: var(--text-primary);">${b.n}</span><span class="lab-chip lab-${r.lab}">${LAB_NAME[r.lab]}</span></div>
           <p class="text-[11px] tabular-nums" style="color: var(--text-muted);">${b.c} ・ ${r.tmin}〜${r.tmax}℃</p>
-          ${b.v ? `<p class="text-[11px] leading-relaxed clamp-2" style="color: var(--text-secondary);">${b.v}</p>` : ''}
+          ${b.v ? `<p class="hidden sm:block text-[11px] leading-relaxed clamp-2" style="color: var(--text-secondary);">${b.v}</p>` : ''}
         </a>`;
       }).join('');
       Array.from(seasonTabs.children).forEach((btn, i) => btn.classList.toggle('is-active', i === offset));
@@ -934,15 +993,17 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
             month_data[c["slug"]] = [[_LAB_CODE.get(m["label"], 2), m["tmin"], m["tmax"], m["score"]] for m in cal["months"]]
 
     feature_links = "".join(
-        f'<a href="./features/{f["slug"]}/" class="ed-surface block p-3.5"><span class="text-[10px] font-medium tracking-wide block" style="color: var(--text-muted);">{_esc(f["badge"])}</span>'
-        f'<p class="text-xs font-semibold mt-1 leading-relaxed" style="color: var(--text-primary);">{_esc(f["title"])}</p></a>'
+        f'<a href="./features/{f["slug"]}/" class="ed-surface block p-3.5 space-y-1">'
+        f'<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" style="background: var(--accent-soft); color: var(--accent-text);">{_esc(f["badge"])}</span>'
+        f'<p class="text-xs font-bold mt-1.5 leading-snug" style="color: var(--text-primary);">{_esc(f["title"].split("｜")[0])}</p>'
+        f'<p class="text-[11px] leading-relaxed clamp-2" style="color: var(--text-muted);">{_esc(f["desc"])}</p></a>'
         for f in FEATURE_PAGES
     )
     compare_links = "".join(
-        f'<a href="./compare/{s1}-vs-{s2}/" class="text-[11px] px-2.5 py-1 rounded-full font-medium transition" style="background: var(--bg-tint); color: var(--text-secondary);">'
+        f'<a href="./compare/{s1}-vs-{s2}/" class="text-[11px] px-2.5 py-1.5 rounded-full font-medium transition" style="background: var(--bg-tint); color: var(--text-secondary);">'
         f'{_esc(city_map[s1]["name_ja"].split("（")[0])} vs {_esc(city_map[s2]["name_ja"].split("（")[0])}</a>'
-        for s1, s2, _ in featured_compare_pairs if s1 in city_map and s2 in city_map
-    )
+        for s1, s2, _ in featured_compare_pairs[:12] if s1 in city_map and s2 in city_map
+    ) + '<a href="./compare/" class="text-[11px] px-2.5 py-1.5 rounded-full font-bold underline" style="color: var(--accent-text);">すべて見る →</a>'
     guide_links = "".join(
         f'<a href="./guides/{slug}/" class="ed-surface block p-3.5 space-y-1"><div class="flex items-center gap-2"><i data-lucide="{icon}" class="w-4 h-4" style="color: var(--accent-text);"></i>'
         f'<span class="font-bold text-xs" style="color: var(--text-primary);">{_esc(label)}</span></div>'
@@ -963,6 +1024,8 @@ def build_index_html(cities: list, rates_data: dict, featured_compare_pairs: lis
         "%%CITY_BRIEF%%": json.dumps(brief, ensure_ascii=False), "%%MONTH_DATA%%": json.dumps(month_data, ensure_ascii=False),
         "%%RATES_UPDATED%%": _esc(str(rates_data.get("updated_at", ""))), "%%CAL_COUNT%%": str(len(month_data)),
         "%%SITE_NAME%%": SITE_NAME, "%%SITE_URL%%": SITE_URL, "%%N_CITIES%%": str(n),
+        "%%BASE_PAIR%%": (f"{featured_compare_pairs[0][0]}-vs-{featured_compare_pairs[0][1]}" if featured_compare_pairs else ""),
+        "%%DEF_A%%": (featured_compare_pairs[0][0] if featured_compare_pairs else ""), "%%DEF_B%%": (featured_compare_pairs[0][1] if featured_compare_pairs else ""),
     }
     for k, v in repl.items():
         out = out.replace(k, v)
@@ -1074,10 +1137,151 @@ def build_contact_html() -> str:
       </button>
       <p class="text-[11px] leading-relaxed" style="color: var(--text-muted);">※パスワードやカード番号など、機密性の高い情報は入力しないでください。</p>
     </form>"""
-    out = _guide_shell(title, desc, url, body, script=_CONTACT_SCRIPT, head_extra='<meta name="robots" content="noindex,follow">')
-    # このページは /contact/ 直下（1階層）なので、相対リンクと見出しを調整
-    out = out.replace('<nav class="text-[11px]" style="color: var(--text-muted);"><a href="../../" class="underline">トップ</a> › <a href="../" class="underline">ガイド・早見表</a></nav>',
-                      '<nav class="text-[11px]" style="color: var(--text-muted);"><a href="../" class="underline">トップ</a> › お問い合わせ</nav>')
-    out = out.replace('href="../../', 'href="../')
-    out = out.replace('<p><a href="../" class="underline">ガイド・早見表一覧</a> · ', '<p><a href="../guides/" class="underline">ガイド・早見表</a> · ')
-    return out
+    crumb = '<nav class="text-[11px]" style="color: var(--text-muted);"><a href="../" class="underline">トップ</a> › お問い合わせ</nav>'
+    return _guide_shell(title, desc, url, body, script=_CONTACT_SCRIPT, head_extra='<meta name="robots" content="noindex,follow">',
+                        depth=1, active="contact", crumb_html=crumb)
+
+
+
+# ---------------------------------------------------------------------------
+# 特集一覧 / 比較一覧
+# ---------------------------------------------------------------------------
+def build_features_hub_html(cities: list) -> str:
+    url = f"{SITE_URL}/features/"
+    title = f"季節・テーマ別の特集一覧｜海外旅行先の選び方｜{SITE_NAME}"
+    desc = "年末年始・春休み・GW・夏休み・秋休み、初めての海外・一人旅など、時期や目的から海外旅行先を選べる特集の一覧です。気温・服装・時差・空港アクセス・治安などを都市ごとに比較できます。"
+    city_map = {c["slug"]: c for c in cities}
+    cards = []
+    for f in FEATURE_PAGES:
+        names = "・".join(city_map[sl]["name_ja"].split("（")[0] for sl in f["cities"][:6] if sl in city_map)
+        cards.append(
+            f'<a href="./{f["slug"]}/" class="ed-surface block p-4 space-y-1.5">'
+            f'<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" style="background: var(--accent-soft); color: var(--accent-text);">{_esc(f["badge"])}</span>'
+            f'<p class="text-sm font-bold leading-snug" style="color: var(--text-primary);">{_esc(f["title"])}</p>'
+            f'<p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">{_esc(f["desc"])}</p>'
+            f'<p class="text-[11px]" style="color: var(--text-muted);">対象都市の例：{_esc(names)} ほか</p></a>'
+        )
+    body = _page_header("FEATURES", "季節・テーマ別の特集一覧", "「いつ行くか」「どんな旅にしたいか」から、行き先を選べます。気温・服装・時差・空港アクセス・治安などを、特集ごとに表で比べられます。") + \
+        f'<section class="grid grid-cols-1 sm:grid-cols-2 gap-3">{"".join(cards)}</section>' + f"""
+    <section class="ed-tint p-4 text-xs leading-relaxed" style="color: var(--text-secondary);">
+      <strong style="color: var(--text-primary);">特集の見方：</strong>気温・降水日数は月別の気候データ（一部は編集部概算）から集計した目安です。実際の天候は年によって異なります。制度や料金は変わるため、渡航前に公式情報をご確認ください。
+    </section>"""
+    crumb = '<nav class="text-[11px]" style="color: var(--text-muted);"><a href="../" class="underline">トップ</a> › 季節・テーマ特集</nav>'
+    return _guide_shell(title, desc, url, body, depth=1, active="features", crumb_html=crumb)
+
+
+def build_compare_hub_html(cities: list, pairs: list) -> str:
+    url = f"{SITE_URL}/compare/"
+    title = f"都市を比べる｜2都市比較ツールと人気の比較一覧｜{SITE_NAME}"
+    desc = "気になる2つの都市を選んで、時差・物価・ベスト月・空港アクセス・コンセント・チップ・治安をまとめて比較。人気の比較ペアの一覧もあります。"
+    city_map = {c["slug"]: c for c in cities}
+    base = f"{pairs[0][0]}-vs-{pairs[0][1]}" if pairs else ""
+    cards = "".join(
+        f'<a href="./{a}-vs-{b}/" class="ed-surface block p-3.5 space-y-1">'
+        f'<span class="text-sm font-bold" style="color: var(--text-primary);">{_esc(city_map[a]["name_ja"].split("（")[0])} vs {_esc(city_map[b]["name_ja"].split("（")[0])}</span>'
+        f'<p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">{_esc(summary)}</p></a>'
+        for a, b, summary in pairs if a in city_map and b in city_map
+    )
+    options = "".join(f'<option value="{c["slug"]}">{_esc(c["name_ja"])}（{_esc(c["country_ja"])}）</option>' for c in cities)
+    default_a = pairs[0][0] if pairs else cities[0]["slug"]
+    default_b = pairs[0][1] if pairs else cities[1]["slug"]
+    body = _page_header("COMPARE", "都市を比べる", "迷っている2都市を選ぶだけ。時差・物価・ベスト月・空港アクセス・コンセント・チップ・治安の違いをまとめて確認できます。") + f"""
+    <section class="pr-card pr-card--accent space-y-2.5">
+      <h2 class="text-sm font-bold" style="color: var(--text-primary);">好きな2都市を選んで比較</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+        <div><label class="block text-[11px] font-semibold mb-1" style="color: var(--text-muted);">都市 A</label><select id="cmp-a" class="w-full rounded-lg px-3 py-2.5 font-bold" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">{options}</select></div>
+        <div><label class="block text-[11px] font-semibold mb-1" style="color: var(--text-muted);">都市 B</label><select id="cmp-b" class="w-full rounded-lg px-3 py-2.5 font-bold" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">{options}</select></div>
+      </div>
+      <p id="cmp-warn" class="hidden text-[11px] font-bold" style="color: var(--rose-text);">異なる2都市を選んでください</p>
+      <a id="cmp-go" href="./{base}/" class="pr-cta" style="background: var(--accent); color: #ffffff;"><span>この2都市を比較する</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+    </section>
+    <section class="space-y-2.5">
+      <h2 class="text-sm font-bold pb-1.5" style="color: var(--text-primary); border-bottom: 1px solid var(--divider);">人気の比較ペア</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">{cards}</div>
+    </section>"""
+    script = """<script>
+    (function () {
+      var a = document.getElementById('cmp-a'), b = document.getElementById('cmp-b'), go = document.getElementById('cmp-go'), warn = document.getElementById('cmp-warn');
+      a.value = '%%A%%'; b.value = '%%B%%';
+      function upd() {
+        var same = a.value === b.value;
+        warn.classList.toggle('hidden', !same);
+        go.href = same ? '#' : './%%BASE%%/?a=' + encodeURIComponent(a.value) + '&b=' + encodeURIComponent(b.value);
+        go.style.opacity = same ? '.5' : '1';
+      }
+      go.addEventListener('click', function (e) { if (a.value === b.value) e.preventDefault(); });
+      a.addEventListener('change', upd); b.addEventListener('change', upd); upd();
+    })();
+  </script>""".replace("%%A%%", default_a).replace("%%B%%", default_b).replace("%%BASE%%", base)
+    crumb = '<nav class="text-[11px]" style="color: var(--text-muted);"><a href="../" class="underline">トップ</a> › 都市を比べる</nav>'
+    return _guide_shell(title, desc, url, body, script=script, depth=1, active="compare", crumb_html=crumb)
+
+
+
+# ---------------------------------------------------------------------------
+# 海外で困ったとき（緊急通報番号・大使館）
+# ---------------------------------------------------------------------------
+def build_emergency_html(cities: list) -> str:
+    url = f"{SITE_URL}/guides/emergency/"
+    title = f"【海外で困ったとき】国・地域別の緊急通報番号と日本大使館の連絡先｜{SITE_NAME}"
+    desc = "海外で事故・病気・盗難・パスポート紛失などに遭ったときの基本の流れと、国・地域別の緊急通報番号、日本大使館・総領事館の連絡先をまとめました。番号は検索・コピーできます。"
+
+    by_country = {}
+    for c in cities:
+        by_country.setdefault(c["country_ja"], []).append(c)
+    cards = []
+    for country, cl in sorted(by_country.items(), key=lambda kv: kv[0]):
+        c0 = cl[0]
+        search = " ".join([country] + [c["name_ja"] + " " + c["name_en"] for c in cl])
+        cards.append(
+            f'<div class="ed-surface p-4 space-y-1.5 em-card" data-search="{_esc(search.lower())}">'
+            f'<div class="flex items-baseline justify-between gap-2 flex-wrap"><h3 class="text-sm font-bold" style="color: var(--text-primary);">{_esc(country)}</h3>'
+            f'<button type="button" class="text-[11px] font-semibold px-2.5 py-1 rounded-full" style="background: var(--bg-tint); border: 1px solid var(--border-soft); color: var(--text-primary);" data-copy="{_esc(country)} 緊急通報: {_esc(c0["emergency_numbers"])} / {_esc(c0["embassy"])}">連絡先をコピー</button></div>'
+            f'<p class="text-xs leading-relaxed"><strong style="color: var(--rose-text);">緊急通報：</strong><span style="color: var(--text-primary);">{_esc(c0["emergency_numbers"])}</span></p>'
+            f'<p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);"><strong style="color: var(--text-primary);">日本大使館・総領事館：</strong>{_esc(c0["embassy"])}</p>'
+            f'<div class="text-[11px]">{_city_links(cl)}</div></div>'
+        )
+
+    steps = f"""
+    <section class="ed-tint p-4 text-xs leading-relaxed space-y-2" style="color: var(--text-secondary);">
+      <h2 class="text-sm font-bold" style="color: var(--text-primary);">困ったときの基本の流れ</h2>
+      <p><strong style="color: var(--rose-text);">1. 命や安全に関わるとき（事故・急病・事件）：</strong>まず安全を確保し、現地の緊急通報番号（下の一覧）へ。入っている海外旅行保険の緊急連絡先（24時間デスク）にも連絡すると、病院の案内や支払いの手続きを助けてもらえます。</p>
+      <p><strong style="color: var(--text-primary);">2. 盗難・紛失のとき：</strong>現地の警察に届け出て、盗難・紛失の証明書（届出番号）を受け取ります。クレジットカードはすぐにカード会社へ連絡して利用停止を。保険金の請求にも証明書が必要になることがあります。</p>
+      <p><strong style="color: var(--text-primary);">3. パスポートをなくしたとき：</strong>警察への届出のあと、日本大使館・総領事館で手続きをします。新しいパスポートの発給や、帰国のための渡航書の発給など、必要な書類や日数は公館によって異なります。事前に外務省と在外公館の案内を確認してください。</p>
+      <p><strong style="color: var(--text-primary);">4. 出発前にしておくこと：</strong>外務省の「たびレジ」に登録すると、渡航先の安全情報がメールで届きます。パスポートの写しやカード会社の連絡先は、スマホとは別の場所にも控えておくと安心です。</p>
+      <p class="text-[11px]" style="color: var(--text-muted);">※番号や連絡先は変更されることがあります。必ず外務省「海外安全ホームページ」や在外公館の最新情報で確認してください。</p>
+      <div class="flex flex-wrap gap-2 pt-1">
+        <a href="https://www.anzen.mofa.go.jp/" target="_blank" rel="noopener noreferrer" class="pr-cta" style="background: var(--text-primary); color: var(--bg-canvas);"><span>外務省 海外安全ホームページ</span><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>
+        <a href="https://www.ezairyu.mofa.go.jp/tabireg/index.html" target="_blank" rel="noopener noreferrer" class="pr-cta" style="background: var(--sage-text); color: #ffffff;"><span>たびレジに登録する</span><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>
+      </div>
+    </section>"""
+    body = _page_header("EMERGENCY GUIDE", "海外で困ったときの連絡先・手順",
+        f"{len(by_country)}の国・地域の緊急通報番号と日本大使館・総領事館の連絡先を、検索してコピーできます。いざというときのために、出発前に渡航先を確認しておきましょう。") + steps + f"""
+    <section class="space-y-2.5">
+      <div class="flex items-baseline justify-between gap-2 flex-wrap pb-1.5" style="border-bottom: 1px solid var(--divider);">
+        <h2 class="text-sm font-bold" style="color: var(--text-primary);">国・地域別の連絡先</h2>
+        <span id="em-count" class="text-[11px]" style="color: var(--text-muted);">{len(by_country)}件</span>
+      </div>
+      <input id="em-search" type="search" autocomplete="off" placeholder="国名・都市名で絞り込み（例：タイ、パリ）" class="w-full rounded-lg px-3 py-2.5 text-xs" style="background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-primary);">
+      <div id="em-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">{''.join(cards)}</div>
+      <p id="em-empty" class="hidden text-xs text-center p-3" style="color: var(--text-muted);">該当する国・都市が見つかりませんでした。</p>
+    </section>
+    {render_telecom_box(custom_note="緊急時に連絡が取れるよう、渡航先で使える通信手段（eSIM・ローミングなど）を出発前に確認しておくと安心です。")}"""
+    script = """<script>
+    (function () {
+      var input = document.getElementById('em-search'), cards = Array.prototype.slice.call(document.querySelectorAll('.em-card'));
+      var count = document.getElementById('em-count'), empty = document.getElementById('em-empty');
+      function hira(s) { return s.replace(/[\\u30a1-\\u30f6]/g, function (m) { return String.fromCharCode(m.charCodeAt(0) - 0x60); }); }
+      function filter() {
+        var q = hira(input.value.toLowerCase().trim()), n = 0;
+        cards.forEach(function (c) { var ok = !q || hira(c.dataset.search).indexOf(q) !== -1; c.style.display = ok ? '' : 'none'; if (ok) n++; });
+        count.textContent = n + '件'; empty.classList.toggle('hidden', n > 0);
+      }
+      input.addEventListener('input', filter);
+      document.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-copy]'); if (!b) return;
+        if (navigator.clipboard) navigator.clipboard.writeText(b.dataset.copy).then(function () { if (typeof showToast === 'function') showToast('連絡先をコピーしました'); });
+      });
+    })();
+  </script>"""
+    return _guide_shell(title, desc, url, body, script=script, crumb=" › 海外で困ったとき")
