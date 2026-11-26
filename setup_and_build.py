@@ -60,9 +60,10 @@ from templates import (
 )
 from templates_pages import (
     build_index_html, build_guides_hub_html, build_plug_guide_html, build_time_guide_html,
-    build_tipping_guide_html, build_packing_html, build_contact_html,
+    build_tipping_guide_html, build_packing_html, build_contact_html, build_emergency_html,
+    build_features_hub_html, build_compare_hub_html,
 )
-from site_content import GUIDE_PAGES
+from site_content import GUIDE_PAGES, ENABLE_OFFLINE
 
 REGION_NORMALIZE_MAP = {
     "アジア・中央アジア": "アジア",
@@ -380,7 +381,78 @@ def write_auxiliary_files(dist_dir: Path):
     }
     (dist_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    sw_js = """self.addEventListener('install', (e) => {
+    if ENABLE_OFFLINE:
+        build_id = datetime.now().strftime("%Y%m%d%H%M")
+        sw_js = """// 渡航ポケット辞典: オフライン対応の Service Worker
+// ページは「ネットワーク優先」（常に最新を取得し、電波がないときだけ保存済みを表示）。
+const VERSION = 'tokou-__BUILD__';
+const CORE = ['/', '/guides/', '/guides/packing-checklist/', '/guides/time-difference/', '/guides/plug-types/', '/guides/tipping/', '/guides/emergency/', '/features/', '/compare/'];
+const CDN_HOSTS = ['cdn.tailwindcss.com', 'unpkg.com'];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(VERSION)
+      .then((c) => Promise.allSettled(CORE.map((u) => c.add(u))))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('tokou-') && k !== VERSION).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+function offlinePage() {
+  const html = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>オフライン</title></head>'
+    + '<body style="font-family:sans-serif;padding:24px;line-height:1.7"><h1 style="font-size:18px">オフラインです</h1>'
+    + '<p>このページはまだ保存されていません。電波のある場所で一度開くと、次回から電波がなくても開けます。</p><p><a href="/">トップページへ</a></p></body></html>';
+  return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+}
+
+function networkFirst(req) {
+  return new Promise((resolve) => {
+    let done = false;
+    const timer = setTimeout(() => {
+      caches.match(req).then((hit) => { if (hit && !done) { done = true; resolve(hit); } });
+    }, 4000);
+    fetch(req).then((res) => {
+      clearTimeout(timer);
+      if (res && res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
+      if (!done) { done = true; resolve(res); }
+    }).catch(() => {
+      clearTimeout(timer);
+      caches.match(req).then((hit) => { if (!done) { done = true; resolve(hit || offlinePage()); } });
+    });
+  });
+}
+
+function staleWhileRevalidate(req) {
+  return caches.open(VERSION).then((cache) => cache.match(req).then((hit) => {
+    const net = fetch(req).then((res) => {
+      if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+      return res;
+    }).catch(() => hit);
+    return hit || net;
+  }));
+}
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin === self.location.origin) {
+    if (req.mode === 'navigate') e.respondWith(networkFirst(req));
+    return;
+  }
+  if (CDN_HOSTS.indexOf(url.hostname) !== -1 && req.destination === 'script') e.respondWith(staleWhileRevalidate(req));
+});
+""".replace("__BUILD__", build_id)
+    else:
+        # 無効化: 各端末の保存データを削除し、Service Worker を解除する
+        sw_js = """self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 self.addEventListener('activate', (e) => {
@@ -464,12 +536,20 @@ def main():
         "time-difference": lambda: build_time_guide_html(cities),
         "tipping": lambda: build_tipping_guide_html(cities),
         "packing-checklist": lambda: build_packing_html(),
+        "emergency": lambda: build_emergency_html(cities),
     }
     for gslug, fn in guide_builders.items():
         gdir = dist_dir / "guides" / gslug if gslug else dist_dir / "guides"
         gdir.mkdir(parents=True, exist_ok=True)
         (gdir / "index.html").write_text(fn(), encoding="utf-8")
         urls.append(f"{SITE_URL}/guides/{gslug + '/' if gslug else ''}")
+
+    # 特集一覧・比較一覧（どのページからも辿れるハブ）
+    for hub_slug, hub_html in (("features", build_features_hub_html(cities)), ("compare", build_compare_hub_html(cities, COMPARE_PAIRS))):
+        hub_dir = dist_dir / hub_slug
+        hub_dir.mkdir(parents=True, exist_ok=True)
+        (hub_dir / "index.html").write_text(hub_html, encoding="utf-8")
+        urls.append(f"{SITE_URL}/{hub_slug}/")
 
     index_html = build_index_html(cities, rates_data, COMPARE_PAIRS)
     (dist_dir / "index.html").write_text(index_html, encoding="utf-8")
