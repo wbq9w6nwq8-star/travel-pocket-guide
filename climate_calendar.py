@@ -500,6 +500,25 @@ def evaluate_city_calendar(city: dict) -> dict:
     }
 
 
+def _outfit_short(tmax: float, rainy: bool, wide_range: bool) -> str:
+    """表の1セルに収まる短い服装ラベル（詳しい説明は outfit を使う）"""
+    if tmax >= 32:
+        base = "半袖＋日よけ"
+    elif tmax >= 25:
+        base = "半袖＋薄い羽織り"
+    elif tmax >= 18:
+        base = "長袖＋軽い上着"
+    elif tmax >= 10:
+        base = "上着・コート"
+    else:
+        base = "防寒着（ダウン等）"
+    if rainy:
+        base += "・雨具"
+    if wide_range:
+        base += "・重ね着"
+    return base
+
+
 def get_season_snapshot(city: dict, target_months: List[int]) -> dict:
     """特集ページ用に該当月の平均気温・降水日数・服装・ベスト月・評価を返す"""
     cal = evaluate_city_calendar(city)
@@ -528,6 +547,7 @@ def get_season_snapshot(city: dict, target_months: List[int]) -> dict:
         "temp_str": f"{avg_min}〜{avg_max}℃",
         "rain_days_str": f"月{avg_rain_days}日",
         "outfit": rep["outfit"] + ("（期間内の気温差が大きいため重ね着で調整）" if spread >= 8 else ""),
+        "outfit_short": _outfit_short(rep["tmax"], "雨が多い" in rep["tags"], spread >= 8),
         "score": avg_score,
         "label": "ベスト" if avg_score >= 80 else ("快適" if avg_score >= 65 else ("標準" if avg_score >= 45 else "注意")),
         "best_month_str": f"{best_in_season['month']}月が狙い目",
