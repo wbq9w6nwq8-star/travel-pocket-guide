@@ -11,6 +11,10 @@ HTML・UIデザイン・テンプレート管理ファイル (templates.py)
 
 import json
 from urllib.parse import quote
+try:
+    from site_content import ENABLE_OFFLINE
+except ImportError:
+    ENABLE_OFFLINE = False
 from config import (
     SITE_URL, SITE_NAME, GA4_ID, OGP_IMAGE_URL, FAVICON_URL,
     SISTER_SITE_URL, SISTER_SITE_NAME,
@@ -237,6 +241,37 @@ def render_editorial_styles() -> str:
       transition: background-color 0.35s var(--ease-smooth), color 0.35s var(--ease-smooth);
     }
     .tabular-nums { font-variant-numeric: tabular-nums; }
+
+    /* ---- サイト共通ナビ（特集・比較・ガイドへの導線） ---- */
+    .site-nav { background: var(--bg-canvas); border-bottom: 1px solid var(--divider); }
+    .snav-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 8px 0; }
+    .snav-row::-webkit-scrollbar { display: none; }
+    .snav-link { flex-shrink: 0; padding: 7px 13px; border-radius: 9999px; font-size: 12px; font-weight: 600; white-space: nowrap;
+      background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-secondary); min-height: 34px; display: inline-flex; align-items: center; }
+    .snav-link:hover { background: var(--bg-tint); }
+    .snav-link.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ---- レスポンシブ表: 画面が狭いときは行ごとのカード表示にして、文字が潰れないようにする ---- */
+    .rtable { width: 100%; border-collapse: collapse; }
+    @media (max-width: 640px) {
+      .rtable thead { display: none; }
+      .rtable, .rtable tbody, .rtable tr { display: block; width: 100%; }
+      .rtable tr { padding: 10px 12px; border-top: 1px solid var(--divider); }
+      .rtable tbody tr:first-child { border-top: none; }
+      .rtable td, .rtable th { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start;
+        width: 100%; padding: 3px 0 !important; border: none !important; background: transparent !important; text-align: right; }
+      .rtable td::before, .rtable th.rt-head::before { content: attr(data-label); flex: 0 0 34%; max-width: 34%; text-align: left;
+        font-size: 11px; font-weight: 600; color: var(--text-muted); }
+      .rtable td > .rt-val { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+      .rtable td.rt-name { display: block; text-align: left; font-size: 14px; padding-bottom: 4px !important; }
+      .rtable td.rt-name::before { content: none; }
+      .rtable th.rt-head { display: block; text-align: left; margin-top: 4px; padding: 6px 8px !important; border-radius: var(--radius-sm);
+        background: var(--bg-tint) !important; color: var(--text-secondary) !important; font-size: 12px; }
+      .rtable th.rt-head::before { content: none; }
+      .rtable td.rt-cmp { display: block; text-align: left; padding: 6px 2px !important; }
+      .rtable td.rt-cmp::before { display: block; max-width: none; margin-bottom: 2px; color: var(--accent-text); font-size: 11px; font-weight: 700; }
+    }
     .hidden { display: none; } /* Tailwind CDN の読み込み前・失敗時でも、非表示にする要素が見えないようにする */
     .font-editorial-italic { font-family: var(--font-editorial); font-style: italic; }
 
@@ -453,6 +488,23 @@ def render_editorial_styles() -> str:
   </style>"""
 
 
+
+def render_site_nav(prefix: str = "./", active: str = "") -> str:
+    """どのページからでも、特集・比較・ガイドへ移動できる共通ナビ"""
+    items = [
+        ("home", "ホーム", prefix),
+        ("features", "季節・テーマ特集", f"{prefix}features/"),
+        ("compare", "都市を比べる", f"{prefix}compare/"),
+        ("guides", "ガイド・早見表", f"{prefix}guides/"),
+        ("contact", "お問い合わせ", f"{prefix}contact/"),
+    ]
+    links = "".join(
+        f'<a href="{href}" class="snav-link{" is-active" if key == active else ""}"{" aria-current=\"page\"" if key == active else ""}>{label}</a>'
+        for key, label, href in items
+    )
+    return f'<nav class="site-nav" aria-label="サイト内ナビゲーション"><div class="max-w-[780px] mx-auto px-4"><div class="snav-row">{links}</div></div></nav>'
+
+
 def render_pr_banner() -> str:
     return """<div style="background: var(--bg-tint); border-bottom: 1px solid var(--divider); text-align: center; padding: 4px 12px; font-size: 10px; color: var(--text-muted);">
     【PR】当サイトはアフィリエイト広告を利用しています
@@ -498,6 +550,30 @@ def render_share_script() -> str:
         });
       }
     }"""
+
+
+OFFLINE_JS = r"""
+    // ---------- オフライン対応（一度開いたページを、電波がなくても開けるようにする）----------
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+    }
+    (function () {
+      function note() {
+        var el = document.getElementById('offline-note');
+        if (!navigator.onLine) {
+          if (!el) {
+            el = document.createElement('div');
+            el.id = 'offline-note';
+            el.setAttribute('role', 'status');
+            el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:95;padding:9px 12px;font-size:12px;font-weight:700;text-align:center;background:#8a5615;color:#fff';
+            el.textContent = 'オフラインです。表示中の情報は、最後に開いた時点のものです。';
+            document.body.appendChild(el);
+          }
+        } else if (el) { el.remove(); }
+      }
+      window.addEventListener('online', note); window.addEventListener('offline', note); note();
+    })();
+"""
 
 
 def render_theme_and_toast_script() -> str:
@@ -557,7 +633,7 @@ def render_theme_and_toast_script() -> str:
     setTimeout(() => {
       document.querySelectorAll('.reveal-section').forEach((sec) => sec.classList.add('is-visible'));
     }, 900);
-    """
+    """ + (OFFLINE_JS if ENABLE_OFFLINE else "")
 
 
 def render_sister_site_banner() -> str:
@@ -1322,6 +1398,7 @@ def build_city_html(city: dict, rates_data: dict, all_cities: list, city_compare
       </nav>
     </div>
   </header>
+  {render_site_nav("../", "")}
 
   <main class="max-w-[780px] mx-auto px-4 pt-5 space-y-9">
     <section id="sec-top" class="space-y-3">
@@ -1945,9 +2022,9 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
     diff_rows_html = "".join([
         f"""
         <tr>
-          <th class="p-3 font-semibold align-top" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">{lbl}</th>
-          <td class="p-3 align-top leading-relaxed" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{v1}</td>
-          <td class="p-3 align-top leading-relaxed" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{v2}</td>
+          <th class="rt-head p-3 font-semibold align-top" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">{lbl}</th>
+          <td class="rt-cmp p-3 align-top leading-relaxed" data-label="{c1['name_ja']}" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{v1}</td>
+          <td class="rt-cmp p-3 align-top leading-relaxed" data-label="{c2['name_ja']}" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">{v2}</td>
         </tr>"""
         for lbl, v1, v2 in payload["diff_rows"]
     ])
@@ -1980,6 +2057,7 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
       </button>
     </div>
   </header>
+  {render_site_nav("../../", "compare")}
 
   <main class="max-w-[780px] mx-auto px-4 pt-5 space-y-6">
     <div class="ed-surface p-5 space-y-2 anim-enter">
@@ -2025,7 +2103,7 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
       <div class="px-3.5 py-2.5" style="border-bottom: 1px solid var(--divider);">
         <h2 class="text-xs font-bold" style="color: var(--text-primary);">違いが出る項目（比較表）</h2>
       </div>
-      <table class="w-full text-left border-collapse text-xs">
+      <table class="rtable w-full text-left border-collapse text-xs">
         <thead>
           <tr style="background: var(--bg-tint); color: var(--text-primary);">
             <th class="p-3 w-1/4 font-bold">違いが出る項目</th>
@@ -2161,9 +2239,9 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
       document.getElementById('th-c2').innerHTML = `<a href="../../${{b.slug}}/" class="underline" style="color: var(--accent-text);">${{escHtml(b.name_ja)}}（${{escHtml(b.country_ja)}}）</a>`;
       document.getElementById('comp-diff-tbody').innerHTML = diffs.map(([lbl, v1, v2]) => `
         <tr>
-          <th class="p-3 font-semibold align-top" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">${{escHtml(lbl)}}</th>
-          <td class="p-3 align-top leading-relaxed" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">${{escHtml(v1)}}</td>
-          <td class="p-3 align-top leading-relaxed" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">${{escHtml(v2)}}</td>
+          <th class="rt-head p-3 font-semibold align-top" style="background: var(--bg-tint); border-top: 1px solid var(--divider); color: var(--text-muted);">${{escHtml(lbl)}}</th>
+          <td class="rt-cmp p-3 align-top leading-relaxed" data-label="${{escHtml(a.name_ja)}}" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">${{escHtml(v1)}}</td>
+          <td class="rt-cmp p-3 align-top leading-relaxed" data-label="${{escHtml(b.name_ja)}}" style="border-top: 1px solid var(--divider); border-left: 1px solid var(--divider);">${{escHtml(v2)}}</td>
         </tr>`).join('');
 
       document.getElementById('btn-c1').href = `../../${{a.slug}}/`;
@@ -2173,6 +2251,15 @@ def build_compare_html(c1: dict, c2: dict, summary_text: str, rates_data: dict, 
     }}
     sel1.addEventListener('change', renderDynamicCompare);
     sel2.addEventListener('change', renderDynamicCompare);
+
+    // 他のページ（トップの比較ツール等）から ?a=都市&b=都市 で開いたときは、その2都市を表示する
+    (function () {{
+      const qp = new URLSearchParams(location.search);
+      const qa = qp.get('a'), qb = qp.get('b');
+      if (qa && qb && qa !== qb && cityBySlug[qa] && cityBySlug[qb]) {{
+        sel1.value = qa; sel2.value = qb; renderDynamicCompare();
+      }}
+    }})();
   </script>
 </body>
 </html>"""
@@ -2241,7 +2328,8 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
         tz_label = season_tz_label(c, target_months) if season_tz_label else c.get("tz_diff_label", "-")
         if snap:
             temp_str = f"{snap['temp_str']}（雨 {snap['rain_days_str']}）"
-            gear_str = snap["outfit"]
+            gear_str = snap["outfit_short"]
+            gear_full = snap["outfit"]
             tag_str = "・".join(snap["tags"]) if snap["tags"] else "穏やか"
             season_badge = f"{season_label}：{snap['label']} · {snap['temp_str']}（{snap['best_month_str']}）"
             autumn_note = autumn_reason_map.get(c["slug"], "") if feat["slug"] == "autumn-silverweek" else ""
@@ -2252,6 +2340,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
         else:
             temp_str = "気候データ確認中"
             gear_str = "気温に応じた重ね着"
+            gear_full = ""
             season_badge = ""
             card_desc = c["climate"]
 
@@ -2269,7 +2358,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
             "english": (f"{r['english']:.1f} / 5.0", "tabular-nums whitespace-nowrap", "var(--text-secondary)"),
         }
         extra_cells = "".join(
-            f'<td class="p-2.5 {cell_values[k][1]}" style="border-top: 1px solid var(--divider); color: {cell_values[k][2]};">{cell_values[k][0]}</td>'
+            f'<td class="p-2.5 {cell_values[k][1]}" data-label="{col_headers[k]}" style="border-top: 1px solid var(--divider); color: {cell_values[k][2]};"><span class="rt-val">{cell_values[k][0]}</span></td>'
             for k in columns
         )
         if feat.get("card_mode") == "safety":
@@ -2278,7 +2367,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
 
         table_rows.append(
             f'<tr>'
-            f'<td class="p-2.5 font-bold whitespace-nowrap" style="border-top: 1px solid var(--divider);"><a href="../../{c["slug"]}/" class="underline" style="color: var(--accent-text);">{c["name_ja"]}</a></td>'
+            f'<td class="p-2.5 font-bold whitespace-nowrap rt-name" style="border-top: 1px solid var(--divider);"><a href="../../{c["slug"]}/" class="underline" style="color: var(--accent-text);">{c["name_ja"]}</a></td>'
             + extra_cells
             + f'</tr>'
         )
@@ -2296,7 +2385,8 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
             f'</div>'
             + (f'<div>{badge_html}</div>' if badge_html else '')
             + f'<p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);">{card_desc}</p>'
-            f'<div class="text-[11px] flex flex-wrap gap-2 pt-1 tabular-nums" style="color: var(--text-muted); border-top: 1px solid var(--divider);">'
+            + (f'<p class="text-[11px] leading-relaxed" style="color: var(--text-secondary);"><strong style="color: var(--text-primary);">服装の目安：</strong>{gear_full}</p>' if gear_full and feat.get('card_mode') != 'safety' else '')
+            + f'<div class="text-[11px] flex flex-wrap gap-2 pt-1 tabular-nums" style="color: var(--text-muted); border-top: 1px solid var(--divider);">'
             f'<span>時差: {tz_label}</span><span>プラグ: {c["plug_type"]}</span><span>通貨: {c["currency_code"]}</span>'
             f'</div>'
             f'</a>'
@@ -2318,7 +2408,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
         <span class="text-[11px]" style="color: var(--text-muted);">{table_source}</span>
       </div>
       <div class="ed-surface overflow-x-auto">
-        <table class="w-full text-left border-collapse text-xs">
+        <table class="rtable w-full text-left border-collapse text-xs">
           <thead>
             <tr style="background: var(--bg-tint); color: var(--text-muted);">
               <th class="p-2.5 font-semibold">都市</th>
@@ -2356,6 +2446,7 @@ def build_feature_html(feat: dict, all_cities: list) -> str:
       </button>
     </div>
   </header>
+  {render_site_nav("../../", "features")}
 
   <main class="max-w-[780px] mx-auto px-4 pt-5 space-y-6">
     <div class="ed-surface p-5 space-y-2 anim-enter">
