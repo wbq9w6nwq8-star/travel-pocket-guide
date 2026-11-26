@@ -499,7 +499,7 @@ def render_site_nav(prefix: str = "./", active: str = "") -> str:
         ("contact", "お問い合わせ", f"{prefix}contact/"),
     ]
     links = "".join(
-        f'<a href="{href}" class="snav-link{" is-active" if key == active else ""}"{" aria-current=\"page\"" if key == active else ""}>{label}</a>'
+        f'<a href="{href}" class="snav-link{" is-active" if key == active else ""}"{" aria-current='page'" if key == active else ""}>{label}</a>'
         for key, label, href in items
     )
     return f'<nav class="site-nav" aria-label="サイト内ナビゲーション"><div class="max-w-[780px] mx-auto px-4"><div class="snav-row">{links}</div></div></nav>'
